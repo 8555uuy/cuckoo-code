@@ -4506,7 +4506,7 @@
         e.stopPropagation();
         const id = btn.dataset.restore;
         const s = snapshots.filter((x) => x.id === id)[0];
-        if (!await ckConfirm("\u786E\u5B9A\u628A\u5FEB\u7167\u300C" + (s ? s.name : "") + "\u300D\u6062\u590D\u5230\u9879\u76EE\u76EE\u5F55\uFF1F\u5C06\u8986\u76D6\u540C\u540D\u6587\u4EF6\u3002")) return;
+        if (!await ckConfirm("\u786E\u5B9A\u628A\u5FEB\u7167\u300C" + (s ? s.name : "") + "\u300D\u6062\u590D\u5230\u9879\u76EE\u76EE\u5F55\uFF1F\n\n\u26A0\uFE0F \u5C06\u8986\u76D6\u9879\u76EE\u4E2D\u7684\u540C\u540D\u6587\u4EF6\uFF0C\u5F53\u524D\u672A\u4FDD\u5B58\u7684\u6539\u52A8\u53EF\u80FD\u4E22\u5931\u3002")) return;
         if (api.restoreSnapshot) {
           try {
             await api.restoreSnapshot(id);

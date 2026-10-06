@@ -59,7 +59,7 @@ function renderSnapshots(): void {
       e.stopPropagation();
       const id = btn.dataset.restore;
       const s = snapshots.filter((x: any) => x.id === id)[0];
-      if (!(await ckConfirm('确定把快照「' + (s ? s.name : '') + '」恢复到项目目录？将覆盖同名文件。'))) return;
+      if (!(await ckConfirm('确定把快照「' + (s ? s.name : '') + '」恢复到项目目录？\n\n⚠️ 将覆盖项目中的同名文件，当前未保存的改动可能丢失。'))) return;
       if (api.restoreSnapshot) { try { await api.restoreSnapshot(id); } catch (_) {} }
       await ckAlert('已恢复');
     });
