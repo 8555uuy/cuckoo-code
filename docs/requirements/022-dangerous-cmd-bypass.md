@@ -2,7 +2,7 @@
 id: 022
 type: fix
 title: 危险命令检测增强（前缀/通配符/长选项）
-status: draft
+status: done
 branch: fix/022-dangerous-cmd-bypass
 created: 2026-10-06
 updated: 2026-10-06
