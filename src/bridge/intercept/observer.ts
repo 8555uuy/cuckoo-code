@@ -11,12 +11,14 @@ import { showToolMask, hideToolMask } from '../../overlay/panel.js';
 import * as watchdog from '../loop/watchdog.js';
 
 // 正文标记：AI 回复里输出 [记忆]xxx，软件据此自动创建
-// 中文全角/半角方括号都支持
-const MEMORY_MARKER_RE = /[\[【]记忆[\]】]\s*([^\n]+)/g;
+// 中文全角/半角方括号都支持。标记本身会留在 AI 页面的对话正文里（无法隐藏）。
+// 只匹配行首（可含前导空白）的标记，避免误伤正文中引用的 `[记忆]` 字样
+const MEMORY_MARKER_RE = /^[ \t]*[\[【]记忆[\]】]\s*([^\n]+)/gm;
 
 /**
- * 从 AI 回复正文中提取 [记忆]/[快照] 标记并触发主进程创建。
+ * 从 AI 回复正文中提取 [记忆] 标记并触发主进程创建。
  * 失败静默（不影响主流程）。返回提取到的数量。
+ * 注意：标记行已由 AI 网页渲染进对话，本函数只负责捕获，不修改显示。
  */
 async function processInlineMarkers(text: string): Promise<{ memories: number }> {
   const result = { memories: 0 };
@@ -37,6 +39,7 @@ async function processInlineMarkers(text: string): Promise<{ memories: number }>
   }
   return result;
 }
+
 
 const MAX_JS_RETRY = 3;
 // 连续"格式提示"次数（JSON/XML 共用，防止 AI 来回切换格式绕过上限）

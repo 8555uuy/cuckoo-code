@@ -77,10 +77,30 @@ function saveMemories(list: any): boolean {
   }
 }
 
-/** 新增一条记忆，返回新记忆（text 为空返回 null） */
+/** 单条记忆最大字符数（超出截断，防 prompt 膨胀） */
+const MAX_MEMORY_LEN = 500;
+/** 注入提示词的记忆章节总长上限（字符） */
+const MAX_SECTION_LEN = 4000;
+/** 记忆条数上限（超出时丢弃最旧的） */
+const MAX_MEMORIES = 200;
+
+/**
+ * 新增一条记忆，返回新记忆。
+ * - text 为空返回 null
+ * - 重复内容（忽略首尾空白后完全相同）不重复添加，返回已存在的那条
+ * - 超长截断到 MAX_MEMORY_LEN
+ * - 超过 MAX_MEMORIES 时丢弃最旧的
+ */
 function addMemory(text: string): Memory | null {
-  const t = typeof text === 'string' ? text.trim() : '';
+  let t = typeof text === 'string' ? text.trim() : '';
   if (!t) return null;
+  if (t.length > MAX_MEMORY_LEN) t = t.slice(0, MAX_MEMORY_LEN);
+
+  const list = listMemories();
+  // 去重：内容完全相同则不重复添加
+  const existing = list.find((m) => m.text === t);
+  if (existing) return existing;
+
   const now = Date.now();
   const mem: Memory = {
     id: 'mem-' + now + '-' + Math.random().toString(36).slice(2, 8),
@@ -88,8 +108,12 @@ function addMemory(text: string): Memory | null {
     createdAt: now,
     updatedAt: now,
   };
-  const list = listMemories();
   list.push(mem);
+  // 超上限时丢弃最旧的（按 createdAt 升序删前面的）
+  while (list.length > MAX_MEMORIES) {
+    list.sort((a, b) => a.createdAt - b.createdAt);
+    list.shift();
+  }
   return saveMemories(list) ? mem : null;
 }
 
@@ -109,12 +133,17 @@ function buildMemorySection(): string {
   const list = listMemories();
   if (!list.length) return '';
   const lines = list.map((m) => '- ' + m.text.replace(/\n/g, ' '));
+  let body = lines.join('\n');
+  // 章节总长上限，超出截断并提示（防 prompt 膨胀）
+  if (body.length > MAX_SECTION_LEN) {
+    body = body.slice(0, MAX_SECTION_LEN) + '\n- ...（更多记忆已省略）';
+  }
   return [
     '## 用户记忆',
     '',
     '以下是用户过往沉淀的偏好与习惯，请在后续工作中遵循（除非用户明确改变要求）：',
     '',
-    ...lines,
+    body,
   ].join('\n');
 }
 
