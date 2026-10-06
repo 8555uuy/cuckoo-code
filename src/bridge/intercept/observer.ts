@@ -10,6 +10,44 @@ import { sendCombinedJsResultsToChat, sendMessageToChat, cancelPendingSend } fro
 import { showToolMask, hideToolMask } from '../../overlay/panel.js';
 import * as watchdog from '../loop/watchdog.js';
 
+// 正文标记：AI 回复里输出 [记忆]xxx / [快照]名称，软件据此自动创建
+// 中文全角/半角方括号都支持
+const MEMORY_MARKER_RE = /[\[【]记忆[\]】]\s*([^\n]+)/g;
+const SNAPSHOT_MARKER_RE = /[\[【]快照[\]】]\s*([^\n]+)/g;
+
+/**
+ * 从 AI 回复正文中提取 [记忆]/[快照] 标记并触发主进程创建。
+ * 失败静默（不影响主流程）。返回提取到的数量。
+ */
+async function processInlineMarkers(text: string): Promise<{ memories: number; snapshots: number }> {
+  const result = { memories: 0, snapshots: 0 };
+  if (!text) return result;
+  const api = (window as any).electronAPI;
+  if (!api) return result;
+
+  const memMatches = Array.from(text.matchAll(MEMORY_MARKER_RE));
+  for (const m of memMatches) {
+    const content = (m[1] || '').trim();
+    if (!content) continue;
+    try {
+      if (api.createMemoryFromMarker) { await api.createMemoryFromMarker(content); result.memories++; }
+    } catch (_) { /* ignore */ }
+  }
+
+  const snapMatches = Array.from(text.matchAll(SNAPSHOT_MARKER_RE));
+  for (const m of snapMatches) {
+    const name = (m[1] || '').trim();
+    if (!name) continue;
+    try {
+      if (api.createSnapshotFromMarker) { await api.createSnapshotFromMarker(name); result.snapshots++; }
+    } catch (_) { /* ignore */ }
+  }
+  if (result.memories || result.snapshots) {
+    console.log('[Cuckoo Code][标记] 记忆=' + result.memories + ' 快照=' + result.snapshots);
+  }
+  return result;
+}
+
 const MAX_JS_RETRY = 3;
 // 连续"格式提示"次数（JSON/XML 共用，防止 AI 来回切换格式绕过上限）
 let formatHintCount = 0;
@@ -78,6 +116,9 @@ async function processInterceptedResponse(text: string, force?: boolean): Promis
   lastProcessedText = raw;
 
   console.log('[Cuckoo Code][拦截] 收到完整回复，长度=' + raw.length + '，开始解析工具调用');
+
+  // 0. 正文标记：[记忆]xxx / [快照]xxx（独立于工具调用，无论后续走哪条路都先处理）
+  try { await processInlineMarkers(raw); } catch (_) { /* ignore */ }
 
   // 1. 优先检测 JS 工具代码块（cuckoo / js 代码块）
   const jsBlocks = extractJsToolBlocks(raw);
@@ -298,4 +339,4 @@ function getLastInterceptedText(): string {
   return lastInterceptedText;
 }
 
-export { startInterceptObserver, processInterceptedResponse, getLastInterceptedText, onInterceptedResponse, onAiError, onToolCall, onStream, onTaskIdle, requestAbort, clearAbort };
+export { startInterceptObserver, processInterceptedResponse, processInlineMarkers, getLastInterceptedText, onInterceptedResponse, onAiError, onToolCall, onStream, onTaskIdle, requestAbort, clearAbort };

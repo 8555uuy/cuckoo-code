@@ -347,6 +347,20 @@ declare function nameConversation(title: string): Promise<{ message: string }>;
  */
 declare function mcpListServers(): Promise<string>;
 
+
+// ================= 记忆 =================
+
+/**
+ * 把用户明确表达的偏好、习惯或长期有用的事实记入长期记忆（跨会话、跨项目保留）。后续对话会自动注入这些记忆。
+ * @param text 要记住的内容（一句话，如"用户偏好用中文回复"）
+ * @returns { id: string, message: string }
+ * @throws 缺少窗口上下文或内容为空时抛出异常
+ */
+declare function remember(text: string): Promise<{ id: string, message: string }>;
+
+
+// ================= MCP =================
+
 /**
  * 查看指定 MCP server 提供的工具列表（含描述和参数）。
  * 确认工具能力后再调用 mcpCall。
@@ -355,6 +369,17 @@ declare function mcpListServers(): Promise<string>;
  * @throws server 不存在或连接失败时抛出异常
  */
 declare function mcpGetTools(serverName: string): Promise<string>;
+
+
+// ================= 记忆 =================
+
+/**
+ * 按 id 删除一条长期记忆（当用户要求"忘掉"某事，或记忆已过时）。可用 listMemories 查看现有记忆及其 id。
+ * @param id 要删除的记忆 id
+ * @returns 确认消息
+ * @throws id 为空或记忆不存在时抛出异常
+ */
+declare function forgetMemory(id: string): Promise<string>;
 
 
 // ================= 任务管理 =================
@@ -367,3 +392,30 @@ declare function mcpGetTools(serverName: string): Promise<string>;
  * @throws 缺少窗口上下文、窗口已关闭或纯净对话模式未开启时抛出异常
  */
 declare function goalDone(): Promise<string>;
+
+
+// ================= 快照 =================
+
+/**
+ * 为当前项目创建一份工作快照（复制项目文件到用户目录存档）。在大范围改动、重构、批量编辑前调用，万一改坏可回滚。
+ * @param name 快照名（简短，如"重构前"）
+ * @param description 可选描述
+ * @returns { id, fileCount, message }
+ * @throws 项目目录未初始化、名为空或复制失败时抛出异常
+ */
+declare function createSnapshot(name: string, description?: string): Promise<{ id: string, fileCount: number, message: string }>;
+
+/**
+ * 列出当前项目的所有工作快照（含 id、名称、文件数、创建时间），用于选择要恢复的快照。
+ * @returns 快照列表文本
+ * @throws 无
+ */
+declare function listSnapshots(): Promise<string>;
+
+/**
+ * 把指定快照的文件恢复到当前项目目录（覆盖同名文件）。属破坏性操作，执行前应先向用户确认。
+ * @param id 要恢复的快照 id（来自 listSnapshots 或 createSnapshot）
+ * @returns { restored, message }
+ * @throws 快照不存在、原项目目录丢失或复制失败时抛出异常
+ */
+declare function restoreSnapshot(id: string): Promise<{ restored: number, message: string }>;

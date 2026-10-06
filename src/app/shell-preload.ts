@@ -138,6 +138,20 @@ const shellAPI = {
   getAutoCompact: () => ipcRenderer.invoke('get-autocompact'),
   saveAutoCompact: (data: any) => ipcRenderer.invoke('save-autocompact', { data }),
   triggerCompact: () => ipcRenderer.invoke('trigger-compact'),
+  // ========== 记忆 ==========
+  listMemories: () => ipcRenderer.invoke('list-memories'),
+  saveMemories: (memories: any) => ipcRenderer.invoke('save-memories', { memories }),
+  addMemory: (text: string) => ipcRenderer.invoke('add-memory', { text }),
+  deleteMemory: (id: string) => ipcRenderer.invoke('delete-memory', { id }),
+  onMemoriesChanged: (cb: () => void) => {
+    ipcRenderer.on('shell-memories-changed', () => cb());
+  },
+  // ========== 快照 ==========
+  listSnapshots: (projectDir?: string) => ipcRenderer.invoke('list-snapshots', { projectDir }),
+  createSnapshot: (projectDir: string, name: string, description?: string) =>
+    ipcRenderer.invoke('create-snapshot', { projectDir, name, description }),
+  restoreSnapshot: (id: string) => ipcRenderer.invoke('restore-snapshot', { id }),
+  deleteSnapshot: (id: string) => ipcRenderer.invoke('delete-snapshot', { id }),
   // ========== 设置 ==========
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (data: any) => ipcRenderer.invoke('save-settings', { data }),
