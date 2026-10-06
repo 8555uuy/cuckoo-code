@@ -81,7 +81,7 @@ class CreateSnapshotTool extends Tool {
       order: 116,
       text: [
         '**工作快照**：在执行**大范围改动、重构、批量编辑**之前，先存一份快照（如"重构前"），万一改坏可用 restoreSnapshot(id) 回滚。',
-        '两种存法：① 调用 createSnapshot(name)；② 在回复正文里输出 `[快照]名称`（更轻，软件会自动捕获并创建，正文标记会被隐藏）。',
+        '两种存法：① 调用 createSnapshot(name)（推荐，正文干净）；② 在回复里**单独一行**输出 `[快照]名称`（更轻，软件会自动捕获；注意标记会留在对话正文里）。标记必须在行首单独成行。',
         '小改动无需快照。快照会排除 .git/node_modules 等产物目录。',
       ].join('\n'),
     };

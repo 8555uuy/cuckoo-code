@@ -2,15 +2,18 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 
-// 与 observer.ts 保持一致的正则
-const SNAPSHOT_MARKER_RE = /[\[【]快照[\]】]\s*([^\n]+)/g;
+// 与 observer.ts 保持一致的正则（行首锚定）
+const SNAPSHOT_MARKER_RE = /^[ \t]*[\[【]快照[\]】]\s*([^\n]+)/gm;
 
 function extract(re, text) {
   return Array.from(text.matchAll(re)).map((m) => (m[1] || '').trim()).filter(Boolean);
 }
 
-test('提取 [快照] 半角', () => {
-  assert.deepStrictEqual(extract(SNAPSHOT_MARKER_RE, '先存个档 [快照]重构前'), ['重构前']);
+test('提取 [快照] 半角（行首）', () => {
+  assert.deepStrictEqual(extract(SNAPSHOT_MARKER_RE, '[快照]重构前'), ['重构前']);
+});
+test('标记在行中（非行首）不识别', () => {
+  assert.deepStrictEqual(extract(SNAPSHOT_MARKER_RE, '先存个档 [快照]重构前'), []);
 });
 test('提取 【快照】 全角', () => {
   assert.deepStrictEqual(extract(SNAPSHOT_MARKER_RE, '【快照】改前'), ['改前']);

@@ -8,7 +8,7 @@ import path from 'node:path';
 const HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'cuckoo-snap-home-'));
 process.env.CUCKOO_HOME = HOME;
 
-const { createSnapshot, listSnapshots, getSnapshot, restoreSnapshot, deleteSnapshot, collectFiles } = await import('../../src/app/snapshots.js');
+const { createSnapshot, listSnapshots, getSnapshot, restoreSnapshot, deleteSnapshot, collectFiles, isExcludedFile } = await import('../../src/app/snapshots.js');
 
 function makeProject() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cuckoo-proj-'));
@@ -27,6 +27,29 @@ test('collectFiles 排除 node_modules/.git', () => {
   const dir = makeProject();
   const files = collectFiles(dir).map((f) => path.relative(dir, f).replace(/\\/g, '/')).sort();
   assert.deepStrictEqual(files, ['a.txt', 'sub/b.txt']);
+});
+
+test('collectFiles 排除敏感文件（.env/私钥/凭据）', () => {
+  const dir = makeProject();
+  fs.writeFileSync(path.join(dir, '.env'), 'SECRET=1');
+  fs.writeFileSync(path.join(dir, '.env.local'), 'SECRET=2');
+  fs.writeFileSync(path.join(dir, 'id_rsa'), 'PRIVATE KEY');
+  fs.writeFileSync(path.join(dir, 'server.pem'), 'CERT');
+  fs.writeFileSync(path.join(dir, 'credentials.json'), '{}');
+  fs.writeFileSync(path.join(dir, '.npmrc'), 'token=x');
+  fs.writeFileSync(path.join(dir, 'normal.txt'), 'ok');
+  const files = collectFiles(dir).map((f) => path.basename(f)).sort();
+  assert.deepStrictEqual(files, ['a.txt', 'b.txt', 'normal.txt']);
+});
+
+test('isExcludedFile 判定敏感文件', () => {
+  assert.strictEqual(isExcludedFile('.env'), true);
+  assert.strictEqual(isExcludedFile('.env.production'), true);
+  assert.strictEqual(isExcludedFile('id_rsa'), true);
+  assert.strictEqual(isExcludedFile('foo.pem'), true);
+  assert.strictEqual(isExcludedFile('credentials.json'), true);
+  assert.strictEqual(isExcludedFile('normal.txt'), false);
+  assert.strictEqual(isExcludedFile('index.js'), false);
 });
 
 test('createSnapshot 复制文件并写 meta', () => {

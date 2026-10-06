@@ -12,7 +12,8 @@ import * as watchdog from '../loop/watchdog.js';
 
 // 正文标记：AI 回复里输出 [快照]名称，软件据此自动创建
 // 中文全角/半角方括号都支持
-const SNAPSHOT_MARKER_RE = /[\[【]快照[\]】]\s*([^\n]+)/g;
+// 只匹配行首（可含前导空白）的标记，避免误伤正文中引用的 `[快照]` 字样
+const SNAPSHOT_MARKER_RE = /^[ \t]*[\[【]快照[\]】]\s*([^\n]+)/gm;
 
 /**
  * 从 AI 回复正文中提取 [记忆]/[快照] 标记并触发主进程创建。
