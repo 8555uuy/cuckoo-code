@@ -11,9 +11,9 @@ import { showToolMask, hideToolMask } from '../../overlay/panel.js';
 import * as watchdog from '../loop/watchdog.js';
 
 // 正文标记：AI 回复里输出 [记忆]xxx / [快照]名称，软件据此自动创建
-// 中文全角/半角方括号都支持
-const MEMORY_MARKER_RE = /[\[【]记忆[\]】]\s*([^\n]+)/g;
-const SNAPSHOT_MARKER_RE = /[\[【]快照[\]】]\s*([^\n]+)/g;
+// 中文全角/半角方括号都支持；只匹配行首（可含前导空白），避免误伤正文中引用的字样
+const MEMORY_MARKER_RE = /^[ \t]*[\[【]记忆[\]】]\s*([^\n]+)/gm;
+const SNAPSHOT_MARKER_RE = /^[ \t]*[\[【]快照[\]】]\s*([^\n]+)/gm;
 
 /**
  * 从 AI 回复正文中提取 [记忆]/[快照] 标记并触发主进程创建。

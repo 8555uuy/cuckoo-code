@@ -27,7 +27,30 @@ export interface SnapshotMeta {
 const EXCLUDE_DIRS = new Set([
   '.git', 'node_modules', 'dist', 'out', 'build',
   '.cuckoo', '.cuckooCode', 'coverage', '.cache', 'wyp',
+  '__pycache__', '.venv', 'venv', '.idea', '.vscode',
 ]);
+
+/**
+ * 排除的敏感文件名模式（避免把密钥/凭据复制进快照）。
+ * 匹配文件名（basename）本身，不区分大小写。
+ */
+const EXCLUDE_FILE_PATTERNS = [
+  /^\.env(\..+)?$/i,          // .env / .env.local / .env.production ...
+  /^id_(rsa|dsa|ecdsa|ed25519)$/i, // SSH 私钥
+  /^.*\.(pem|key|p12|pfx|jks|keystore)$/i, // 证书/私钥
+  /^credentials(\.json)?$/i,
+  /^secrets?(\.json|\.ya?ml)?$/i,
+  /^\.npmrc$/i,               // 可能含 token
+  /^\.netrc$/i,
+  /^auth\.json$/i,
+  /^service-account.*\.json$/i, // GCP
+  /^\.htpasswd$/i,
+];
+
+/** 判断文件名是否应排除（敏感文件） */
+function isExcludedFile(name: string): boolean {
+  return EXCLUDE_FILE_PATTERNS.some((re) => re.test(name));
+}
 
 /** 用户级目录（可用 CUCKOO_HOME 覆盖） */
 function getUserDir(): string {
@@ -66,6 +89,7 @@ function collectFiles(root: string): string[] {
         if (EXCLUDE_DIRS.has(ent.name)) continue;
         walk(path.join(dir, ent.name));
       } else if (ent.isFile()) {
+        if (isExcludedFile(ent.name)) continue; // 敏感文件不入快照
         result.push(path.join(dir, ent.name));
       }
     }
@@ -157,6 +181,7 @@ function restoreSnapshot(id: string): { restored: number; projectDir: string } {
     throw new Error('原项目目录已不存在，无法恢复: ' + meta.projectDir);
   }
 
+  const projectRoot = path.resolve(meta.projectDir);
   let restored = 0;
   const walk = (dir: string): void => {
     for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -164,7 +189,12 @@ function restoreSnapshot(id: string): { restored: number; projectDir: string } {
       if (ent.isDirectory()) { walk(src); continue; }
       if (!ent.isFile()) continue;
       const rel = path.relative(filesDir, src);
-      const dest = path.join(meta.projectDir, rel);
+      const dest = path.resolve(projectRoot, rel);
+      // 路径穿越防护：目标必须在项目目录内
+      if (dest !== projectRoot && !dest.startsWith(projectRoot + path.sep)) {
+        console.warn('[Snapshots] 跳过越界路径:', dest);
+        continue;
+      }
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(src, dest);
       restored++;
@@ -186,5 +216,5 @@ function deleteSnapshot(id: string): boolean {
 
 export {
   createSnapshot, listSnapshots, getSnapshot, restoreSnapshot, deleteSnapshot,
-  getSnapshotsDir, getSnapshotDir, collectFiles, EXCLUDE_DIRS,
+  getSnapshotsDir, getSnapshotDir, collectFiles, EXCLUDE_DIRS, EXCLUDE_FILE_PATTERNS, isExcludedFile,
 };
