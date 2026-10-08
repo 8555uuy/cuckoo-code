@@ -125,6 +125,61 @@ function buildCuckooHost(): CuckooHost {
       }
       return null;
     },
+    // ===== C8 =====
+    mcpCall: async (server: string, tool: string, args?: any) => {
+      const t = registry.get('mcpCall');
+      if (!t) return '';
+      const res: any = await t.execute({ server, tool, args: args || {} });
+      return res && res.success !== false ? (res.data ?? res.output ?? '') : (res && res.error) || '';
+    },
+    mcpListServers: async () => {
+      const t = registry.get('mcpListServers');
+      if (!t) return '';
+      const res: any = await t.execute({});
+      return res && res.success !== false ? (res.data ?? res.output ?? '') : '';
+    },
+    mcpGetTools: async (server: string) => {
+      const t = registry.get('mcpGetTools');
+      if (!t) return '';
+      const res: any = await t.execute({ serverName: server });
+      return res && res.success !== false ? (res.data ?? res.output ?? '') : '';
+    },
+    webFetch: async (url: string) => {
+      const t = registry.get('webFetch');
+      if (!t) return '';
+      const res: any = await t.execute({ url });
+      return res && res.success !== false ? (res.data ?? res.output ?? '') : (res && res.error) || '';
+    },
+    openBrowserWindow: async (url: string, opts?: any) => {
+      const t = registry.get('openBrowserWindow');
+      if (!t) return null;
+      const res: any = await t.execute({ url, ...(opts || {}) });
+      return res && res.success !== false ? (res.data ?? res.output ?? null) : null;
+    },
+    injectJS: async (windowId: string, code: string) => {
+      const t = registry.get('injectJS');
+      if (!t) return null;
+      const res: any = await t.execute({ windowId, code });
+      return res && res.success !== false ? (res.data ?? res.output ?? null) : null;
+    },
+    attachFile: async (filePath: string) => {
+      const t = registry.get('attachFile');
+      if (!t) return null;
+      const ctxs = windowState.getAllContexts();
+      const ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      const currentWindowId = ctx && ctx.win && !ctx.win.isDestroyed() ? ctx.win.id : null;
+      const res: any = await t.execute({ filePath, currentWindowId, projectDir: currentSession().projectDir });
+      return res && res.success !== false ? (res.data ?? res.output ?? null) : null;
+    },
+    runTerminal: async (command: string, opts?: any) => {
+      const t = registry.get('bash');
+      if (!t) return { stdout: '', exitCode: 1 };
+      const res: any = await t.execute({ command, workdir: opts && opts.cwd, timeoutMs: opts && opts.timeoutMs });
+      const out = (res && (res.data ?? res.output)) || '';
+      const text = typeof out === 'string' ? out : JSON.stringify(out);
+      const exitCode = /\[exit code: (\d+)\]/.exec(text) ? Number(RegExp.$1) : (res && res.success === false ? 1 : 0);
+      return { stdout: text, exitCode };
+    },
   };
 }
 

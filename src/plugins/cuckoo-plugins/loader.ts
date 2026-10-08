@@ -17,6 +17,7 @@ import { createAgents } from '../dsh-compat/agents-service.js';
 import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
+import { createC8Services } from '../dsh-compat/c8-services.js';
 
 const require = createRequire(import.meta.url);
 
@@ -161,6 +162,15 @@ interface CuckooHost {
   runSubagent?: (name: string, task: string) => Promise<string>;
   runCommand?: (command: string, opts?: { cwd?: string; timeoutMs?: number }) => Promise<{ stdout: string; stderr?: string; exitCode: number }>;
   querySession?: (sessionId: string) => { id: string; title?: string; projectDir?: string | null } | null;
+  // ===== C8 =====
+  mcpCall?: (server: string, tool: string, args?: any) => Promise<any>;
+  mcpListServers?: () => Promise<any>;
+  mcpGetTools?: (server: string) => Promise<any>;
+  webFetch?: (url: string) => Promise<string>;
+  openBrowserWindow?: (url: string, opts?: any) => Promise<any>;
+  injectJS?: (windowId: string, code: string) => Promise<any>;
+  attachFile?: (filePath: string) => Promise<any>;
+  runTerminal?: (command: string, opts?: any) => Promise<{ stdout: string; exitCode: number }>;
 }
 
 /** 一个"假 ctx"——收集插件注册的工具；未知属性用 stub 兜底（够用空接口） */
@@ -200,6 +210,8 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     ...createC6Services(host),
     // C7：subagents / shell / sessionQuery
     ...createC7Services(host),
+    // C8：mcpResources / web / browserUse / attachments / terminals / computerUse / ssh / lsp
+    ...createC8Services(host),
     // 提示词段（C4）：插件 ctx.systemPrompt.section(...) 注册进全局表
     systemPrompt: {
       section(sec: any) { return registerPromptSection(sec, pluginName); },
