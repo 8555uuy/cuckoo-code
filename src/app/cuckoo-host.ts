@@ -6,6 +6,7 @@ import * as windowState from './window.js';
 import { registry } from '../tools/index.js';
 import { getPluginConfig, setPluginConfig } from '../plugins/plugins-config.js';
 import { scanSkills } from '../skills/index.js';
+import { scanAgents } from '../agents/index.js';
 import { getPluginScanRoots } from '../plugins/roots.js';
 import { listSnippets } from './snippets.js';
 import { getTotal as getTokenTotal } from './token-stats.js';
@@ -87,6 +88,43 @@ function buildCuckooHost(): CuckooHost {
       context: 0, cumulative: 0, today: 0, windowCumulative: 0,
       total: (() => { try { return getTokenTotal(); } catch (_) { return 0; } })(),
     }),
+    // ===== C7 =====
+    listSubagents: () => {
+      try {
+        const dir = currentSession().projectDir;
+        return scanAgents(dir).map((a: any) => ({ name: a.name, description: a.description }));
+      } catch (_) { return []; }
+    },
+    runSubagent: async (name: string, task: string) => {
+      const tool = registry.get('runAgent');
+      if (!tool) throw new Error('runAgent 工具不可用');
+      const ctxs = windowState.getAllContexts();
+      const ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      const windowId = ctx && ctx.win && !ctx.win.isDestroyed() ? ctx.win.id : null;
+      const res: any = await tool.execute({ name, task, currentWindowId: windowId, projectDir: currentSession().projectDir });
+      return res && res.success !== false ? (res.data ?? res.output ?? '') : (res && res.error) || '子代理执行失败';
+    },
+    runCommand: async (command: string, opts?: any) => {
+      const isWin = process.platform === 'win32';
+      const tool = registry.get(isWin ? 'bash' : 'bash'); // 统一走 bash（win 下即 cmd）
+      if (!tool) return { stdout: '', stderr: '命令工具不可用', exitCode: 1 };
+      const res: any = await tool.execute({ command, workdir: opts && opts.cwd, timeoutMs: opts && opts.timeoutMs });
+      const out = (res && (res.data ?? res.output)) || '';
+      const text = typeof out === 'string' ? out : JSON.stringify(out);
+      const exitCode = /\[exit code: (\d+)\]/.exec(text) ? Number(RegExp.$1) : (res && res.success === false ? 1 : 0);
+      return { stdout: text, exitCode };
+    },
+    querySession: (id: string) => {
+      for (const ctx of windowState.getAllContexts()) {
+        const store = ctx && ctx.sessionStore;
+        if (!store) continue;
+        try {
+          const meta = store.getSessionMeta(id);
+          if (meta) return { id, title: meta.title, projectDir: meta.projectDir ?? null };
+        } catch (_) { /* ignore */ }
+      }
+      return null;
+    },
   };
 }
 

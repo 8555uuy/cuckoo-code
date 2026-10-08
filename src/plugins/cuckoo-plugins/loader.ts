@@ -16,6 +16,7 @@ import { createFs } from '../dsh-compat/fs-service.js';
 import { createAgents } from '../dsh-compat/agents-service.js';
 import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
+import { createC7Services } from '../dsh-compat/c7-services.js';
 
 const require = createRequire(import.meta.url);
 
@@ -155,6 +156,11 @@ interface CuckooHost {
   getSessionTitle?: () => string | null;
   setSessionTitle?: (title: string) => boolean;
   getTokens?: () => { context: number; cumulative: number; today: number; windowCumulative: number; total: number };
+  // ===== C7 =====
+  listSubagents?: () => Array<{ name: string; description?: string }>;
+  runSubagent?: (name: string, task: string) => Promise<string>;
+  runCommand?: (command: string, opts?: { cwd?: string; timeoutMs?: number }) => Promise<{ stdout: string; stderr?: string; exitCode: number }>;
+  querySession?: (sessionId: string) => { id: string; title?: string; projectDir?: string | null } | null;
 }
 
 /** 一个"假 ctx"——收集插件注册的工具；未知属性用 stub 兜底（够用空接口） */
@@ -192,6 +198,8 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     agents: createAgents(host),
     // C6：skills/commands/goals/compaction/workspaceFiles/sessionTitle/tokenMeter
     ...createC6Services(host),
+    // C7：subagents / shell / sessionQuery
+    ...createC7Services(host),
     // 提示词段（C4）：插件 ctx.systemPrompt.section(...) 注册进全局表
     systemPrompt: {
       section(sec: any) { return registerPromptSection(sec, pluginName); },
