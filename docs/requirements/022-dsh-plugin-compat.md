@@ -149,6 +149,23 @@ DSH（DeepSeek Harness）是 DeepSeek 官方的 Agent 框架，生态里已有�
 
 **现在**：DSH 插件能"列技能/命令、看目标、触发压缩、读 token、读写标题"。
 
+## C7：subagents / shell / sessionQuery（`src/plugins/dsh-compat/c7-services.ts`）
+
+- `ctx.subagents`：list（scanAgents）+ run（runAgent 工具）
+- `ctx.shell`：exec（bash 工具）
+- `ctx.sessionQuery`：get（sessionStore.getSessionMeta）
+
+## C8：mcpResources / web / browserUse / attachments / terminals（`src/plugins/dsh-compat/c8-services.ts`）
+
+- `ctx.mcpResources`：call/listServers/listTools（mcpCall 等工具）
+- `ctx.web`：fetch（webFetch 工具）
+- `ctx.browserUse`：open/inject（openBrowserWindow/injectJS 工具）
+- `ctx.attachments`：attach（attachFile 工具）
+- `ctx.terminals`：exec（bash 工具）
+- `ctx.computerUse / ssh / lsp`：空实现（不崩）
+
+> **C7/C8 在分支 `feat/022-dsh-compat-c7`**（未合 master）。
+
 ## 验证
 
 ### 单测（865 tests 全过）
