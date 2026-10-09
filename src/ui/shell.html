@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement9(type, config, children) {
+          function createElement10(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState8(initialState) {
+          function useState9(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect7(create, deps) {
+          function useEffect8(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback7(callback, deps) {
+          function useCallback8(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement9.apply(this, arguments);
+            var element = createElement10.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback7;
+          exports.useCallback = useCallback8;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect7;
+          exports.useEffect = useEffect8;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef3;
-          exports.useState = useState8;
+          exports.useState = useState9;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement9(type, props, rootContainerElement, parentNamespace) {
+          function createElement10(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement9(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement10(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -29524,6 +29524,198 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/settings-react.tsx
+  var import_react9 = __toESM(require_react(), 1);
+  init_shared();
+  var THEME_BUILTINS2 = [["system", "\u8DDF\u968F\u7CFB\u7EDF"], ["light", "\u6D45\u8272"], ["dark", "\u6DF1\u8272"]];
+  function RefreshIcon3() {
+    return (0, import_react9.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react9.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react9.createElement)("path", { d: "M21 3v6h-6" })
+    );
+  }
+  function ToggleRow2({ label, checked, onChange }) {
+    return (0, import_react9.createElement)(
+      "div",
+      { className: "ck-set-field ck-set-toggle" },
+      (0, import_react9.createElement)("span", { className: "ck-set-key" }, label),
+      (0, import_react9.createElement)(
+        "label",
+        { className: "ck-switch" },
+        (0, import_react9.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
+        (0, import_react9.createElement)("span", { className: "ck-switch-track" })
+      )
+    );
+  }
+  function SettingsPage() {
+    const [data, setData] = (0, import_react9.useState)(null);
+    const [themes, setThemes] = (0, import_react9.useState)(THEME_BUILTINS2);
+    const [theme, setTheme] = (0, import_react9.useState)("system");
+    const [saving, setSaving] = (0, import_react9.useState)(false);
+    const load = (0, import_react9.useCallback)(async () => {
+      if (!api.getSettings) return;
+      try {
+        const r = await api.getSettings();
+        if (r && r.success && r.data) setData(r.data);
+      } catch (_) {
+      }
+    }, []);
+    (0, import_react9.useEffect)(() => {
+      load();
+    }, [load]);
+    (0, import_react9.useEffect)(() => {
+      const anyApi = api;
+      if (typeof anyApi.themeGet === "function") {
+        anyApi.themeGet().then((r) => {
+          if (r && r.success && r.snapshot) {
+            const opts = THEME_BUILTINS2.slice();
+            for (const t of r.snapshot.themes || []) {
+              if (t && t.id && t.id !== "light" && t.id !== "dark") opts.push([t.id, t.id]);
+            }
+            setThemes(opts);
+            setTheme(r.snapshot.preference || "system");
+          }
+        }).catch(() => {
+        });
+      }
+    }, []);
+    const onThemeChange = (0, import_react9.useCallback)((v) => {
+      setTheme(v);
+      const anyApi = api;
+      if (typeof anyApi.themeSet === "function") anyApi.themeSet(v).catch(() => {
+      });
+    }, []);
+    const setField = (0, import_react9.useCallback)((key, v) => setData((d) => ({ ...d, [key]: v })), []);
+    const save = (0, import_react9.useCallback)(async () => {
+      if (!api.saveSettings) return;
+      setSaving(true);
+      try {
+        const r = await api.saveSettings(data);
+        if (r && r.success) {
+          if (r.data) setData(r.data);
+          await ckAlert("\u5DF2\u4FDD\u5B58");
+        } else {
+          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+        }
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+      setSaving(false);
+    }, [data]);
+    const reset = (0, import_react9.useCallback)(async () => {
+      const anyApi = api;
+      if (!anyApi.resetSettings) return;
+      if (!await ckConfirm("\u786E\u5B9A\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E\uFF1F")) return;
+      try {
+        const r = await anyApi.resetSettings();
+        if (r && r.success && r.data) setData(r.data);
+      } catch (_) {
+      }
+    }, []);
+    if (data === null) return (0, import_react9.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react9.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"));
+    const numVal = (key) => data[key] === null || data[key] === void 0 ? "" : data[key];
+    return (0, import_react9.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      // 外观
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react9.createElement)("div", { className: "ck-set-group-title" }, "\u5916\u89C2"),
+        (0, import_react9.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u4E3B\u9898"),
+          (0, import_react9.createElement)(
+            "select",
+            { className: "ck-set-input", value: theme, onChange: (e) => onThemeChange(e.target.value) },
+            ...themes.map(([v, label]) => (0, import_react9.createElement)("option", { key: v, value: v }, label))
+          )
+        )
+      ),
+      // 失败自动重试
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react9.createElement)("div", { className: "ck-set-group-title" }, "\u5931\u8D25\u81EA\u52A8\u91CD\u8BD5"),
+        (0, import_react9.createElement)(ToggleRow2, { label: "\u542F\u7528\u81EA\u52A8\u91CD\u8BD5", checked: data.retryEnabled !== false, onChange: (v) => setField("retryEnabled", v) }),
+        (0, import_react9.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u95F4\u9694\uFF08\u79D2\uFF09"),
+          (0, import_react9.createElement)(
+            "div",
+            { className: "ck-set-inline" },
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMin"), onChange: (e) => setField("retryDelayMin", parseFloat(e.target.value) || 0) }),
+            (0, import_react9.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMax"), onChange: (e) => setField("retryDelayMax", parseFloat(e.target.value) || 0) })
+          )
+        ),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retryCount"), onChange: (e) => setField("retryCount", parseInt(e.target.value, 10) || 0) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u95F4\u9694\uFF08\u79D2\uFF09"), (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retry429Delay"), onChange: (e) => setField("retry429Delay", parseFloat(e.target.value) || 0) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retry429Count"), onChange: (e) => setField("retry429Count", parseInt(e.target.value, 10) || 0) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react9.createElement)("textarea", { className: "ck-set-textarea", rows: 3, value: data.retryPrompt || "", onChange: (e) => setField("retryPrompt", e.target.value) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "AI \u56DE\u590D\u8D85\u65F6\u540E\u91CD\u8BD5\uFF08\u79D2\uFF09"), (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("xhrIdleTimeout"), onChange: (e) => setField("xhrIdleTimeout", parseFloat(e.target.value) || 0) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react9.createElement)("input", { type: "text", className: "ck-set-input", value: data.watchdogPrompt || "", onChange: (e) => setField("watchdogPrompt", e.target.value) })),
+        (0, import_react9.createElement)("div", { className: "ck-set-field" }, (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("watchdogCount"), onChange: (e) => setField("watchdogCount", parseInt(e.target.value, 10) || 0) }))
+      ),
+      // 发送延迟
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react9.createElement)("div", { className: "ck-set-group-title" }, "\u53D1\u9001\u5EF6\u8FDF"),
+        (0, import_react9.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u5EF6\u8FDF\u533A\u95F4\uFF08\u79D2\uFF09"),
+          (0, import_react9.createElement)(
+            "div",
+            { className: "ck-set-inline" },
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMin"), onChange: (e) => setField("sendDelayMin", parseFloat(e.target.value) || 0) }),
+            (0, import_react9.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMax"), onChange: (e) => setField("sendDelayMax", parseFloat(e.target.value) || 0) })
+          )
+        )
+      ),
+      // 附件上传间隔
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react9.createElement)("div", { className: "ck-set-group-title" }, "\u9644\u4EF6\u4E0A\u4F20\u95F4\u9694"),
+        (0, import_react9.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react9.createElement)("span", { className: "ck-set-key" }, "\u4E0A\u4F20\u540E\u68C0\u6D4B\u7B49\u5F85\uFF08\u79D2\uFF09"),
+          (0, import_react9.createElement)(
+            "div",
+            { className: "ck-set-inline" },
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMin"), onChange: (e) => setField("attachDelayMin", parseFloat(e.target.value) || 0) }),
+            (0, import_react9.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+            (0, import_react9.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMax"), onChange: (e) => setField("attachDelayMax", parseFloat(e.target.value) || 0) })
+          )
+        )
+      ),
+      // 网络安全
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react9.createElement)("div", { className: "ck-set-group-title" }, "\u7F51\u7EDC\u5B89\u5168"),
+        (0, import_react9.createElement)(ToggleRow2, { label: "\u62D2\u7EDD webFetch \u8BBF\u95EE\u5185\u7F51/\u672C\u5730\u5730\u5740", checked: data.ssrfGuard === true, onChange: (v) => setField("ssrfGuard", v) }),
+        (0, import_react9.createElement)("p", { className: "ck-about-tip" }, "\u5F00\u542F\u540E\uFF0CwebFetch \u5C06\u62D2\u7EDD\u8BBF\u95EE\u5185\u7F51\u3001\u56DE\u73AF\u3001\u4FDD\u7559\u5730\u5740\uFF08\u9632 SSRF\uFF09\u3002\u9ED8\u8BA4\u5173\u95ED\uFF08\u53EF\u8BBF\u95EE\u672C\u5730\u9879\u76EE\uFF09\u3002")
+      ),
+      // 操作
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react9.createElement)("button", { className: "ck-btn ck-btn-primary", disabled: saving, onClick: save }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"),
+        (0, import_react9.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: reset }, "\u6062\u590D\u9ED8\u8BA4"),
+        (0, import_react9.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react9.createElement)(RefreshIcon3))
+      )
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -29570,6 +29762,7 @@
     registerPage("conversations", ConversationsPage);
     registerPage("token", TokenPage);
     registerPage("feishu", FeishuPage);
+    registerPage("settings", SettingsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
