@@ -130,8 +130,50 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 
 ---
 
-## 五、相关
+## 五、关键结论：DSH UI 插件能否在 Cuckoo 跑（挂起问题）
+
+> 2026-10-09 实证 + POC 验证后的结论。**"改 React 也不行"的说法不够精确**——修正如下。
+
+### 5.1 DSH UI 插件 = 双入口
+
+| 入口 | 内容 | 技术 |
+|---|---|---|
+| `.`（宿主侧）| `apply(ctx)` 注册工具/服务 | **纯 JS**（Cuckoo 已支持）|
+| `./client`（客户端）| **React 组件 + 槽位注册** | **React** |
+
+**实测**：`ui-attachment` 的宿主侧是**空壳**（`apply(){}`），功能全在 `./client`。
+
+### 5.2 "改 React 是否可行"——分四层
+
+| 层 | 结论 | 证据 |
+|---|---|---|
+| **① React 本身** | ✅ **能进 Cuckoo** | 骨架验证（`feat/shell-react` 分支，`ck-react-root` 渲染成功）|
+| **② 最小运行时**（`__ModuleLoader__` + `ctx.slots`）| ✅ **~100 行** | POC（`_poc-dsh-ui.html`，含内联实现）|
+| **③ 客户端服务**（`layout`/`locale`/`store`/`api-remotes`…）| ⚠️ **按需补**（复杂插件 inject 一堆）| `ui-sidebar` inject 5 个服务 |
+| **④ 槽位位置** | ❌ **根本问题** | DSH 大量槽位在"对话区"，**Cuckoo 的对话在 AI 网页**（不能动）|
+
+### 5.3 能跑的插件范围
+
+| 插件类型 | 能否跑 |
+|---|---|
+| 只用 `slots` 的简单 UI 插件 | ✅ **能**（补②即可）|
+| inject 多服务的复杂插件 | ⚠️ **按需补服务**（无底洞）|
+| 注册到"对话区"槽位的插件 | ❌ **无处可放**（对话在 AI 网页）|
+
+### 5.4 结论
+
+**"改 React"是必要的，但只解决"渲染"**——还缺三道关：
+1. **运行时**（简单，POC 已证）
+2. **客户端服务**（复杂，按需）
+3. **槽位映射**（根本问题，**你逐个拍板**）
+
+**React 只是"入场券"**；**真正难的是"槽位位置对不上"+"复杂插件要补服务"**。
+
+---
+
+## 六、相关
 
 - 截图：`dsh-all-slots.png`（全槽位标注）、`dsh-slot-inject.png`（注入演示）
 - 现有 Cuckoo UI 机制：`docs/plugin-system.md`（`ctx.ui` / `ctx.ui.overlay`）
 - 需求档案：`docs/requirements/022-dsh-plugin-compat.md`
+- React 骨架验证分支：`feat/shell-react`
