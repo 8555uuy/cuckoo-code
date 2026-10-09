@@ -34,6 +34,7 @@ import { TokenPage } from './pages/token-react.js';
 import { FeishuPage } from './pages/feishu-react.js';
 import { SettingsPage } from './pages/settings-react.js';
 import { AgentsPage } from './pages/agents-react.js';
+import { FilesPage } from './pages/files-react.js';
 
 // 注册 tab → 加载函数（sidebar 点击时调用）
 registerTab('workspaces', loadWorkspaces);
@@ -75,6 +76,7 @@ try {
   registerPage('feishu', FeishuPage);
   registerPage('settings', SettingsPage);
   registerPage('agents', AgentsPage);
+  registerPage('files', FilesPage);
   mountShellFrame();
 } catch (e) { console.error('[react-shell] 挂载失败', e); }
 
