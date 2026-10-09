@@ -28626,19 +28626,36 @@
   var import_react = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
   init_shared();
+  var SIDEBAR_COLLAPSED2 = 46;
+  var MIN_WIDTH2 = 320;
+  var MAX_WIDTH2 = 4e3;
+  var WIDTH_KEY2 = "cuckoo-sidebar-width";
+  function savedWidth() {
+    try {
+      const v = Number(localStorage.getItem(WIDTH_KEY2));
+      if (Number.isFinite(v) && v >= MIN_WIDTH2 && v <= MAX_WIDTH2) return Math.round(v);
+    } catch (_) {
+    }
+    return 320;
+  }
   function expandSidebar() {
     const sidebar2 = document.getElementById("ck-sidebar");
     if (!sidebar2 || !sidebar2.classList.contains("ck-collapsed")) return;
     sidebar2.classList.remove("ck-collapsed");
-    let w = 320;
-    try {
-      const v = Number(localStorage.getItem("cuckoo-sidebar-width"));
-      if (Number.isFinite(v) && v >= 320) w = Math.round(v);
-    } catch (_) {
-    }
+    const w = savedWidth();
     sidebar2.style.width = w + "px";
     try {
       if (api.toggleSidebar) api.toggleSidebar(w);
+    } catch (_) {
+    }
+  }
+  function collapseSidebar() {
+    const sidebar2 = document.getElementById("ck-sidebar");
+    if (!sidebar2 || sidebar2.classList.contains("ck-collapsed")) return;
+    sidebar2.classList.add("ck-collapsed");
+    sidebar2.style.width = "";
+    try {
+      if (api.toggleSidebar) api.toggleSidebar(SIDEBAR_COLLAPSED2);
     } catch (_) {
     }
   }
@@ -28673,7 +28690,17 @@
     const [activeTab, setActiveTab] = (0, import_react.useState)("about");
     const Page = (0, import_react.useMemo)(() => PAGES[activeTab], [activeTab]);
     const onTabClick = (id) => {
-      expandSidebar();
+      const sidebar2 = document.getElementById("ck-sidebar");
+      const collapsed = !!(sidebar2 && sidebar2.classList.contains("ck-collapsed"));
+      if (collapsed) {
+        expandSidebar();
+        setActiveTab(id);
+        return;
+      }
+      if (id === activeTab) {
+        collapseSidebar();
+        return;
+      }
       setActiveTab(id);
     };
     return (0, import_react.createElement)(
@@ -28719,6 +28746,42 @@
     const root = (0, import_client.createRoot)(host);
     host.__root = root;
     root.render((0, import_react.createElement)(ShellFrame));
+    if (!sidebar2.__resizerAdded) {
+      const resizer = document.createElement("div");
+      resizer.className = "ck-sidebar-resizer";
+      resizer.title = "\u62D6\u52A8\u8C03\u6574\u5BBD\u5EA6";
+      sidebar2.appendChild(resizer);
+      resizer.addEventListener("mousedown", (e) => {
+        if (sidebar2.classList.contains("ck-collapsed")) return;
+        e.preventDefault();
+        try {
+          if (api.startSidebarDrag) api.startSidebarDrag();
+        } catch (_) {
+        }
+      });
+      sidebar2.__resizerAdded = true;
+    }
+    if (!sidebar2.__dragWired && api.onSidebarDrag) {
+      api.onSidebarDrag((w) => {
+        if (typeof w !== "number" || !Number.isFinite(w)) return;
+        const nw = Math.max(MIN_WIDTH2, Math.min(MAX_WIDTH2, Math.round(w)));
+        try {
+          localStorage.setItem(WIDTH_KEY2, String(nw));
+        } catch (_) {
+        }
+        if (!sidebar2.classList.contains("ck-collapsed")) sidebar2.style.width = nw + "px";
+      });
+      sidebar2.__dragWired = true;
+    }
+    if (!document.__dragEndWired) {
+      document.addEventListener("mouseup", () => {
+        try {
+          if (api.endSidebarDrag) api.endSidebarDrag();
+        } catch (_) {
+        }
+      });
+      document.__dragEndWired = true;
+    }
   }
 
   // src/ui/shell/scripts/pages/about-react.tsx

@@ -10,15 +10,34 @@ import { createElement, useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './shared.js';
 
-/** 展开侧栏（若收起）：从 localStorage 恢复宽度，并通知主进程重排 */
+const SIDEBAR_COLLAPSED = 46;
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 4000;
+const WIDTH_KEY = 'cuckoo-sidebar-width';
+
+/** 读持久化宽度 */
+function savedWidth(): number {
+  try { const v = Number(localStorage.getItem(WIDTH_KEY)); if (Number.isFinite(v) && v >= MIN_WIDTH && v <= MAX_WIDTH) return Math.round(v); } catch (_) {}
+  return 320;
+}
+
+/** 展开侧栏（若收起）：恢复宽度，并通知主进程重排 */
 function expandSidebar(): void {
   const sidebar = document.getElementById('ck-sidebar');
   if (!sidebar || !sidebar.classList.contains('ck-collapsed')) return;
   sidebar.classList.remove('ck-collapsed');
-  let w = 320;
-  try { const v = Number(localStorage.getItem('cuckoo-sidebar-width')); if (Number.isFinite(v) && v >= 320) w = Math.round(v); } catch (_) {}
+  const w = savedWidth();
   sidebar.style.width = w + 'px';
   try { if (api.toggleSidebar) api.toggleSidebar(w); } catch (_) {}
+}
+
+/** 收起侧栏 */
+function collapseSidebar(): void {
+  const sidebar = document.getElementById('ck-sidebar');
+  if (!sidebar || sidebar.classList.contains('ck-collapsed')) return;
+  sidebar.classList.add('ck-collapsed');
+  sidebar.style.width = '';
+  try { if (api.toggleSidebar) api.toggleSidebar(SIDEBAR_COLLAPSED); } catch (_) {}
 }
 
 /** 活动栏 tab 定义 */
@@ -63,7 +82,15 @@ function AbButton({ tab, active, onClick }: { tab: TabDef; active: boolean; onCl
 function ShellFrame() {
   const [activeTab, setActiveTab] = useState('about');
   const Page = useMemo(() => PAGES[activeTab], [activeTab]);
-  const onTabClick = (id: string) => { expandSidebar(); setActiveTab(id); };
+  const onTabClick = (id: string) => {
+    const sidebar = document.getElementById('ck-sidebar');
+    const collapsed = !!(sidebar && sidebar.classList.contains('ck-collapsed'));
+    // 收起态 → 展开并切页
+    if (collapsed) { expandSidebar(); setActiveTab(id); return; }
+    // 已激活的图标 → 收起（VS Code 行为）
+    if (id === activeTab) { collapseSidebar(); return; }
+    setActiveTab(id);
+  };
   return createElement('div', { style: { display: 'contents' } },
     createElement('div', { className: 'ck-activitybar' },
       TABS.map((t) => createElement(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
@@ -103,4 +130,33 @@ export function mountShellFrame(): void {
   const root = createRoot(host);
   (host as any).__root = root;
   root.render(createElement(ShellFrame));
+
+  // 拖拽调宽：在侧栏右侧插一个 resizer（原生 DOM，不进 React 树）
+  if (!(sidebar as any).__resizerAdded) {
+    const resizer = document.createElement('div');
+    resizer.className = 'ck-sidebar-resizer';
+    resizer.title = '拖动调整宽度';
+    sidebar.appendChild(resizer);
+    resizer.addEventListener('mousedown', (e: any) => {
+      if (sidebar.classList.contains('ck-collapsed')) return;
+      e.preventDefault();
+      try { if (api.startSidebarDrag) api.startSidebarDrag(); } catch (_) {}
+    });
+    (sidebar as any).__resizerAdded = true;
+  }
+  // 拖拽中：主进程推来实时宽度
+  if (!(sidebar as any).__dragWired && api.onSidebarDrag) {
+    api.onSidebarDrag((w: number) => {
+      if (typeof w !== 'number' || !Number.isFinite(w)) return;
+      const nw = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(w)));
+      try { localStorage.setItem(WIDTH_KEY, String(nw)); } catch (_) {}
+      if (!sidebar.classList.contains('ck-collapsed')) sidebar.style.width = nw + 'px';
+    });
+    (sidebar as any).__dragWired = true;
+  }
+  // 松开鼠标 → 结束拖拽
+  if (!(document as any).__dragEndWired) {
+    document.addEventListener('mouseup', () => { try { if (api.endSidebarDrag) api.endSidebarDrag(); } catch (_) {} });
+    (document as any).__dragEndWired = true;
+  }
 }
