@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement5(type, config, children) {
+          function createElement6(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState4(initialState) {
+          function useState5(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect3(create, deps) {
+          function useEffect4(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback3(callback, deps) {
+          function useCallback4(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement5.apply(this, arguments);
+            var element = createElement6.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback3;
+          exports.useCallback = useCallback4;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect3;
+          exports.useEffect = useEffect4;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef;
-          exports.useState = useState4;
+          exports.useState = useState5;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement5(type, props, rootContainerElement, parentNamespace) {
+          function createElement6(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement5(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement6(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -28895,6 +28895,184 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/snippets-react.tsx
+  var import_react5 = __toESM(require_react(), 1);
+  init_shared();
+  var I = {
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    plus: "M12 5v14M5 12h14",
+    edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+    del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+    init: "M21 12a9 9 0 1 1-3-6.7M21 3v5h-5"
+  };
+  function Svg({ d }) {
+    return (0, import_react5.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react5.createElement)("path", { d }));
+  }
+  function SnipModal({ initial, onSave, onCancel }) {
+    const [name, setName] = (0, import_react5.useState)(initial ? initial.name : "");
+    const [content, setContent] = (0, import_react5.useState)(initial ? initial.content : "");
+    const [autoSend, setAutoSend] = (0, import_react5.useState)(initial ? initial.autoSend !== false : true);
+    return (0, import_react5.createElement)(
+      "div",
+      { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
+        if (e.target === e.currentTarget) onCancel();
+      } },
+      (0, import_react5.createElement)(
+        "div",
+        { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
+        (0, import_react5.createElement)("h3", { style: { margin: "0 0 14px" } }, initial ? "\u7F16\u8F91\u63D0\u793A\u8BCD" : "\u65B0\u5EFA\u63D0\u793A\u8BCD"),
+        (0, import_react5.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react5.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
+          (0, import_react5.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" }, autoFocus: true })
+        ),
+        (0, import_react5.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react5.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u5185\u5BB9"),
+          (0, import_react5.createElement)("textarea", { value: content, onChange: (e) => setContent(e.target.value), rows: 5, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box", resize: "vertical" } })
+        ),
+        (0, import_react5.createElement)(
+          "label",
+          { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 13, marginBottom: 16 } },
+          (0, import_react5.createElement)("input", { type: "checkbox", checked: autoSend, onChange: (e) => setAutoSend(e.target.checked) }),
+          "\u81EA\u52A8\u53D1\u9001"
+        ),
+        (0, import_react5.createElement)(
+          "div",
+          { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
+          (0, import_react5.createElement)("button", { onClick: onCancel, style: { padding: "6px 16px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react5.createElement)("button", { onClick: () => onSave({ name: name.trim(), content, autoSend }), style: { padding: "6px 16px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
+        )
+      )
+    );
+  }
+  function SnippetsPage() {
+    const [snippets2, setSnippets] = (0, import_react5.useState)(null);
+    const [modal, setModal] = (0, import_react5.useState)({ open: false, editing: null });
+    const load = (0, import_react5.useCallback)(async () => {
+      if (!api.listSnippets) {
+        setSnippets([]);
+        return;
+      }
+      try {
+        const res = await api.listSnippets();
+        setSnippets((res && res.success && Array.isArray(res.snippets) ? res.snippets : []) || []);
+      } catch (_) {
+        setSnippets([]);
+      }
+    }, []);
+    (0, import_react5.useEffect)(() => {
+      load();
+    }, [load]);
+    const save = (0, import_react5.useCallback)(async (data) => {
+      if (!data.name) {
+        await ckAlert("\u8BF7\u586B\u5199\u540D\u79F0");
+        return;
+      }
+      if (!data.content.trim()) {
+        await ckAlert("\u8BF7\u586B\u5199\u5185\u5BB9");
+        return;
+      }
+      const list2 = snippets2 || [];
+      let next;
+      if (modal.editing) {
+        next = list2.map((x) => x.id === modal.editing.id ? { id: x.id, ...data } : x);
+      } else {
+        next = [...list2, { id: "snip-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8), ...data }];
+      }
+      setSnippets(next);
+      setModal({ open: false, editing: null });
+      if (api.saveSnippets) {
+        try {
+          await api.saveSnippets(next);
+        } catch (_) {
+        }
+      }
+    }, [snippets2, modal.editing]);
+    const del = (0, import_react5.useCallback)(async (s) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u63D0\u793A\u8BCD\u300C" + s.name + "\u300D\uFF1F")) return;
+      const next = (snippets2 || []).filter((x) => x.id !== s.id);
+      setSnippets(next);
+      if (api.saveSnippets) {
+        try {
+          await api.saveSnippets(next);
+        } catch (_) {
+        }
+      }
+    }, [snippets2]);
+    const trigger = (0, import_react5.useCallback)(async (s) => {
+      if (!api.triggerSnippet) return;
+      try {
+        await api.triggerSnippet(s.content, s.autoSend);
+      } catch (_) {
+      }
+      addRecent("snippet", s.name, { payload: s.content, autoSend: s.autoSend });
+    }, []);
+    const initProject = (0, import_react5.useCallback)(async () => {
+      if (!api.initProject) return;
+      try {
+        await api.initProject();
+      } catch (_) {
+      }
+    }, []);
+    const list = snippets2 || [];
+    return (0, import_react5.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react5.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react5.createElement)(
+          "button",
+          { className: "ck-btn ck-btn-anim", onClick: initProject },
+          (0, import_react5.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react5.createElement)("path", { d: I.init })),
+          (0, import_react5.createElement)("span", null, "\u91CD\u65B0\u9879\u76EE\u521D\u59CB\u5316")
+        )
+      ),
+      (0, import_react5.createElement)("div", { className: "ck-divider" }),
+      (0, import_react5.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react5.createElement)(
+          "button",
+          { className: "ck-btn ck-btn-anim", onClick: () => setModal({ open: true, editing: null }) },
+          (0, import_react5.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react5.createElement)("path", { d: I.plus })),
+          (0, import_react5.createElement)("span", null, "\u65B0\u5EFA\u5FEB\u6377\u63D0\u793A\u8BCD")
+        ),
+        (0, import_react5.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react5.createElement)(Svg, { d: I.refresh }))
+      ),
+      (0, import_react5.createElement)(
+        "div",
+        { className: "ck-list" },
+        snippets2 === null ? (0, import_react5.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react5.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u63D0\u793A\u8BCD\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA") : list.map((s) => (0, import_react5.createElement)(
+          "div",
+          { key: s.id, className: "ck-snip-item", onClick: () => trigger(s) },
+          (0, import_react5.createElement)(
+            "div",
+            { className: "ck-snip-top" },
+            (0, import_react5.createElement)("span", { className: "ck-snip-name" }, s.name, s.autoSend ? (0, import_react5.createElement)("span", { className: "ck-snip-badge" }, "\u81EA\u52A8\u53D1\u9001") : null),
+            (0, import_react5.createElement)(
+              "div",
+              { className: "ck-snip-actions" },
+              (0, import_react5.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
+                e.stopPropagation();
+                setModal({ open: true, editing: s });
+              } }, (0, import_react5.createElement)(Svg, { d: I.edit })),
+              (0, import_react5.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
+                e.stopPropagation();
+                del(s);
+              } }, (0, import_react5.createElement)(Svg, { d: I.del }))
+            )
+          ),
+          (0, import_react5.createElement)("span", { className: "ck-snip-preview" }, s.content)
+        ))
+      ),
+      modal.open ? (0, import_react5.createElement)(SnipModal, { initial: modal.editing, onSave: save, onCancel: () => setModal({ open: false, editing: null }) }) : null
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -28937,6 +29115,7 @@
     registerPage("about", AboutPage);
     registerPage("skills", SkillsPage);
     registerPage("mcp", McpPage);
+    registerPage("snippets", SnippetsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);

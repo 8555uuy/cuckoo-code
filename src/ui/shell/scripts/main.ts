@@ -28,6 +28,7 @@ import { mountShellFrame, registerPage } from './shell-frame.js';
 import { AboutPage } from './pages/about-react.js';
 import { SkillsPage } from './pages/skills-react.js';
 import { McpPage } from './pages/mcp-react.js';
+import { SnippetsPage } from './pages/snippets-react.js';
 
 // 注册 tab → 加载函数（sidebar 点击时调用）
 registerTab('workspaces', loadWorkspaces);
@@ -63,6 +64,7 @@ try {
   registerPage('about', AboutPage);
   registerPage('skills', SkillsPage);
   registerPage('mcp', McpPage);
+  registerPage('snippets', SnippetsPage);
   mountShellFrame();
 } catch (e) { console.error('[react-shell] 挂载失败', e); }
 
