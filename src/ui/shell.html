@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement6(type, config, children) {
+          function createElement7(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState5(initialState) {
+          function useState6(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3349,11 +3349,11 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef(initialValue) {
+          function useRef2(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect4(create, deps) {
+          function useEffect5(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback4(callback, deps) {
+          function useCallback5(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement6.apply(this, arguments);
+            var element = createElement7.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,19 +4132,19 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback4;
+          exports.useCallback = useCallback5;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect4;
+          exports.useEffect = useEffect5;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
-          exports.useRef = useRef;
-          exports.useState = useState5;
+          exports.useRef = useRef2;
+          exports.useState = useState6;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement6(type, props, rootContainerElement, parentNamespace) {
+          function createElement7(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement6(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement7(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -29073,6 +29073,105 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/conversations-react.tsx
+  var import_react6 = __toESM(require_react(), 1);
+  init_shared();
+  function RefreshIcon2() {
+    return (0, import_react6.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react6.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react6.createElement)("path", { d: "M21 3v6h-6" })
+    );
+  }
+  function PlusIcon() {
+    return (0, import_react6.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react6.createElement)("path", { d: "M12 5v14M5 12h14" })
+    );
+  }
+  function ConversationsPage() {
+    const [sessions, setSessions] = (0, import_react6.useState)([]);
+    const [curUrl, setCurUrl] = (0, import_react6.useState)("");
+    const [busy, setBusy] = (0, import_react6.useState)(false);
+    const loadedRef = (0, import_react6.useRef)(false);
+    const load = (0, import_react6.useCallback)(async (retainOnEmpty) => {
+      const anyApi = api;
+      if (!anyApi.listWebSessions) return;
+      let res = null;
+      try {
+        res = await anyApi.listWebSessions();
+      } catch (_) {
+        res = null;
+      }
+      const list = res && res.success && Array.isArray(res.sessions) ? res.sessions : [];
+      const url = res && res.currentUrl || "";
+      if (!list.length) {
+        if (retainOnEmpty) return;
+        if (loadedRef.current) return;
+        return;
+      }
+      setSessions(list);
+      setCurUrl(url);
+      loadedRef.current = true;
+    }, []);
+    (0, import_react6.useEffect)(() => {
+      load();
+    }, [load]);
+    (0, import_react6.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onHarnessBusy) anyApi.onHarnessBusy((b) => setBusy(b));
+    }, []);
+    (0, import_react6.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onWebUrlChanged) anyApi.onWebUrlChanged(() => {
+        load(true);
+        setTimeout(() => load(true), 800);
+        setTimeout(() => load(true), 1800);
+        setTimeout(() => load(false), 3200);
+      });
+    }, [load]);
+    const onItemClick = (0, import_react6.useCallback)((s) => {
+      if (busy) return;
+      const anyApi = api;
+      if (s.href && anyApi.navigateWebSession) {
+        anyApi.navigateWebSession(s.href);
+        setCurUrl(s.href);
+      }
+    }, [busy]);
+    const onNew = (0, import_react6.useCallback)(async () => {
+      const anyApi = api;
+      if (anyApi.newWebConversation) {
+        await anyApi.newWebConversation();
+        load(true);
+        setTimeout(() => load(true), 800);
+        setTimeout(() => load(false), 1800);
+      }
+    }, [load]);
+    return (0, import_react6.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react6.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react6.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5BF9\u8BDD", onClick: onNew }, (0, import_react6.createElement)(PlusIcon)),
+        (0, import_react6.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5BF9\u8BDD"),
+        (0, import_react6.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: () => load() }, (0, import_react6.createElement)(RefreshIcon2))
+      ),
+      (0, import_react6.createElement)(
+        "div",
+        { className: "ck-list" },
+        sessions.length === 0 ? (0, import_react6.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026\uFF08\u82E5\u6301\u7EED\u4E3A\u7A7A\uFF0C\u8BF7\u70B9\u5237\u65B0\uFF09") : sessions.map((s) => (0, import_react6.createElement)("div", {
+          key: s.href,
+          className: "ck-conv-item" + (s.href === curUrl ? " ck-conv-active" : "") + (busy ? " ck-conv-disabled" : ""),
+          title: s.title,
+          onClick: () => onItemClick(s)
+        }, (0, import_react6.createElement)("span", { className: "ck-conv-title" }, s.title)))
+      )
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -29116,6 +29215,7 @@
     registerPage("skills", SkillsPage);
     registerPage("mcp", McpPage);
     registerPage("snippets", SnippetsPage);
+    registerPage("conversations", ConversationsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);

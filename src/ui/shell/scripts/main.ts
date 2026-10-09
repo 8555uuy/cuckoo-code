@@ -29,6 +29,7 @@ import { AboutPage } from './pages/about-react.js';
 import { SkillsPage } from './pages/skills-react.js';
 import { McpPage } from './pages/mcp-react.js';
 import { SnippetsPage } from './pages/snippets-react.js';
+import { ConversationsPage } from './pages/conversations-react.js';
 
 // 注册 tab → 加载函数（sidebar 点击时调用）
 registerTab('workspaces', loadWorkspaces);
@@ -65,6 +66,7 @@ try {
   registerPage('skills', SkillsPage);
   registerPage('mcp', McpPage);
   registerPage('snippets', SnippetsPage);
+  registerPage('conversations', ConversationsPage);
   mountShellFrame();
 } catch (e) { console.error('[react-shell] 挂载失败', e); }
 
