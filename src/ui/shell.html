@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement2(type, config, children) {
+          function createElement5(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState(initialState) {
+          function useState4(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect(create, deps) {
+          function useEffect3(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,11 +3365,11 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback(callback, deps) {
+          function useCallback3(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
-          function useMemo(create, deps) {
+          function useMemo2(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useMemo(create, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement2.apply(this, arguments);
+            var element = createElement5.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,19 +4132,19 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback;
+          exports.useCallback = useCallback3;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect;
+          exports.useEffect = useEffect3;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
           exports.useLayoutEffect = useLayoutEffect;
-          exports.useMemo = useMemo;
+          exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef;
-          exports.useState = useState;
+          exports.useState = useState4;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement2(type, props, rootContainerElement, parentNamespace) {
+          function createElement5(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement2(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement5(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -28622,37 +28622,277 @@
     }
   }
 
-  // src/ui/shell/scripts/react-root.tsx
-  var import_client = __toESM(require_client(), 1);
+  // src/ui/shell/scripts/shell-frame.tsx
   var import_react = __toESM(require_react(), 1);
-  function ReactProbe() {
-    return (0, import_react.createElement)("div", {
-      style: {
-        position: "fixed",
-        bottom: "8px",
-        right: "8px",
-        zIndex: 99999,
-        padding: "6px 10px",
-        borderRadius: "6px",
-        background: "rgba(139,147,255,.15)",
-        color: "#8b93ff",
-        border: "1px solid #8b93ff",
-        font: "12px monospace",
-        pointerEvents: "none"
-      }
-    }, "\u269B React \u5DF2\u63A5\u5165\uFF08\u9AA8\u67B6\u9A8C\u8BC1\uFF09");
-  }
-  function mountReactProbe() {
-    let el = document.getElementById("ck-react-root");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "ck-react-root";
-      document.body.appendChild(el);
+  var import_client = __toESM(require_client(), 1);
+  init_shared();
+  function expandSidebar() {
+    const sidebar2 = document.getElementById("ck-sidebar");
+    if (!sidebar2 || !sidebar2.classList.contains("ck-collapsed")) return;
+    sidebar2.classList.remove("ck-collapsed");
+    let w = 320;
+    try {
+      const v = Number(localStorage.getItem("cuckoo-sidebar-width"));
+      if (Number.isFinite(v) && v >= 320) w = Math.round(v);
+    } catch (_) {
     }
-    if (el.__ckRoot) return;
-    const root = (0, import_client.createRoot)(el);
-    el.__ckRoot = root;
-    root.render((0, import_react.createElement)(ReactProbe));
+    sidebar2.style.width = w + "px";
+    try {
+      if (api.toggleSidebar) api.toggleSidebar(w);
+    } catch (_) {
+    }
+  }
+  var TABS = [
+    { id: "workspaces", title: "\u5DE5\u4F5C\u533A\uFF08\u4F1A\u8BDD\uFF09", icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
+    { id: "files", title: "\u9879\u76EE\u6587\u4EF6", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6" },
+    { id: "snippets", title: "\u63D0\u793A\u8BCD", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
+    { id: "skills", title: "\u6280\u80FD", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
+    { id: "plugins", title: "\u63D2\u4EF6", icon: "M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.2 2.2 0 0 1 0 4.4H2V19a2 2 0 0 0 2 2h3.8v-1.5a2.2 2.2 0 0 1 4.4 0V21H18a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" },
+    { id: "agents", title: "\u5B50\u4EE3\u7406", icon: "M3 8h18v12H3zM12 8V4" },
+    { id: "mcp", title: "MCP\uFF08\u8FDE\u63A5\u5668\uFF09", icon: "M9 12h6M8 7H7a5 5 0 0 0 0 10h1M16 7h1a5 5 0 0 1 0 10h-1" },
+    { id: "windows", title: "\u7A97\u53E3", icon: "M3 3h18v18H3zM3 9h18M9 21V9" },
+    { id: "token", title: "Token\uFF08\u8BCD\u5143\uFF09", icon: { text: "\u5143" } }
+  ];
+  var BOTTOM_TABS = [
+    { id: "about", title: "\u5173\u4E8E", icon: "M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 16v-4M12 8h.01" },
+    { id: "feishu", title: "\u98DE\u4E66\u540C\u6B65\uFF08\u624B\u673A\uFF09", icon: "M5 2h14v20H5zM11 18h2" },
+    { id: "settings", title: "\u8BBE\u7F6E", icon: "M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0" }
+  ];
+  var PAGES = {};
+  function registerPage(id, comp) {
+    PAGES[id] = comp;
+  }
+  function Icon({ icon }) {
+    if (typeof icon === "object" && "text" in icon) return (0, import_react.createElement)("span", { className: "ck-ab-text" }, icon.text);
+    return (0, import_react.createElement)("svg", { className: "ck-ab-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react.createElement)("path", { d: icon }));
+  }
+  function AbButton({ tab, active, onClick }) {
+    return (0, import_react.createElement)("button", { className: "ck-ab-item" + (active ? " ck-ab-active" : ""), title: tab.title, onClick }, (0, import_react.createElement)(Icon, { icon: tab.icon }));
+  }
+  function ShellFrame() {
+    const [activeTab, setActiveTab] = (0, import_react.useState)("about");
+    const Page = (0, import_react.useMemo)(() => PAGES[activeTab], [activeTab]);
+    const onTabClick = (id) => {
+      expandSidebar();
+      setActiveTab(id);
+    };
+    return (0, import_react.createElement)(
+      "div",
+      { style: { display: "contents" } },
+      (0, import_react.createElement)(
+        "div",
+        { className: "ck-activitybar" },
+        TABS.map((t) => (0, import_react.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
+        (0, import_react.createElement)("div", { className: "ck-ab-spacer" }),
+        BOTTOM_TABS.map((t) => (0, import_react.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) }))
+      ),
+      (0, import_react.createElement)(
+        "div",
+        { className: "ck-panel" },
+        (0, import_react.createElement)(
+          "div",
+          { className: "ck-panel-body" },
+          Page ? (0, import_react.createElement)(Page) : (0, import_react.createElement)("div", { style: { padding: 12, color: "#888" } }, "\u9875\u9762\u300C" + activeTab + "\u300D\u5C1A\u672A\u91CD\u5199")
+        )
+      )
+    );
+  }
+  function mountShellFrame() {
+    const sidebar2 = document.getElementById("ck-sidebar");
+    if (!sidebar2) return;
+    if (!sidebar2.dataset.ckOldWrapped) {
+      const wrap = document.createElement("div");
+      wrap.id = "ck-old-shell";
+      wrap.style.display = "none";
+      while (sidebar2.firstChild) wrap.appendChild(sidebar2.firstChild);
+      sidebar2.appendChild(wrap);
+      sidebar2.dataset.ckOldWrapped = "1";
+    }
+    let host = document.getElementById("ck-shell-react");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "ck-shell-react";
+      host.style.cssText = "display:contents;";
+      sidebar2.appendChild(host);
+    }
+    if (host.__root) return;
+    const root = (0, import_client.createRoot)(host);
+    host.__root = root;
+    root.render((0, import_react.createElement)(ShellFrame));
+  }
+
+  // src/ui/shell/scripts/pages/about-react.tsx
+  var import_react2 = __toESM(require_react(), 1);
+  function AboutPage() {
+    return (0, import_react2.createElement)(
+      "div",
+      { style: { padding: "16px" } },
+      (0, import_react2.createElement)("h2", { style: { margin: "0 0 12px" } }, "\u5173\u4E8E"),
+      (0, import_react2.createElement)("p", null, "Cuckoo Code \u2014\u2014 \u96F6 Token \u6210\u672C\u7684 AI Agent \u684C\u9762\u5E94\u7528"),
+      (0, import_react2.createElement)("p", { style: { color: "#888", fontSize: "12px" } }, "\uFF08React \u7248\u58F3\u9875\u9762 \xB7 \u9AA8\u67B6\u9A8C\u8BC1\u4E2D\uFF09")
+    );
+  }
+
+  // src/ui/shell/scripts/pages/skills-react.tsx
+  var import_react3 = __toESM(require_react(), 1);
+  init_shared();
+  function SkillItem({ s, onClick }) {
+    return (0, import_react3.createElement)(
+      "div",
+      { className: "ck-skill-item", onClick },
+      (0, import_react3.createElement)(
+        "div",
+        { className: "ck-skill-top" },
+        (0, import_react3.createElement)("span", { className: "ck-skill-name" }, s.name)
+      ),
+      (0, import_react3.createElement)("div", { className: "ck-skill-desc" }, s.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
+    );
+  }
+  function SkillsPage() {
+    const [skills, setSkills] = (0, import_react3.useState)(null);
+    const [err, setErr] = (0, import_react3.useState)(false);
+    const load = (0, import_react3.useCallback)(async () => {
+      if (!api.listSkills) {
+        setSkills([]);
+        return;
+      }
+      try {
+        const r = await api.listSkills();
+        setSkills((r && r.success ? r.skills : []) || []);
+        setErr(false);
+      } catch (_) {
+        setErr(true);
+        setSkills([]);
+      }
+    }, []);
+    (0, import_react3.useEffect)(() => {
+      load();
+    }, [load]);
+    const onSkillClick = (0, import_react3.useCallback)(async (name) => {
+      if (api.appendSnippet) {
+        try {
+          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD");
+        } catch (_) {
+        }
+      }
+      addRecent("skill", name);
+    }, []);
+    const list = skills || [];
+    const userSkills = list.filter((s) => s.source !== "project");
+    const projSkills = list.filter((s) => s.source === "project");
+    return (0, import_react3.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react3.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react3.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u6280\u80FD"),
+        (0, import_react3.createElement)(
+          "button",
+          { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load },
+          (0, import_react3.createElement)(
+            "svg",
+            { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+            (0, import_react3.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+            (0, import_react3.createElement)("path", { d: "M21 3v6h-6" })
+          )
+        )
+      ),
+      (0, import_react3.createElement)(
+        "div",
+        { className: "ck-list" },
+        skills === null ? (0, import_react3.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react3.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react3.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u6280\u80FD", (0, import_react3.createElement)("br"), "\uFF08.cuckoo/skills/ \u6216 ~/.cuckoo/skills/\uFF09") : [
+          userSkills.length ? (0, import_react3.createElement)("div", { key: "u-title", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+          ...userSkills.map((s) => (0, import_react3.createElement)(SkillItem, { key: "u-" + s.name, s, onClick: () => onSkillClick(s.name) })),
+          projSkills.length ? (0, import_react3.createElement)("div", { key: "p-title", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          ...projSkills.map((s) => (0, import_react3.createElement)(SkillItem, { key: "p-" + s.name, s, onClick: () => onSkillClick(s.name) }))
+        ]
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/pages/mcp-react.tsx
+  var import_react4 = __toESM(require_react(), 1);
+  init_shared();
+  function RefreshIcon() {
+    return (0, import_react4.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react4.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react4.createElement)("path", { d: "M21 3v6h-6" })
+    );
+  }
+  function McpItem({ s, onClick }) {
+    return (0, import_react4.createElement)(
+      "div",
+      { className: "ck-mcp-item", onClick },
+      (0, import_react4.createElement)(
+        "div",
+        { className: "ck-mcp-top" },
+        (0, import_react4.createElement)("span", { className: "ck-mcp-dot" + (s.connected ? " on" : "") }),
+        (0, import_react4.createElement)("span", { className: "ck-mcp-name" }, s.name)
+      ),
+      (0, import_react4.createElement)(
+        "div",
+        { className: "ck-mcp-bottom" },
+        (0, import_react4.createElement)("span", { className: "ck-mcp-tag" }, s.type || "stdio"),
+        (0, import_react4.createElement)("span", { className: "ck-mcp-tag" }, (s.toolCount || 0) + " \u5DE5\u5177")
+      )
+    );
+  }
+  function McpPage() {
+    const [servers, setServers] = (0, import_react4.useState)(null);
+    const [err, setErr] = (0, import_react4.useState)(false);
+    const load = (0, import_react4.useCallback)(async () => {
+      const anyApi = api;
+      if (!anyApi.listMcpServers) {
+        setServers([]);
+        return;
+      }
+      try {
+        const r = await anyApi.listMcpServers();
+        setServers((r && r.success ? r.servers : []) || []);
+        setErr(false);
+      } catch (_) {
+        setErr(true);
+        setServers([]);
+      }
+    }, []);
+    (0, import_react4.useEffect)(() => {
+      load();
+    }, [load]);
+    const onItemClick = (0, import_react4.useCallback)(async (name) => {
+      if (api.appendSnippet) {
+        try {
+          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP");
+        } catch (_) {
+        }
+      }
+      addRecent("mcp", name);
+    }, []);
+    const list = servers || [];
+    const userServers = list.filter((s) => s.source !== "project");
+    const projServers = list.filter((s) => s.source === "project");
+    return (0, import_react4.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react4.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react4.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "MCP\uFF08\u8FDE\u63A5\u5668\uFF09"),
+        (0, import_react4.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react4.createElement)(RefreshIcon))
+      ),
+      (0, import_react4.createElement)(
+        "div",
+        { className: "ck-list" },
+        servers === null ? (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u672A\u914D\u7F6E MCP server") : [
+          userServers.length ? (0, import_react4.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+          ...userServers.map((s) => (0, import_react4.createElement)(McpItem, { key: "u-" + s.name, s, onClick: () => onItemClick(s.name) })),
+          projServers.length ? (0, import_react4.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          ...projServers.map((s) => (0, import_react4.createElement)(McpItem, { key: "p-" + s.name, s, onClick: () => onItemClick(s.name) }))
+        ]
+      )
+    );
   }
 
   // src/ui/shell/scripts/main.ts
@@ -28694,9 +28934,12 @@
   } catch (_) {
   }
   try {
-    mountReactProbe();
+    registerPage("about", AboutPage);
+    registerPage("skills", SkillsPage);
+    registerPage("mcp", McpPage);
+    mountShellFrame();
   } catch (e) {
-    console.error("[react] \u6302\u8F7D\u5931\u8D25", e);
+    console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
   }
   function reportShellSize() {
     if (api.reportShellSize) api.reportShellSize(window.innerWidth, window.innerHeight);

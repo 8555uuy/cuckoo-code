@@ -24,7 +24,10 @@ import { loadConversations } from './pages/conversations.js';
 import { loadPlugins } from './pages/plugins.js';
 import { initPluginShell } from './plugin-shell.js';
 import { initThemePresenter } from './theme-presenter.js';
-import { mountReactProbe } from './react-root.js';
+import { mountShellFrame, registerPage } from './shell-frame.js';
+import { AboutPage } from './pages/about-react.js';
+import { SkillsPage } from './pages/skills-react.js';
+import { McpPage } from './pages/mcp-react.js';
 
 // 注册 tab → 加载函数（sidebar 点击时调用）
 registerTab('workspaces', loadWorkspaces);
@@ -55,8 +58,13 @@ try { initPluginShell(); } catch (_) { /* ignore */ }
 // 主题呈现层（消费主进程快照，写 --ck-* 变量）
 try { initThemePresenter(); } catch (_) { /* ignore */ }
 
-// ⚛ React 骨架验证
-try { mountReactProbe(); } catch (e) { console.error('[react] 挂载失败', e); }
+// ⚛ React 壳框架（feat/shell-react）
+try {
+  registerPage('about', AboutPage);
+  registerPage('skills', SkillsPage);
+  registerPage('mcp', McpPage);
+  mountShellFrame();
+} catch (e) { console.error('[react-shell] 挂载失败', e); }
 
 // 上报壳页面真实可视尺寸（主进程据此精确布局，避免菜单栏高度误差盖住状态栏）
 function reportShellSize(): void {
