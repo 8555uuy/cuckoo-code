@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement12(type, config, children) {
+          function createElement13(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState11(initialState) {
+          function useState12(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect10(create, deps) {
+          function useEffect11(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback10(callback, deps) {
+          function useCallback11(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement12.apply(this, arguments);
+            var element = createElement13.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo2;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback10;
+          exports.useCallback = useCallback11;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect10;
+          exports.useEffect = useEffect11;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef4;
-          exports.useState = useState11;
+          exports.useState = useState12;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement12(type, props, rootContainerElement, parentNamespace) {
+          function createElement13(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement12(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement13(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -30235,6 +30235,286 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/windows-react.tsx
+  var import_react12 = __toESM(require_react(), 1);
+  init_shared();
+  var PROVIDER_COLORS2 = {
+    deepseek: "linear-gradient(135deg, #4d6bfe, #3b5bdb)",
+    claude: "linear-gradient(135deg, #d97757, #c05a3a)",
+    chatgpt: "linear-gradient(135deg, #10a37f, #0d8a6b)"
+  };
+  var I3 = {
+    plus: "M12 5v14M5 12h14",
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"
+  };
+  function Svg3({ d, cls }) {
+    return (0, import_react12.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react12.createElement)("path", { d }));
+  }
+  function WinItem({ p, providerMap, onOpen, onDelete, onToggleAuto }) {
+    const pname = providerMap[p.providerId || ""] || "\u672A\u9009\u5E73\u53F0";
+    const initial = (p.name || "?").trim().charAt(0).toUpperCase();
+    const avatarStyle = PROVIDER_COLORS2[p.providerId || ""] || "";
+    const auto = p.autoOpen === true;
+    return (0, import_react12.createElement)(
+      "div",
+      { className: "ck-win-item", onClick: onOpen },
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-win-top" },
+        (0, import_react12.createElement)("span", { className: "ck-win-avatar", style: avatarStyle ? { background: avatarStyle } : void 0 }, initial),
+        (0, import_react12.createElement)("span", { className: "ck-win-name" }, p.name),
+        (0, import_react12.createElement)("span", { className: "ck-win-del", title: "\u5220\u9664\u7A97\u53E3", onClick: (e) => {
+          e.stopPropagation();
+          onDelete();
+        } }, "\u2715")
+      ),
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-win-bottom" },
+        (0, import_react12.createElement)("span", { className: "ck-win-provider" }, pname),
+        (0, import_react12.createElement)(
+          "label",
+          { className: "ck-win-check" + (auto ? " ck-win-check-on" : ""), title: "\u542F\u52A8\u65F6\u9ED8\u8BA4\u6253\u5F00", onClick: (e) => e.stopPropagation() },
+          (0, import_react12.createElement)("input", { type: "checkbox", checked: auto, onClick: (e) => e.stopPropagation(), onChange: (e) => onToggleAuto(e.target.checked) }),
+          "\u9ED8\u8BA4\u6253\u5F00"
+        )
+      )
+    );
+  }
+  function GroupModal({ group, profiles, onClose, onSaved }) {
+    const [name, setName] = (0, import_react12.useState)(group.name || "");
+    const [members, setMembers] = (0, import_react12.useState)((group.windowIds || []).slice());
+    const byId = {};
+    for (const p of profiles) byId[p.id] = p;
+    const avail = profiles.filter((p) => !members.includes(p.id));
+    const save = (0, import_react12.useCallback)(async () => {
+      const anyApi = api;
+      try {
+        const newName = name.trim();
+        if (newName && newName !== group.name) await anyApi.wgRename?.(group.id, newName);
+        const cur = (group.windowIds || []).slice();
+        for (const id of cur) {
+          if (!members.includes(id)) await anyApi.wgRemoveWindow?.(group.id, id);
+        }
+        for (const id of members) {
+          if (!cur.includes(id)) await anyApi.wgAddWindow?.(group.id, id);
+        }
+        onSaved();
+        onClose();
+      } catch (_) {
+        onClose();
+      }
+    }, [name, members, group, onClose, onSaved]);
+    return (0, import_react12.createElement)(
+      "div",
+      { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
+        if (e.target === e.currentTarget) onClose();
+      } },
+      (0, import_react12.createElement)(
+        "div",
+        { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
+        (0, import_react12.createElement)("h3", { style: { margin: "0 0 14px" } }, "\u7BA1\u7406\u7A97\u53E3\u7EC4"),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react12.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u540D"),
+          (0, import_react12.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
+        ),
+        (0, import_react12.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u5185\u7A97\u53E3"),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { marginBottom: 8 } },
+          members.length === 0 ? (0, import_react12.createElement)("div", { style: { color: "#999", fontSize: 12, padding: 4 } }, "\uFF08\u6682\u65E0\u7A97\u53E3\uFF09") : members.map((id) => (0, import_react12.createElement)(
+            "div",
+            { key: id, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", border: "1px solid #eee", borderRadius: 6, marginBottom: 4 } },
+            (0, import_react12.createElement)("span", null, byId[id] ? byId[id].name : id),
+            (0, import_react12.createElement)("span", { style: { color: "#e55", cursor: "pointer" }, onClick: () => setMembers(members.filter((x) => x !== id)) }, "\u2715")
+          ))
+        ),
+        (0, import_react12.createElement)(
+          "select",
+          { onChange: (e) => {
+            const id = e.target.value;
+            if (id && !members.includes(id)) {
+              setMembers([...members, id]);
+              e.target.value = "";
+            }
+          }, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box", marginBottom: 16 } },
+          (0, import_react12.createElement)("option", { value: "" }, "\uFF08\u9009\u62E9\u8981\u52A0\u5165\u7684\u7A97\u53E3\u2026\uFF09"),
+          ...avail.map((p) => (0, import_react12.createElement)("option", { key: p.id, value: p.id }, p.name))
+        ),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
+          (0, import_react12.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react12.createElement)("button", { onClick: save, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
+        )
+      )
+    );
+  }
+  function WindowsPage() {
+    const [profiles, setProfiles] = (0, import_react12.useState)(null);
+    const [groups, setGroups] = (0, import_react12.useState)([]);
+    const [providerMap, setProviderMap] = (0, import_react12.useState)({});
+    const [err, setErr] = (0, import_react12.useState)(false);
+    const [managing, setManaging] = (0, import_react12.useState)(null);
+    const load = (0, import_react12.useCallback)(async () => {
+      if (!api.listProfiles) {
+        setProfiles([]);
+        return;
+      }
+      try {
+        const res = await api.listProfiles();
+        setProfiles((res && res.success ? res.profiles : []) || []);
+        setErr(false);
+        const anyApi = api;
+        try {
+          const pvRes = await anyApi.listProviders?.();
+          if (pvRes && pvRes.success) {
+            const m = {};
+            for (const p of pvRes.providers || []) m[p.id] = p.name;
+            setProviderMap(m);
+          }
+        } catch (_) {
+        }
+        try {
+          const gr = await anyApi.wgList?.();
+          setGroups(gr && gr.success ? gr.groups || [] : []);
+        } catch (_) {
+          setGroups([]);
+        }
+      } catch (_) {
+        setErr(true);
+        setProfiles([]);
+      }
+    }, []);
+    (0, import_react12.useEffect)(() => {
+      load();
+    }, [load]);
+    const open = (0, import_react12.useCallback)(async (id) => {
+      try {
+        await api.openProfileWindow?.(id);
+      } catch (_) {
+      }
+    }, []);
+    const del = (0, import_react12.useCallback)(async (p) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u7A97\u53E3\u300C" + p.name + "\u300D\uFF1F\u6B64\u64CD\u4F5C\u4E0D\u53EF\u6062\u590D\u3002")) return;
+      try {
+        const r = await api.deleteProfileWindow?.(p.id);
+        if (r && r.success) load();
+      } catch (_) {
+      }
+    }, [load]);
+    const toggleAuto = (0, import_react12.useCallback)(async (p, v) => {
+      try {
+        const r = await api.setProfileAutoOpen?.(p.id, v);
+        if (!r || !r.success) return;
+        setProfiles((ps) => (ps || []).map((x) => x.id === p.id ? { ...x, autoOpen: v } : x));
+      } catch (_) {
+      }
+    }, []);
+    const newWin = (0, import_react12.useCallback)(async () => {
+      try {
+        await api.createProfileWindow?.();
+        load();
+      } catch (_) {
+      }
+    }, [load]);
+    const newGroup = (0, import_react12.useCallback)(async () => {
+      const name = await ckPrompt({ title: "\u65B0\u5EFA\u7A97\u53E3\u7EC4", placeholder: "\u7EC4\u540D\uFF08\u5982\uFF1A\u4E3B\u529B\u8D26\u53F7\u7EC4\uFF09", value: "" });
+      if (name === null) return;
+      try {
+        await api.wgCreate?.(name.trim() || void 0);
+        load();
+      } catch (_) {
+      }
+    }, [load]);
+    const wgSwitch = (0, import_react12.useCallback)(async (g) => {
+      const anyApi = api;
+      if (!anyApi.wgSwitch) return;
+      try {
+        const r = await anyApi.wgSwitch(g.id);
+        if (!r || !r.success) alert("\u5207\u6362\u5931\u8D25\uFF1A" + (r && r.error || "\u672A\u77E5\u9519\u8BEF"));
+      } catch (e) {
+        alert("\u5207\u6362\u5931\u8D25\uFF1A" + (e.message || e));
+      }
+      load();
+    }, [load]);
+    const wgDel = (0, import_react12.useCallback)(async (g) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BE5\u7A97\u53E3\u7EC4\uFF1F\uFF08\u7A97\u53E3\u672C\u8EAB\u4E0D\u5220\uFF09")) return;
+      try {
+        await api.wgDelete?.(g.id);
+        load();
+      } catch (_) {
+      }
+    }, [load]);
+    const wgLast = (0, import_react12.useCallback)(async (g) => {
+      if (!g.lastWindowId) return;
+      try {
+        await api.openProfileWindow?.(g.lastWindowId);
+        if (g.lastSessionId && api.navigateSession) {
+          try {
+            await api.navigateSession(g.lastSessionId);
+          } catch (_) {
+          }
+        }
+      } catch (_) {
+      }
+    }, []);
+    const list = profiles || [];
+    const byId = {};
+    for (const p of list) byId[p.id] = p;
+    const inGroup = /* @__PURE__ */ new Set();
+    for (const g of groups) for (const w of g.windowIds || []) inGroup.add(w);
+    const ungrouped = list.filter((p) => !inGroup.has(p.id));
+    return (0, import_react12.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newWin }, (0, import_react12.createElement)(Svg3, { d: I3.plus, cls: "ck-btn-icon" }), (0, import_react12.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3")),
+        (0, import_react12.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\u5217\u8868", onClick: load }, (0, import_react12.createElement)(Svg3, { d: I3.refresh }))
+      ),
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newGroup }, (0, import_react12.createElement)(Svg3, { d: I3.grid, cls: "ck-btn-icon" }), (0, import_react12.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3\u7EC4"))
+      ),
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-list" },
+        profiles === null ? (0, import_react12.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react12.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react12.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u7A97\u53E3") : [
+          ...groups.map((g) => {
+            const members = (g.windowIds || []).map((w) => byId[w]).filter(Boolean);
+            return (0, import_react12.createElement)(
+              "div",
+              { key: g.id, className: "ck-wg" },
+              (0, import_react12.createElement)(
+                "div",
+                { className: "ck-wg-head" },
+                (0, import_react12.createElement)("span", { className: "ck-wg-name" }, g.name),
+                (0, import_react12.createElement)("span", { className: "ck-wg-switch", title: "\u8F6C\u79FB\u5F53\u524D\u5BF9\u8BDD\u5230\u4E0B\u4E00\u7A97\u53E3", onClick: () => wgSwitch(g) }, "\u8F6C\u79FB\u5BF9\u8BDD"),
+                (0, import_react12.createElement)("span", { className: "ck-wg-manage", title: "\u7BA1\u7406\u7EC4\uFF08\u6539\u540D\u3001\u589E\u5220\u7A97\u53E3\uFF09", onClick: () => setManaging(g) }, "\u7BA1\u7406"),
+                (0, import_react12.createElement)("span", { className: "ck-wg-del", title: "\u5220\u9664\u7EC4", onClick: () => wgDel(g) }, "\u2715")
+              ),
+              g.lastWindowId ? (0, import_react12.createElement)("div", { className: "ck-wg-last", title: "\u70B9\u51FB\u8DF3\u5230\u8BE5\u7A97\u53E3\u7684\u6700\u8FD1\u5BF9\u8BDD", onClick: () => wgLast(g) }, "\u6700\u8FD1\uFF1A" + (byId[g.lastWindowId] ? byId[g.lastWindowId].name : g.lastWindowId)) : null,
+              (0, import_react12.createElement)("div", { className: "ck-wg-body" }, members.map((p) => (0, import_react12.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
+            );
+          }),
+          ungrouped.length ? (0, import_react12.createElement)(
+            "div",
+            { key: "ungrouped", className: "ck-wg ck-wg-ungrouped" },
+            (0, import_react12.createElement)("div", { className: "ck-wg-head" }, (0, import_react12.createElement)("span", { className: "ck-wg-name" }, "\u672A\u5206\u7EC4")),
+            (0, import_react12.createElement)("div", { className: "ck-wg-body" }, ungrouped.map((p) => (0, import_react12.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
+          ) : null
+        ]
+      ),
+      managing ? (0, import_react12.createElement)(GroupModal, { group: managing, profiles: list, onClose: () => setManaging(null), onSaved: load }) : null
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -30284,6 +30564,7 @@
     registerPage("settings", SettingsPage);
     registerPage("agents", AgentsPage);
     registerPage("files", FilesPage);
+    registerPage("windows", WindowsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
