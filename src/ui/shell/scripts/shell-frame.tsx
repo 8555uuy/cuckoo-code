@@ -44,6 +44,7 @@ function collapseSidebar(): void {
 interface TabDef { id: string; title: string; icon: string | { text: string }; }
 
 const TABS: TabDef[] = [
+  { id: 'home', title: '主页', icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10' },
   { id: 'workspaces', title: '工作区（会话）', icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
   { id: 'files', title: '项目文件', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6' },
   { id: 'snippets', title: '提示词', icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z' },
@@ -80,7 +81,7 @@ function AbButton({ tab, active, onClick }: { tab: TabDef; active: boolean; onCl
 
 /** 主框架 */
 function ShellFrame() {
-  const [activeTab, setActiveTab] = useState('about');
+  const [activeTab, setActiveTab] = useState('home');
   const Page = useMemo(() => PAGES[activeTab], [activeTab]);
   const onTabClick = (id: string) => {
     const sidebar = document.getElementById('ck-sidebar');

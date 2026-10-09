@@ -20,6 +20,7 @@ import { initPluginShell } from './plugin-shell.js';
 import { initThemePresenter } from './theme-presenter.js';
 import { mountShellFrame, registerPage } from './shell-frame.js';
 import { mountStatusBar } from './statusbar.js';
+import { HomePage } from './pages/home-react.js';
 import { AboutPage } from './pages/about-react.js';
 import { SkillsPage } from './pages/skills-react.js';
 import { McpPage } from './pages/mcp-react.js';
@@ -42,6 +43,7 @@ try { initThemePresenter(); } catch (_) { /* ignore */ }
 
 // ⚛ React 壳框架（feat/shell-react）
 try {
+  registerPage('home', HomePage);
   registerPage('about', AboutPage);
   registerPage('skills', SkillsPage);
   registerPage('mcp', McpPage);
