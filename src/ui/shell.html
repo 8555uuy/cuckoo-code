@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement13(type, config, children) {
+          function createElement14(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState12(initialState) {
+          function useState13(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect11(create, deps) {
+          function useEffect12(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback11(callback, deps) {
+          function useCallback12(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement13.apply(this, arguments);
+            var element = createElement14.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo2;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback11;
+          exports.useCallback = useCallback12;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect11;
+          exports.useEffect = useEffect12;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef4;
-          exports.useState = useState12;
+          exports.useState = useState13;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement13(type, props, rootContainerElement, parentNamespace) {
+          function createElement14(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement13(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement14(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -30515,6 +30515,347 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/workspaces-react.tsx
+  var import_react13 = __toESM(require_react(), 1);
+  init_shared();
+  function baseName2(dir) {
+    if (!dir) return "\u672A\u547D\u540D";
+    const parts = String(dir).replace(/[\\/]+$/, "").split(/[\\/]/);
+    return parts[parts.length - 1] || dir;
+  }
+  function relTime2(iso) {
+    if (!iso) return "";
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t)) return "";
+    const diff = Date.now() - t;
+    const min = Math.floor(diff / 6e4);
+    if (min < 1) return "\u521A\u521A";
+    if (min < 60) return min + "\u5206\u949F\u524D";
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return hr + "\u5C0F\u65F6\u524D";
+    const day = Math.floor(hr / 24);
+    if (day < 30) return day + "\u5929\u524D";
+    const mon = Math.floor(day / 30);
+    if (mon < 12) return mon + "\u4E2A\u6708\u524D";
+    return Math.floor(mon / 12) + "\u5E74\u524D";
+  }
+  function collectHist(byId, s) {
+    const out = [];
+    let cur = s.parentId;
+    let guard = 0;
+    while (cur && guard++ < 50) {
+      const p = byId[cur];
+      if (!p || p.kind === "subagent") break;
+      out.push(p);
+      cur = p.parentId;
+    }
+    return out;
+  }
+  function latestTs2(list) {
+    let max = 0;
+    for (const s of list) {
+      const t = s.updatedAt ? Date.parse(s.updatedAt) : 0;
+      if (Number.isFinite(t) && t > max) max = t;
+    }
+    return max;
+  }
+  function byTimeDesc2(a, b) {
+    const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+    const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+    return tb - ta;
+  }
+  var IC = {
+    caret: "M6 3l5 5-5 5",
+    folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+    plus: "M12 5v14M5 12h14",
+    rename: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+    archive: "M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4",
+    unarchive: "M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M12 10v6M9 13l3-3 3 3",
+    archiveProj: "M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4",
+    unarchiveProj: "M3 7v5h5M3.5 12a8.5 8.5 0 1 0 2-5.4L3 9",
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"
+  };
+  function Svg4({ d, cls }) {
+    return (0, import_react13.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react13.createElement)("path", { d }));
+  }
+  function WsItem({ s, cur, archived, hasChildren, sub, open, onToggle, onNav, onRename, onArchive, onUnarchive }) {
+    const label = s.kind === "subagent" && s.agentName ? "\u5B50\u4EE3\u7406: " + s.agentName : s.title || s.sessionId;
+    const time = relTime2(s.updatedAt);
+    const isCur = s.sessionId === cur;
+    return (0, import_react13.createElement)(
+      "div",
+      { className: "ck-ws-item" + (isCur ? " current" : "") + (sub ? " sub" : ""), title: s.sessionId, onClick: () => onNav(s.sessionId) },
+      hasChildren ? (0, import_react13.createElement)("span", { className: "ck-ws-expand" + (open ? " open" : ""), onClick: (e) => {
+        e.stopPropagation();
+        onToggle(s.sessionId);
+      } }, (0, import_react13.createElement)(Svg4, { d: IC.caret })) : (0, import_react13.createElement)("span", { className: "ck-ws-expand ck-ws-expand-hidden" }),
+      (0, import_react13.createElement)("span", { className: "ck-ws-name" }, label),
+      time ? (0, import_react13.createElement)("span", { className: "ck-ws-time" }, time) : null,
+      (0, import_react13.createElement)(
+        "span",
+        { className: "ck-ws-acts" },
+        (0, import_react13.createElement)("span", { className: "ck-ws-act", title: "\u91CD\u547D\u540D", onClick: (e) => {
+          e.stopPropagation();
+          onRename(s, label);
+        } }, (0, import_react13.createElement)(Svg4, { d: IC.rename })),
+        archived ? (0, import_react13.createElement)("span", { className: "ck-ws-act", title: "\u53D6\u6D88\u5F52\u6863", onClick: (e) => {
+          e.stopPropagation();
+          onUnarchive(s.sessionId);
+        } }, (0, import_react13.createElement)(Svg4, { d: IC.unarchive })) : sub ? null : (0, import_react13.createElement)("span", { className: "ck-ws-act", title: "\u5F52\u6863", onClick: (e) => {
+          e.stopPropagation();
+          onArchive(s.sessionId);
+        } }, (0, import_react13.createElement)(Svg4, { d: IC.archive }))
+      )
+    );
+  }
+  function WorkspacesPage() {
+    const [sessions, setSessions] = (0, import_react13.useState)(null);
+    const [curSessionId, setCurSessionId] = (0, import_react13.useState)(null);
+    const [curDir, setCurDir] = (0, import_react13.useState)(null);
+    const [archivedProjects2, setArchivedProjects] = (0, import_react13.useState)([]);
+    const [expandedDirs2, setExpandedDirs] = (0, import_react13.useState)(/* @__PURE__ */ new Set());
+    const [archivedOpen2, setArchivedOpen] = (0, import_react13.useState)(/* @__PURE__ */ new Set());
+    const [expandedProjects, setExpandedProjects] = (0, import_react13.useState)(false);
+    const [expandedNodes2, setExpandedNodes] = (0, import_react13.useState)(/* @__PURE__ */ new Set());
+    const [expandedSubs, setExpandedSubs] = (0, import_react13.useState)(/* @__PURE__ */ new Set());
+    const [tip, setTip] = (0, import_react13.useState)(null);
+    const [err, setErr] = (0, import_react13.useState)(false);
+    const load = (0, import_react13.useCallback)(async () => {
+      if (!api.listAllSessions) {
+        setSessions([]);
+        return;
+      }
+      try {
+        if (api.getProjectDir) {
+          try {
+            const pr = await api.getProjectDir();
+            if (pr && pr.success) setCurDir(pr.dir);
+          } catch (_) {
+          }
+        }
+        const r = await api.listAllSessions();
+        setSessions(r && r.success && Array.isArray(r.sessions) ? r.sessions : []);
+        setCurSessionId(r && r.currentSessionId || null);
+        setArchivedProjects(r && Array.isArray(r.archivedProjects) ? r.archivedProjects : []);
+        setErr(false);
+      } catch (_) {
+        setErr(true);
+        setSessions([]);
+      }
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      load();
+    }, [load]);
+    (0, import_react13.useEffect)(() => {
+      if (api.onProjectDir) api.onProjectDir((d) => {
+        setCurDir(d);
+        load();
+      });
+      if (api.onUrlUpdated) {
+        let t = null;
+        api.onUrlUpdated(() => {
+          if (t) clearTimeout(t);
+          t = setTimeout(() => load(), 600);
+        });
+      }
+      if (api.onSessionsChanged) api.onSessionsChanged(() => load());
+    }, [load]);
+    const onNav = (0, import_react13.useCallback)(async (id) => {
+      if (api.navigateSession) {
+        try {
+          await api.navigateSession(id);
+        } catch (_) {
+        }
+      }
+    }, []);
+    const onRename = (0, import_react13.useCallback)(async (s, cur) => {
+      if (!api.setSessionTitle) return;
+      const name = await ckPrompt({ title: "\u91CD\u547D\u540D\u5BF9\u8BDD", placeholder: "\u8F93\u5165\u5BF9\u8BDD\u540D\u79F0", value: cur === s.sessionId ? "" : cur });
+      if (!name) return;
+      try {
+        await api.setSessionTitle(s.sessionId, name);
+      } catch (_) {
+      }
+      load();
+    }, [load]);
+    const onArchive = (0, import_react13.useCallback)(async (id) => {
+      if (api.setSessionArchived) {
+        try {
+          await api.setSessionArchived(id, true);
+        } catch (_) {
+        }
+        load();
+      }
+    }, [load]);
+    const onUnarchive = (0, import_react13.useCallback)(async (id) => {
+      if (api.setSessionArchived) {
+        try {
+          await api.setSessionArchived(id, false);
+        } catch (_) {
+        }
+        load();
+      }
+    }, [load]);
+    const toggle = (setFn, key) => setFn((s) => {
+      const n = new Set(s);
+      if (n.has(key)) n.delete(key);
+      else n.add(key);
+      return n;
+    });
+    const showTip = (0, import_react13.useCallback)(async (dir, el) => {
+      const rect = el.getBoundingClientRect();
+      const sidebar2 = document.getElementById("ck-sidebar");
+      const sbw = sidebar2 && sidebar2.offsetWidth ? sidebar2.offsetWidth : 320;
+      let x = Math.min(rect.left, Math.max(6, sbw - 260));
+      setTip({ dir, x, y: rect.bottom + 6 });
+    }, []);
+    if (sessions === null) return (0, import_react13.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react13.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"));
+    if (err) return (0, import_react13.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react13.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25"));
+    const byId = {};
+    for (const s of sessions) byId[s.sessionId] = s;
+    const subsByParent = {};
+    for (const s of sessions) {
+      if (s.kind === "subagent" && s.parentId) {
+        (subsByParent[s.parentId] = subsByParent[s.parentId] || []).push(s);
+      }
+    }
+    const main = sessions.filter((s) => s.kind !== "subagent" && !s.superseded);
+    const groups = {};
+    for (const s of main) {
+      const d = s.projectDir || "";
+      if (!groups[d]) groups[d] = { active: [], archived: [] };
+      if (s.archived) groups[d].archived.push(s);
+      else groups[d].active.push(s);
+    }
+    const renderConv = (s, archived) => {
+      const hist = collectHist(byId, s);
+      const chainIds = [s.sessionId].concat(hist.map((x) => x.sessionId));
+      const subs = [];
+      for (const cid of chainIds) {
+        const arr = subsByParent[cid];
+        if (arr) for (const x of arr) subs.push(x);
+      }
+      const hasChildren = subs.length > 0 || hist.length > 0;
+      const open = expandedNodes2.has(s.sessionId);
+      const out = [(0, import_react13.createElement)(WsItem, { key: s.sessionId, s, cur: curSessionId, archived, hasChildren, open, onToggle: (id) => toggle(setExpandedNodes, id), onNav, onRename, onArchive, onUnarchive })];
+      if (hasChildren && open) {
+        const kids = [];
+        if (subs.length) {
+          const k = s.sessionId + ":sub";
+          const so = expandedSubs.has(k);
+          kids.push((0, import_react13.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (so ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u5B50\u4EE3\u7406\uFF08" + subs.length + "\uFF09"));
+          if (so) kids.push(...subs.map((x) => (0, import_react13.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
+          }, onNav, onRename, onArchive, onUnarchive })));
+        }
+        if (hist.length) {
+          const k = s.sessionId + ":hist";
+          const ho = expandedSubs.has(k);
+          kids.push((0, import_react13.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (ho ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u538B\u7F29\u5386\u53F2\uFF08" + hist.length + "\uFF09"));
+          if (ho) kids.push(...hist.map((x) => (0, import_react13.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
+          }, onNav, onRename, onArchive, onUnarchive })));
+        }
+        out.push((0, import_react13.createElement)("div", { key: s.sessionId + ":kids", className: "ck-ws-children" }, kids));
+      }
+      return out;
+    };
+    const dirs = Object.keys(groups).sort((a, b) => latestTs2(groups[a].active.concat(groups[a].archived)) - latestTs2(groups[b].active.concat(groups[b].archived)) === 0 ? 0 : latestTs2(groups[b].active.concat(groups[b].archived)) - latestTs2(groups[a].active.concat(groups[a].archived)));
+    const renderGroup = (dir) => {
+      const g = groups[dir];
+      g.active.sort(byTimeDesc2);
+      g.archived.sort(byTimeDesc2);
+      const isOpen = dir === curDir || expandedDirs2.has(dir);
+      const isArchOpen = archivedOpen2.has(dir);
+      return (0, import_react13.createElement)(
+        "div",
+        { key: dir, className: "ck-ws-group" + (isOpen ? " open" : ""), "data-dir": dir },
+        (0, import_react13.createElement)(
+          "div",
+          { className: "ck-ws-group-title", title: dir, onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e) => showTip(dir, e.currentTarget), onMouseLeave: () => setTip(null) },
+          (0, import_react13.createElement)(Svg4, { d: IC.caret, cls: "ck-ws-caret" }),
+          (0, import_react13.createElement)(Svg4, { d: IC.folder, cls: "ck-ws-folder" }),
+          (0, import_react13.createElement)("span", { className: "ck-ws-gname" }, baseName2(dir)),
+          (0, import_react13.createElement)(
+            "span",
+            { className: "ck-ws-gacts" },
+            (0, import_react13.createElement)("span", { className: "ck-ws-gact", title: "\u7528\u8BE5\u9879\u76EE\u65B0\u5EFA\u5BF9\u8BDD", onClick: async (e) => {
+              e.stopPropagation();
+              if (api.newConversationForProject) {
+                try {
+                  await api.newConversationForProject(dir);
+                } catch (_) {
+                }
+              }
+            } }, (0, import_react13.createElement)(Svg4, { d: IC.plus })),
+            archivedProjects2.includes(dir) ? (0, import_react13.createElement)("span", { className: "ck-ws-gact", title: "\u53D6\u6D88\u5F52\u6863", onClick: async (e) => {
+              e.stopPropagation();
+              if (api.setProjectArchived) {
+                try {
+                  await api.setProjectArchived(dir, false);
+                } catch (_) {
+                }
+                load();
+              }
+            } }, (0, import_react13.createElement)(Svg4, { d: IC.unarchiveProj })) : (0, import_react13.createElement)("span", { className: "ck-ws-gact", title: "\u5F52\u6863\u9879\u76EE", onClick: async (e) => {
+              e.stopPropagation();
+              if (api.setProjectArchived) {
+                try {
+                  await api.setProjectArchived(dir, true);
+                } catch (_) {
+                }
+                load();
+              }
+            } }, (0, import_react13.createElement)(Svg4, { d: IC.archiveProj }))
+          )
+        ),
+        (0, import_react13.createElement)(
+          "div",
+          { className: "ck-ws-items" },
+          ...g.active.flatMap((s) => renderConv(s, false)),
+          g.archived.length ? (0, import_react13.createElement)(
+            "div",
+            { key: "arch", className: "ck-ws-archived" + (isArchOpen ? " open" : ""), "data-dir": dir },
+            (0, import_react13.createElement)("div", { className: "ck-ws-archived-title", onClick: () => toggle(setArchivedOpen, dir) }, "\u5DF2\u5F52\u6863 " + g.archived.length + " \u5BF9\u8BDD"),
+            (0, import_react13.createElement)("div", { className: "ck-ws-archived-items" }, ...g.archived.flatMap((s) => renderConv(s, true)))
+          ) : null
+        )
+      );
+    };
+    const activeDirs = dirs.filter((d) => !archivedProjects2.includes(d));
+    const archivedDirs = dirs.filter((d) => archivedProjects2.includes(d));
+    return (0, import_react13.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react13.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react13.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DE5\u4F5C\u533A"),
+        (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react13.createElement)(Svg4, { d: IC.refresh }))
+      ),
+      (0, import_react13.createElement)(
+        "div",
+        { className: "ck-list" },
+        sessions.length === 0 ? (0, import_react13.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u4F1A\u8BDD") : (0, import_react13.createElement)(
+          "div",
+          { style: { display: "contents" } },
+          ...activeDirs.map(renderGroup),
+          archivedDirs.length ? (0, import_react13.createElement)(
+            "div",
+            { key: "archivedProjects", className: "ck-ws-archived-projects" + (expandedProjects ? " open" : "") },
+            (0, import_react13.createElement)("div", { className: "ck-ws-archived-projects-title", onClick: () => setExpandedProjects(!expandedProjects) }, "\u5DF2\u5F52\u6863 " + archivedDirs.length + " \u9879\u76EE"),
+            (0, import_react13.createElement)("div", { className: "ck-ws-archived-projects-items" }, ...archivedDirs.map(renderGroup))
+          ) : null
+        )
+      ),
+      tip ? (0, import_react13.createElement)(
+        "div",
+        { className: "ck-ws-tip", style: { display: "block", position: "fixed", top: tip.y, left: tip.x, zIndex: 1e4 } },
+        (0, import_react13.createElement)("div", { className: "ck-tip-name" }, baseName2(tip.dir)),
+        (0, import_react13.createElement)("div", { className: "ck-tip-path" }, tip.dir),
+        (0, import_react13.createElement)("div", { className: "ck-tip-time" }, "")
+      ) : null
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -30565,6 +30906,7 @@
     registerPage("agents", AgentsPage);
     registerPage("files", FilesPage);
     registerPage("windows", WindowsPage);
+    registerPage("workspaces", WorkspacesPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
