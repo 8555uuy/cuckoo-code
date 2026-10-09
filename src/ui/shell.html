@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement10(type, config, children) {
+          function createElement11(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState9(initialState) {
+          function useState10(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect8(create, deps) {
+          function useEffect9(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback8(callback, deps) {
+          function useCallback9(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement10.apply(this, arguments);
+            var element = createElement11.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback8;
+          exports.useCallback = useCallback9;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect8;
+          exports.useEffect = useEffect9;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef3;
-          exports.useState = useState9;
+          exports.useState = useState10;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement10(type, props, rootContainerElement, parentNamespace) {
+          function createElement11(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement10(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement11(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -29716,6 +29716,182 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/agents-react.tsx
+  var import_react10 = __toESM(require_react(), 1);
+  init_shared();
+  var I2 = {
+    edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+    del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    plus: "M12 5v14M5 12h14"
+  };
+  function Svg2({ d }) {
+    return (0, import_react10.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react10.createElement)("path", { d }));
+  }
+  function AgentModal({ editing, onClose, onSaved }) {
+    const [name, setName] = (0, import_react10.useState)(editing ? editing.name : "");
+    const [scope, setScope] = (0, import_react10.useState)("project");
+    const isEdit = !!editing;
+    const submit = (0, import_react10.useCallback)(async () => {
+      if (!name.trim()) {
+        await ckAlert("\u8BF7\u586B\u5199\u540D\u79F0");
+        return;
+      }
+      try {
+        if (isEdit) {
+          if (!api.renameAgent) return;
+          const rr = await api.renameAgent(editing.agentPath, name.trim());
+          if (rr && rr.success) {
+            onSaved();
+            onClose();
+          } else await ckAlert(rr && rr.error || "\u4FDD\u5B58\u5931\u8D25");
+        } else {
+          if (!api.createAgentFile) return;
+          const r = await api.createAgentFile(name.trim(), scope);
+          if (r && r.success) {
+            onClose();
+            await ckAlert("\u5DF2\u521B\u5EFA\uFF1A" + r.name + ".md\n\uFF08\u5DF2\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u7A0B\u5E8F\u6253\u5F00\uFF0C\u7F16\u8F91\u4FDD\u5B58\u540E\u70B9\u300C\u5237\u65B0\u300D\u5373\u53EF\u770B\u5230\uFF09");
+            onSaved();
+          } else await ckAlert(r && r.error || "\u521B\u5EFA\u5931\u8D25");
+        }
+      } catch (e) {
+        await ckAlert("\u64CD\u4F5C\u5931\u8D25: " + (e.message || e));
+      }
+    }, [name, scope, isEdit, editing, onClose, onSaved]);
+    const openFile = (0, import_react10.useCallback)(async () => {
+      if (!editing || !api.openAgentFile) return;
+      try {
+        const r = await api.openAgentFile(editing.agentPath);
+        if (r && !r.success) await ckAlert(r && r.error || "\u6253\u5F00\u5931\u8D25");
+      } catch (e) {
+        await ckAlert("\u6253\u5F00\u5931\u8D25: " + (e.message || e));
+      }
+    }, [editing]);
+    return (0, import_react10.createElement)(
+      "div",
+      { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
+        if (e.target === e.currentTarget) onClose();
+      } },
+      (0, import_react10.createElement)(
+        "div",
+        { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
+        (0, import_react10.createElement)("h3", { style: { margin: "0 0 14px" } }, isEdit ? "\u7F16\u8F91\u5B50\u4EE3\u7406" : "\u65B0\u5EFA\u5B50\u4EE3\u7406"),
+        (0, import_react10.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react10.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
+          (0, import_react10.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
+        ),
+        !isEdit ? (0, import_react10.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react10.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u8303\u56F4"),
+          (0, import_react10.createElement)(
+            "select",
+            { value: scope, onChange: (e) => setScope(e.target.value), style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } },
+            (0, import_react10.createElement)("option", { value: "project" }, "\u9879\u76EE\u7EA7"),
+            (0, import_react10.createElement)("option", { value: "user" }, "\u7528\u6237\u7EA7")
+          )
+        ) : null,
+        (0, import_react10.createElement)("p", { style: { fontSize: 12, color: "#888" } }, isEdit ? "\u6539\u540D\u4F1A\u91CD\u547D\u540D\u6587\u4EF6\uFF1B\u300C\u6253\u5F00\u6B63\u6587\u300D\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u7F16\u8F91\u63D0\u793A\u8BCD\u3002" : "\u751F\u6210\u6A21\u677F\u540E\uFF0C\u4F1A\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u7A0B\u5E8F\u6253\u5F00\uFF0C\u4F60\u76F4\u63A5\u7F16\u8F91\u4FDD\u5B58\u5373\u53EF\u3002"),
+        (0, import_react10.createElement)(
+          "div",
+          { style: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 } },
+          isEdit ? (0, import_react10.createElement)("button", { onClick: openFile, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u6253\u5F00\u6B63\u6587") : null,
+          (0, import_react10.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react10.createElement)("button", { onClick: submit, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, isEdit ? "\u4FDD\u5B58\u540D\u79F0" : "\u521B\u5EFA\u5E76\u6253\u5F00")
+        )
+      )
+    );
+  }
+  function AgentsPage() {
+    const [agents, setAgents] = (0, import_react10.useState)(null);
+    const [modal, setModal] = (0, import_react10.useState)({ open: false, editing: null });
+    const load = (0, import_react10.useCallback)(async () => {
+      if (!api.listAgents) {
+        setAgents([]);
+        return;
+      }
+      try {
+        const r = await api.listAgents();
+        setAgents((r && r.success ? r.agents : []) || []);
+      } catch (_) {
+        setAgents([]);
+      }
+    }, []);
+    (0, import_react10.useEffect)(() => {
+      load();
+    }, [load]);
+    const click = (0, import_react10.useCallback)(async (a) => {
+      if (api.appendSnippet) {
+        try {
+          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + a.name + " \u5B50\u4EE3\u7406");
+        } catch (_) {
+        }
+      }
+      addRecent("agent", a.name);
+    }, []);
+    const del = (0, import_react10.useCallback)(async (a) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BE5\u5B50\u4EE3\u7406\u6587\u4EF6\uFF1F\u6B64\u64CD\u4F5C\u4E0D\u53EF\u6062\u590D\u3002")) return;
+      const anyApi = api;
+      if (!anyApi.deleteAgentFile) return;
+      try {
+        const r = await anyApi.deleteAgentFile(a.agentPath);
+        if (r && r.success) load();
+        else await ckAlert(r && r.error || "\u5220\u9664\u5931\u8D25");
+      } catch (e) {
+        await ckAlert("\u5220\u9664\u5931\u8D25: " + (e.message || e));
+      }
+    }, [load]);
+    const list = agents || [];
+    const userAgents = list.filter((a) => a.source !== "project");
+    const projAgents = list.filter((a) => a.source === "project");
+    const card = (a) => (0, import_react10.createElement)(
+      "div",
+      { key: a.agentPath, className: "ck-skill-item ck-agent-item", onClick: () => click(a) },
+      (0, import_react10.createElement)(
+        "div",
+        { className: "ck-skill-top" },
+        (0, import_react10.createElement)("span", { className: "ck-skill-name" }, a.name),
+        (0, import_react10.createElement)(
+          "div",
+          { className: "ck-agent-actions" },
+          (0, import_react10.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
+            e.stopPropagation();
+            setModal({ open: true, editing: a });
+          } }, (0, import_react10.createElement)(Svg2, { d: I2.edit })),
+          (0, import_react10.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
+            e.stopPropagation();
+            del(a);
+          } }, (0, import_react10.createElement)(Svg2, { d: I2.del }))
+        )
+      ),
+      (0, import_react10.createElement)("div", { className: "ck-skill-desc" }, a.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
+    );
+    return (0, import_react10.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react10.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react10.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5EFA", onClick: () => setModal({ open: true, editing: null }) }, (0, import_react10.createElement)(Svg2, { d: I2.plus })),
+        (0, import_react10.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5B50\u4EE3\u7406"),
+        (0, import_react10.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react10.createElement)(Svg2, { d: I2.refresh }))
+      ),
+      (0, import_react10.createElement)(
+        "div",
+        { className: "ck-list" },
+        agents === null ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u5B50\u4EE3\u7406", (0, import_react10.createElement)("br"), "\uFF08.cuckoo/agents/ \u6216 ~/.cuckoo/agents/\uFF09") : [
+          userAgents.length ? (0, import_react10.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+          ...userAgents.map(card),
+          projAgents.length ? (0, import_react10.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          ...projAgents.map(card)
+        ]
+      ),
+      modal.open ? (0, import_react10.createElement)(AgentModal, { editing: modal.editing, onClose: () => setModal({ open: false, editing: null }), onSaved: load }) : null
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -29763,6 +29939,7 @@
     registerPage("token", TokenPage);
     registerPage("feishu", FeishuPage);
     registerPage("settings", SettingsPage);
+    registerPage("agents", AgentsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
