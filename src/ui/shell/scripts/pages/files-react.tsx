@@ -10,6 +10,7 @@
 import { createElement, useState, useEffect, useCallback, useRef, memo } from 'react';
 import { api } from '../shared.js';
 import { showInMonaco } from '../preview-monaco.js';
+import { useHideAiView } from '../use-hide-ai-view.js';
 
 interface TreeNode { name: string; path: string; type: 'dir' | 'file'; children?: TreeNode[] }
 
@@ -139,12 +140,7 @@ function FilePreviewModal({ path, onClose }: { path: string; onClose: () => void
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // 弹窗打开时隐藏 AI 视图（原生视图永远在网页之上），关闭时恢复
-  useEffect(() => {
-    const anyApi = api as any;
-    if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {});
-    return () => { if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {}); };
-  }, []);
+  useHideAiView();
 
   const openExternal = useCallback(() => { if ((api as any).openFileExternal) (api as any).openFileExternal(path).catch(() => {}); }, [path]);
 

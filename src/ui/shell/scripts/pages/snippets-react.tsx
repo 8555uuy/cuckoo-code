@@ -9,6 +9,7 @@
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
 import { addRecent } from '../recent.js';
+import { useHideAiView } from '../use-hide-ai-view.js';
 
 interface Snippet { id: string; name: string; content: string; autoSend?: boolean; }
 
@@ -29,6 +30,7 @@ function SnipModal({ initial, onSave, onCancel }: { initial: Snippet | null; onS
   const [name, setName] = useState(initial ? initial.name : '');
   const [content, setContent] = useState(initial ? initial.content : '');
   const [autoSend, setAutoSend] = useState(initial ? initial.autoSend !== false : true);
+  useHideAiView();
   return createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }, onClick: (e: any) => { if (e.target === e.currentTarget) onCancel(); } },
     createElement('div', { style: { background: '#fff', borderRadius: 10, padding: 20, width: 420, maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,.2)' } },
       createElement('h3', { style: { margin: '0 0 14px' } }, initial ? '编辑提示词' : '新建提示词'),

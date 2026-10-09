@@ -9,6 +9,7 @@
  */
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api, ckConfirm, ckPrompt } from '../shared.js';
+import { useHideAiView } from '../use-hide-ai-view.js';
 
 interface Profile { id: string; name: string; providerId?: string; autoOpen?: boolean; }
 interface Group { id: string; name: string; windowIds?: string[]; lastWindowId?: string; lastSessionId?: string; }
@@ -54,6 +55,7 @@ function WinItem({ p, providerMap, onOpen, onDelete, onToggleAuto }: { p: Profil
 function GroupModal({ group, profiles, onClose, onSaved }: { group: Group; profiles: Profile[]; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(group.name || '');
   const [members, setMembers] = useState<string[]>((group.windowIds || []).slice());
+  useHideAiView();
   const byId: Record<string, Profile> = {}; for (const p of profiles) byId[p.id] = p;
   const avail = profiles.filter((p) => !members.includes(p.id));
 

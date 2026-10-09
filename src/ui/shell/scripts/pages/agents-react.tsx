@@ -10,6 +10,7 @@
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
 import { addRecent } from '../recent.js';
+import { useHideAiView } from '../use-hide-ai-view.js';
 
 interface Agent { name: string; description?: string; source?: string; agentPath: string; }
 
@@ -28,6 +29,7 @@ function AgentModal({ editing, onClose, onSaved }: { editing: Agent | null; onCl
   const [name, setName] = useState(editing ? editing.name : '');
   const [scope, setScope] = useState('project');
   const isEdit = !!editing;
+  useHideAiView();
 
   const submit = useCallback(async () => {
     if (!name.trim()) { await ckAlert('请填写名称'); return; }
