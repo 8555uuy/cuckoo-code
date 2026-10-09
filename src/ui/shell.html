@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement8(type, config, children) {
+          function createElement9(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState7(initialState) {
+          function useState8(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect6(create, deps) {
+          function useEffect7(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback6(callback, deps) {
+          function useCallback7(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement8.apply(this, arguments);
+            var element = createElement9.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback6;
+          exports.useCallback = useCallback7;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect6;
+          exports.useEffect = useEffect7;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef3;
-          exports.useState = useState7;
+          exports.useState = useState8;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement8(type, props, rootContainerElement, parentNamespace) {
+          function createElement9(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement8(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement9(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -29338,6 +29338,192 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/feishu-react.tsx
+  var import_react8 = __toESM(require_react(), 1);
+  init_shared();
+  function ToggleRow({ label, checked, onChange }) {
+    return (0, import_react8.createElement)(
+      "div",
+      { className: "ck-set-field ck-set-toggle" },
+      (0, import_react8.createElement)("span", { className: "ck-set-key" }, label),
+      (0, import_react8.createElement)(
+        "label",
+        { className: "ck-switch" },
+        (0, import_react8.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
+        (0, import_react8.createElement)("span", { className: "ck-switch-track" })
+      )
+    );
+  }
+  function FeishuPage() {
+    const [cfg, setCfg] = (0, import_react8.useState)({});
+    const [status, setStatus] = (0, import_react8.useState)({ status: "", detail: "" });
+    const [chats, setChats] = (0, import_react8.useState)([]);
+    const [binding, setBinding] = (0, import_react8.useState)({});
+    const loadBinding = (0, import_react8.useCallback)(async () => {
+      if (!api.getFeishuBinding) return;
+      try {
+        const b = await api.getFeishuBinding();
+        if (api.listFeishuChats) {
+          const lr = await api.listFeishuChats();
+          setChats(lr && lr.success && lr.chats || []);
+        }
+        setBinding(b || {});
+      } catch (_) {
+      }
+    }, []);
+    const load = (0, import_react8.useCallback)(async () => {
+      if (!api.getFeishuConfig) return;
+      try {
+        const r = await api.getFeishuConfig();
+        if (r && r.success) {
+          setCfg(r.config || {});
+          setStatus({ status: r.status || "", detail: r.statusDetail || "" });
+        }
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [loadBinding]);
+    (0, import_react8.useEffect)(() => {
+      load();
+    }, [load]);
+    const save = (0, import_react8.useCallback)(async () => {
+      if (!api.saveFeishuConfig) return;
+      try {
+        const r = await api.saveFeishuConfig(cfg);
+        if (r && r.success) {
+          await load();
+        } else {
+          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+        }
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+    }, [cfg, load]);
+    const savePush = (0, import_react8.useCallback)(async () => {
+      if (!api.saveFeishuConfig) return;
+      try {
+        const r = await api.saveFeishuConfig({ pushUserMessage: !!cfg.pushUserMessage, pushAiReply: !!cfg.pushAiReply, pushToolStatus: !!cfg.pushToolStatus, pushToolName: !!cfg.pushToolName });
+        if (!(r && r.success)) await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+    }, [cfg]);
+    const onBind = (0, import_react8.useCallback)(async (chatId) => {
+      if (!api.bindFeishuChat) return;
+      const chat = chats.find((c) => c.chatId === chatId);
+      try {
+        await api.bindFeishuChat(chatId, chat ? chat.name : "");
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [chats, loadBinding]);
+    const onUnbind = (0, import_react8.useCallback)(async () => {
+      if (!api.bindFeishuChat) return;
+      try {
+        await api.bindFeishuChat("", "");
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [loadBinding]);
+    const onDisconnect = (0, import_react8.useCallback)(async () => {
+      const anyApi = api;
+      if (!anyApi.disconnectFeishu) return;
+      try {
+        await anyApi.disconnectFeishu();
+      } catch (_) {
+      }
+      await load();
+    }, [load]);
+    const statusLabel = status.status === "connected" ? "\u5DF2\u8FDE\u63A5" : status.status === "connecting" ? "\u8FDE\u63A5\u4E2D\u2026" : status.status === "error" ? "\u9519\u8BEF\uFF1A" + (status.detail || "") : "\u672A\u8FDE\u63A5";
+    return (0, import_react8.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react8.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react8.createElement)("div", { className: "ck-set-group-title" }, "\u98DE\u4E66\u540C\u6B65"),
+        (0, import_react8.createElement)(
+          "p",
+          { className: "ck-about-tip" },
+          "\u8FD8\u6CA1\u914D\u7F6E\u8FC7\uFF1F",
+          (0, import_react8.createElement)("a", { href: "#", style: { color: "var(--ck-primary)", cursor: "pointer", textDecoration: "underline" }, onClick: (e) => {
+            e.preventDefault();
+            if (api.openFeishuSetup) api.openFeishuSetup();
+          } }, "\u67E5\u770B\u56FE\u6587\u914D\u7F6E\u6559\u7A0B \u2192")
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react8.createElement)("span", { className: "ck-set-key" }, "App ID"),
+          (0, import_react8.createElement)("input", { type: "text", className: "ck-set-input", placeholder: "cli_xxxxxx", value: cfg.appId || "", onChange: (e) => setCfg({ ...cfg, appId: e.target.value }) })
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react8.createElement)("span", { className: "ck-set-key" }, "App Secret"),
+          (0, import_react8.createElement)("input", { type: "password", className: "ck-set-input", placeholder: cfg.hasSecret ? "\uFF08\u5DF2\u4FDD\u5B58\uFF0C\u7559\u7A7A\u5219\u4E0D\u53D8\uFF09" : "\u586B\u5199\u5E94\u7528\u7684 App Secret", value: cfg.appSecret || "", onChange: (e) => setCfg({ ...cfg, appSecret: e.target.value }) })
+        ),
+        (0, import_react8.createElement)(ToggleRow, { label: "\u542F\u7528\u98DE\u4E66\u540C\u6B65", checked: !!cfg.enabled, onChange: (v) => setCfg({ ...cfg, enabled: v }) }),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-actions" },
+          (0, import_react8.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: save }, "\u4FDD\u5B58\u5E76\u8FDE\u63A5"),
+          (0, import_react8.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onDisconnect }, "\u65AD\u5F00")
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "fs-status" },
+          (0, import_react8.createElement)("span", { className: "fs-dot" + (status.status === "connected" ? " connected" : status.status === "error" ? " error" : status.status === "connecting" ? " connecting" : "") }),
+          (0, import_react8.createElement)("span", { className: "ck-set-key" }, statusLabel)
+        )
+      ),
+      (0, import_react8.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react8.createElement)("div", { className: "ck-set-group-title" }, "\u672C\u7A97\u53E3\u7ED1\u5B9A\u7684\u98DE\u4E66\u7FA4"),
+        (0, import_react8.createElement)("p", { className: "ck-about-tip" }, "\u628A\u673A\u5668\u4EBA\u62C9\u8FDB\u4E00\u4E2A\u98DE\u4E66\u7FA4\uFF0C\u8FD9\u91CC\u9009\u5B83\u3002", (0, import_react8.createElement)("strong", null, "\u6BCF\u4E2A\u7A97\u53E3\u7ED1\u5B9A\u5404\u81EA\u7684\u7FA4"), "\uFF0C\u5BF9\u8BDD\u4E92\u4E0D\u5E72\u6270\u3002"),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react8.createElement)("span", { className: "ck-set-key" }, "\u98DE\u4E66\u7FA4"),
+          (0, import_react8.createElement)(
+            "select",
+            { className: "ck-set-input", value: binding.chatId || "", onChange: (e) => onBind(e.target.value) },
+            (0, import_react8.createElement)("option", { value: "" }, "\uFF08\u672A\u7ED1\u5B9A \u2014\u2014 \u8BE5\u7A97\u53E3\u98DE\u4E66\u529F\u80FD\u5173\u95ED\uFF09"),
+            ...chats.map((c) => (0, import_react8.createElement)("option", { key: c.chatId, value: c.chatId }, c.name))
+          )
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-actions" },
+          (0, import_react8.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: loadBinding }, "\u5237\u65B0\u7FA4\u5217\u8868"),
+          (0, import_react8.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onUnbind }, "\u89E3\u7ED1")
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "fs-status" },
+          (0, import_react8.createElement)("span", { className: "ck-set-key" }, binding && binding.chatId ? "\u5DF2\u7ED1\u5B9A\uFF1A" + (binding.chatName || binding.chatId) : "\u672A\u7ED1\u5B9A")
+        )
+      ),
+      (0, import_react8.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react8.createElement)("div", { className: "ck-set-group-title" }, "\u63A8\u9001\u5185\u5BB9\uFF08Cuckoo \u2192 \u98DE\u4E66\uFF09"),
+        (0, import_react8.createElement)(ToggleRow, { label: "\u7528\u6237\u6D88\u606F", checked: cfg.pushUserMessage !== false, onChange: (v) => setCfg({ ...cfg, pushUserMessage: v }) }),
+        (0, import_react8.createElement)(ToggleRow, { label: "AI \u56DE\u590D", checked: cfg.pushAiReply !== false, onChange: (v) => setCfg({ ...cfg, pushAiReply: v }) }),
+        (0, import_react8.createElement)(ToggleRow, { label: "\u5DE5\u5177\u8C03\u7528\u72B6\u6001", checked: cfg.pushToolStatus !== false, onChange: (v) => setCfg({ ...cfg, pushToolStatus: v }) }),
+        (0, import_react8.createElement)(ToggleRow, { label: "\u5DE5\u5177\u72B6\u6001\u5E26\u5DE5\u5177\u540D\uFF08\u9ED8\u8BA4\u5173\uFF0C\u9690\u79C1\uFF09", checked: cfg.pushToolName === true, onChange: (v) => setCfg({ ...cfg, pushToolName: v }) }),
+        (0, import_react8.createElement)("div", { className: "ck-actions" }, (0, import_react8.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: savePush }, "\u4FDD\u5B58\u63A8\u9001\u8BBE\u7F6E"))
+      ),
+      (0, import_react8.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react8.createElement)("div", { className: "ck-set-group-title" }, "\u63A5\u6536\uFF08\u98DE\u4E66 \u2192 Cuckoo\uFF09"),
+        (0, import_react8.createElement)("p", { className: "ck-about-tip" }, "\u5728", (0, import_react8.createElement)("strong", null, "\u7ED1\u5B9A\u7684\u7FA4"), "\u91CC\u53D1\u6D88\u606F\uFF08\u53EF @ \u6216\u76F4\u63A5\u53D1\uFF09\uFF0C\u4F1A\u9001\u5230", (0, import_react8.createElement)("strong", null, "\u672C\u7A97\u53E3"), "\u53D1\u7ED9 AI\u3002", (0, import_react8.createElement)("br"), "\u4E00\u4E2A\u7FA4\u53EA\u5BF9\u5E94\u4E00\u4E2A\u7A97\u53E3\uFF1B\u672A\u7ED1\u5B9A\u7FA4\u7684\u7A97\u53E3\u4E0D\u63A8\u4E5F\u4E0D\u6536\u3002")
+      )
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -29383,6 +29569,7 @@
     registerPage("snippets", SnippetsPage);
     registerPage("conversations", ConversationsPage);
     registerPage("token", TokenPage);
+    registerPage("feishu", FeishuPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
