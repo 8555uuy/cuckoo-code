@@ -2767,7 +2767,7 @@
             }
             return element;
           };
-          function createElement14(type, config, children) {
+          function createElement15(type, config, children) {
             var propName;
             var props = {};
             var key = null;
@@ -3341,7 +3341,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState13(initialState) {
+          function useState14(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -3353,7 +3353,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect12(create, deps) {
+          function useEffect13(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3365,7 +3365,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback12(callback, deps) {
+          function useCallback13(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3866,7 +3866,7 @@
                 error("React.createElement: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
               }
             }
-            var element = createElement14.apply(this, arguments);
+            var element = createElement15.apply(this, arguments);
             if (element == null) {
               return element;
             }
@@ -4132,11 +4132,11 @@
           exports.memo = memo2;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback12;
+          exports.useCallback = useCallback13;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect12;
+          exports.useEffect = useEffect13;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4144,7 +4144,7 @@
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef4;
-          exports.useState = useState13;
+          exports.useState = useState14;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -11673,7 +11673,7 @@
               }
             }
           }
-          function createElement14(type, props, rootContainerElement, parentNamespace) {
+          function createElement15(type, props, rootContainerElement, parentNamespace) {
             var isCustomComponentTag;
             var ownerDocument = getOwnerDocumentFromRootContainer(rootContainerElement);
             var domElement;
@@ -12543,7 +12543,7 @@
               }
               parentNamespace = hostContextDev.namespace;
             }
-            var domElement = createElement14(type, props, rootContainerInstance, parentNamespace);
+            var domElement = createElement15(type, props, rootContainerInstance, parentNamespace);
             precacheFiberNode(internalInstanceHandle, domElement);
             updateFiberProps(domElement, props);
             return domElement;
@@ -28002,15 +28002,15 @@
         return;
       }
       listEl2.innerHTML = plugins.map((p) => {
-        const hasExec = pluginHasExec(p.contributes);
-        const swTitle = hasExec ? "\u542F\u7528\u540E\uFF1A\u6280\u80FD/\u4EE3\u7406/\u89C4\u5219 + MCP + \u53EF\u6267\u884C\u5185\u5BB9\u5168\u90E8\u751F\u6548" : "\u542F\u7528\u540E\uFF1A\u6280\u80FD/\u4EE3\u7406/\u89C4\u5219\u5168\u90E8\u751F\u6548";
+        const hasExec2 = pluginHasExec(p.contributes);
+        const swTitle = hasExec2 ? "\u542F\u7528\u540E\uFF1A\u6280\u80FD/\u4EE3\u7406/\u89C4\u5219 + MCP + \u53EF\u6267\u884C\u5185\u5BB9\u5168\u90E8\u751F\u6548" : "\u542F\u7528\u540E\uFF1A\u6280\u80FD/\u4EE3\u7406/\u89C4\u5219\u5168\u90E8\u751F\u6548";
         const sw = '<label class="ck-switch" title="' + escapeAttr(swTitle) + '"><input type="checkbox" data-toggle="' + escapeAttr(p.id) + '"' + (p.enabled ? " checked" : "") + ' /><span class="ck-switch-track"></span></label>';
         const meta = [];
         if (p.version) meta.push("v" + escapeHtml(p.version));
         if (p.repo) meta.push(escapeHtml(p.repo));
         const contrib = pluginContribSummary(p.contributes);
         if (contrib) meta.push(escapeHtml(contrib));
-        return '<div class="ck-plugin-item" data-plugin="' + escapeAttr(p.id) + '"><div class="ck-plugin-head"><span class="ck-plugin-name">' + escapeHtml(p.name || p.id) + "</span>" + (hasExec ? '<span class="ck-plugin-badge update" title="\u542B\u53EF\u6267\u884C\u5185\u5BB9">\u542B\u53EF\u6267\u884C</span>' : "") + '<div class="ck-plugin-switch-row"><span class="ck-plugin-switch-label">' + (p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528") + "</span>" + sw + '</div><div class="ck-plugin-actions">' + (p.hasConfig ? '<button class="ck-snip-icon-btn" data-config="' + escapeAttr(p.id) + '" title="\u914D\u7F6E">\u2699</button>' : '<span class="ck-snip-icon-btn ck-snip-icon-placeholder" aria-hidden="true"></span>') + '<button class="ck-snip-icon-btn danger" data-uninstall="' + escapeAttr(p.id) + '" title="\u5378\u8F7D">' + ICON_TRASH + '</button></div></div><div class="ck-plugin-desc">' + escapeHtml(p.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09") + "</div>" + pluginMetaHtml(meta) + "</div>";
+        return '<div class="ck-plugin-item" data-plugin="' + escapeAttr(p.id) + '"><div class="ck-plugin-head"><span class="ck-plugin-name">' + escapeHtml(p.name || p.id) + "</span>" + (hasExec2 ? '<span class="ck-plugin-badge update" title="\u542B\u53EF\u6267\u884C\u5185\u5BB9">\u542B\u53EF\u6267\u884C</span>' : "") + '<div class="ck-plugin-switch-row"><span class="ck-plugin-switch-label">' + (p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528") + "</span>" + sw + '</div><div class="ck-plugin-actions">' + (p.hasConfig ? '<button class="ck-snip-icon-btn" data-config="' + escapeAttr(p.id) + '" title="\u914D\u7F6E">\u2699</button>' : '<span class="ck-snip-icon-btn ck-snip-icon-placeholder" aria-hidden="true"></span>') + '<button class="ck-snip-icon-btn danger" data-uninstall="' + escapeAttr(p.id) + '" title="\u5378\u8F7D">' + ICON_TRASH + '</button></div></div><div class="ck-plugin-desc">' + escapeHtml(p.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09") + "</div>" + pluginMetaHtml(meta) + "</div>";
       }).join("");
       listEl2.querySelectorAll("[data-config]").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
@@ -30856,6 +30856,385 @@
     );
   }
 
+  // src/ui/shell/scripts/pages/plugins-react.tsx
+  var import_react14 = __toESM(require_react(), 1);
+  init_shared();
+  var I4 = {
+    install: "M12 3v12M7 10l5 5 5-5M5 21h14",
+    update: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    trash: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    folder: "M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",
+    plus: "M12 5v14M5 12h14"
+  };
+  function Svg5({ d, cls }) {
+    return (0, import_react14.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react14.createElement)("path", { d }));
+  }
+  function isNewer(a, b) {
+    if (!a || !b) return false;
+    const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
+    const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
+    const n = Math.max(pa.length, pb.length);
+    for (let i = 0; i < n; i++) {
+      const x = pa[i] || 0, y = pb[i] || 0;
+      if (x > y) return true;
+      if (x < y) return false;
+    }
+    return false;
+  }
+  function hasExec(c) {
+    return !!(c && (c.providers && c.providers.length > 0 || c.mcp || c.scripts && c.scripts.length > 0));
+  }
+  function contribSummary(c) {
+    if (!c) return "";
+    const parts = [];
+    if (c.skills && c.skills.length) parts.push("\u6280\u80FD " + c.skills.length);
+    if (c.agents && c.agents.length) parts.push("\u4EE3\u7406 " + c.agents.length);
+    if (c.rules && c.rules.length) parts.push("\u89C4\u5219 " + c.rules.length);
+    if (c.mcp) parts.push("MCP");
+    if (c.providers && c.providers.length) parts.push("\u53EF\u6267\u884C " + c.providers.length);
+    if (c.scripts && c.scripts.length) parts.push("\u7F51\u9875\u811A\u672C " + c.scripts.length);
+    return parts.join(" \xB7 ");
+  }
+  function Meta({ pairs }) {
+    const cells = pairs.filter(Boolean);
+    if (!cells.length) return null;
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-plugin-meta" },
+      cells.map((c, i) => (0, import_react14.createElement)("span", { key: i, style: { display: "contents" } }, i > 0 ? (0, import_react14.createElement)("span", { className: "sep" }, "\xB7") : null, (0, import_react14.createElement)("span", null, c)))
+    );
+  }
+  function InstalledItem({ p, onToggle, onUninstall, onConfig }) {
+    const exec = hasExec(p.contributes);
+    const meta = [];
+    if (p.version) meta.push("v" + p.version);
+    if (p.repo) meta.push(p.repo);
+    const contrib = contribSummary(p.contributes);
+    if (contrib) meta.push(contrib);
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-plugin-item" },
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-plugin-head" },
+        (0, import_react14.createElement)("span", { className: "ck-plugin-name" }, p.name || p.id),
+        exec ? (0, import_react14.createElement)("span", { className: "ck-plugin-badge update", title: "\u542B\u53EF\u6267\u884C\u5185\u5BB9" }, "\u542B\u53EF\u6267\u884C") : null,
+        (0, import_react14.createElement)(
+          "div",
+          { className: "ck-plugin-switch-row" },
+          (0, import_react14.createElement)("span", { className: "ck-plugin-switch-label" }, p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528"),
+          (0, import_react14.createElement)(
+            "label",
+            { className: "ck-switch" },
+            (0, import_react14.createElement)("input", { type: "checkbox", checked: !!p.enabled, onChange: (e) => onToggle(e.target.checked) }),
+            (0, import_react14.createElement)("span", { className: "ck-switch-track" })
+          )
+        ),
+        (0, import_react14.createElement)(
+          "div",
+          { className: "ck-plugin-actions" },
+          p.hasConfig ? (0, import_react14.createElement)("button", { className: "ck-snip-icon-btn", title: "\u914D\u7F6E", onClick: onConfig }, "\u2699") : (0, import_react14.createElement)("span", { className: "ck-snip-icon-btn ck-snip-icon-placeholder" }),
+          (0, import_react14.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5378\u8F7D", onClick: onUninstall }, (0, import_react14.createElement)(Svg5, { d: I4.trash }))
+        )
+      ),
+      (0, import_react14.createElement)("div", { className: "ck-plugin-desc" }, p.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09"),
+      (0, import_react14.createElement)(Meta, { pairs: meta })
+    );
+  }
+  function MarketCard({ it, state, remote, onInstall }) {
+    const badges = [];
+    if (it.archived) badges.push((0, import_react14.createElement)("span", { key: "a", className: "ck-plugin-badge archived", title: "\u4ED3\u5E93\u5DF2\u5F52\u6863\uFF0C\u53EF\u80FD\u4E0D\u518D\u7EF4\u62A4" }, "\u5DF2\u5F52\u6863"));
+    if (state === "installed") badges.push((0, import_react14.createElement)("span", { key: "i", className: "ck-plugin-badge on" }, "\u5DF2\u5B89\u88C5"));
+    if (state === "update") badges.push((0, import_react14.createElement)("span", { key: "u", className: "ck-plugin-badge update" }, "\u53EF\u66F4\u65B0"));
+    let action = null;
+    if (state === "none") action = (0, import_react14.createElement)("button", { className: "ck-snip-icon-btn", title: "\u5B89\u88C5", onClick: () => onInstall(false) }, (0, import_react14.createElement)(Svg5, { d: I4.install }));
+    else if (state === "update") action = (0, import_react14.createElement)("button", { className: "ck-snip-icon-btn", title: "\u66F4\u65B0\u5230\u6700\u65B0", onClick: () => onInstall(true) }, (0, import_react14.createElement)(Svg5, { d: I4.update }));
+    let req = null;
+    if (remote && remote.ok) {
+      const bits = [];
+      if (remote.version) bits.push("\u63D2\u4EF6 v" + remote.version);
+      if (remote.minAppVersion) bits.push("\u9700\u8981 Cuckoo Code \u2265 " + remote.minAppVersion);
+      if (bits.length) req = (0, import_react14.createElement)("div", { className: "ck-plugin-req" }, bits.join(" \xB7 "));
+    } else if (remote && remote.error) req = (0, import_react14.createElement)("div", { className: "ck-plugin-req err" }, "\u8BFB\u4E0D\u5230 plugin.json\uFF1A" + remote.error);
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-plugin-item" },
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-plugin-head" },
+        (0, import_react14.createElement)("span", { className: "ck-plugin-name", title: it.id }, it.id),
+        ...badges,
+        (0, import_react14.createElement)("div", { className: "ck-plugin-actions" }, action)
+      ),
+      (0, import_react14.createElement)("div", { className: "ck-plugin-desc" }, it.description || "\uFF08\u65E0\u7B80\u4ECB\uFF09"),
+      (0, import_react14.createElement)(Meta, { pairs: [it.language, it.stars ? "\u2605 " + it.stars : "", it.license, (it.pushedAt || it.updatedAt || "").slice(0, 10)] }),
+      req
+    );
+  }
+  function PluginsPage() {
+    const [installed, setInstalled] = (0, import_react14.useState)(null);
+    const [market, setMarket] = (0, import_react14.useState)([]);
+    const [marketNotice, setMarketNotice] = (0, import_react14.useState)("");
+    const [marketRemote, setMarketRemote] = (0, import_react14.useState)({});
+    const [installedMap, setInstalledMap] = (0, import_react14.useState)({});
+    const [dsh, setDsh] = (0, import_react14.useState)(null);
+    const anyApi = api;
+    const loadInstalled = (0, import_react14.useCallback)(async () => {
+      if (!api.listInstalledPlugins) {
+        setInstalled([]);
+        return;
+      }
+      try {
+        const r = await api.listInstalledPlugins();
+        setInstalled((r && r.success ? r.plugins : []) || []);
+      } catch (_) {
+        setInstalled([]);
+      }
+    }, []);
+    const loadMarket = (0, import_react14.useCallback)(async (force) => {
+      if (!anyApi.pluginMarketList) {
+        setMarket([]);
+        return;
+      }
+      setMarketNotice("");
+      try {
+        const r = await anyApi.pluginMarketList({ force: !!force });
+        if (!r || !r.success) {
+          setMarket([]);
+          setMarketNotice(r && r.error || "\u52A0\u8F7D\u5931\u8D25");
+          return;
+        }
+        setMarket(r.items || []);
+        setInstalledMap(r && r.installed || {});
+        setMarketNotice(r && r.error || "");
+        const targets = (r.items || []).filter((it) => it.defaultBranch).map((it) => ({ repo: it.id, branch: it.defaultBranch }));
+        if (targets.length && anyApi.pluginMarketRemote) {
+          anyApi.pluginMarketRemote(targets).then((rr) => {
+            if (rr && rr.success) setMarketRemote(rr.remote || {});
+          }).catch(() => {
+          });
+        }
+      } catch (_) {
+        setMarket([]);
+      }
+    }, [anyApi]);
+    const loadDsh = (0, import_react14.useCallback)(async () => {
+      if (typeof anyApi.cuckooPluginList !== "function") {
+        setDsh([]);
+        return;
+      }
+      try {
+        const r = await anyApi.cuckooPluginList();
+        setDsh((r && r.success ? r.plugins : []) || []);
+      } catch (_) {
+        setDsh([]);
+      }
+    }, [anyApi]);
+    const loadAll = (0, import_react14.useCallback)(async () => {
+      await loadInstalled();
+      await loadMarket(false);
+      await loadDsh();
+    }, [loadInstalled, loadMarket, loadDsh]);
+    (0, import_react14.useEffect)(() => {
+      loadAll();
+    }, [loadAll]);
+    const onToggleInstalled = (0, import_react14.useCallback)(async (p, v) => {
+      if (v && hasExec(p.contributes)) {
+        const lines = (p.contributes.providers || []).map((f) => "\xB7 providers/" + f + "\uFF08\u4F1A\u88AB require \u6267\u884C\uFF09");
+        if (p.contributes.mcp) lines.push("\xB7 mcp.json \u91CC\u7684 MCP server\uFF08\u4F1A\u542F\u52A8\u5B50\u8FDB\u7A0B\uFF09");
+        const ok = await ckConfirm("\u542F\u7528\u300C" + (p.name || p.id) + "\u300D\uFF1F\n\n\u8BE5\u63D2\u4EF6\u542B\u53EF\u6267\u884C\u5185\u5BB9\uFF0C\u542F\u7528\u540E\u4F1A\u5728\u672C\u673A\u8FD0\u884C\u7B2C\u4E09\u65B9\u4EE3\u7801\uFF1A\n\n" + lines.join("\n"), "\u542F\u7528\u63D2\u4EF6");
+        if (!ok) return;
+      }
+      if (!api.pluginSetEnabled) return;
+      const r = await api.pluginSetEnabled(p.id, v);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u64CD\u4F5C\u5931\u8D25");
+        return;
+      }
+      loadInstalled();
+    }, [loadInstalled]);
+    const onUninstallInstalled = (0, import_react14.useCallback)(async (p) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5378\u8F7D\u63D2\u4EF6\u300C" + p.id + "\u300D\uFF1F\n\n\u63D2\u4EF6\u76EE\u5F55\u4E0E\u5176\u542F\u7528\u72B6\u6001\u90FD\u4F1A\u88AB\u5220\u9664\u3002", "\u5378\u8F7D\u63D2\u4EF6")) return;
+      if (!api.pluginUninstall) return;
+      const r = await api.pluginUninstall(p.id);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u5378\u8F7D\u5931\u8D25");
+        return;
+      }
+      loadAll();
+    }, [loadAll]);
+    const onConfig = (0, import_react14.useCallback)(async (id) => {
+      if (typeof anyApi.pluginConfigGet !== "function") {
+        await ckAlert("\u914D\u7F6E\u63A5\u53E3\u4E0D\u53EF\u7528");
+        return;
+      }
+      const r = await anyApi.pluginConfigGet(id);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
+        return;
+      }
+      const schema = r.schema || {};
+      const values = r.values || {};
+      const keys = Object.keys(schema);
+      if (keys.length === 0) {
+        await ckAlert("\u8BE5\u63D2\u4EF6\u6CA1\u6709\u914D\u7F6E\u9879");
+        return;
+      }
+      const out = {};
+      for (const k of keys) {
+        const f = schema[k] || {};
+        if (f.type === "boolean") {
+          const v = await ckConfirm((f.label || k) + " \uFF1F\uFF08\u786E\u5B9A=\u5F00\uFF0C\u53D6\u6D88=\u5173\uFF09", "\u63D2\u4EF6\u914D\u7F6E");
+          out[k] = v;
+        } else {
+          const def = values[k] !== void 0 ? values[k] : f.default !== void 0 ? f.default : "";
+          const v = await ckPrompt({ title: f.label || k, placeholder: f.description || "", value: String(def) });
+          if (v === null) return;
+          out[k] = f.type === "number" ? Number(v) : v;
+        }
+      }
+      const sr = await anyApi.pluginConfigSet(id, out);
+      if (!sr || !sr.success) {
+        await ckAlert(sr && sr.error || "\u4FDD\u5B58\u5931\u8D25");
+        return;
+      }
+      await ckAlert("\u5DF2\u4FDD\u5B58\u3002\u91CD\u542F\u6216\u91CD\u8F7D\u540E\u751F\u6548\uFF08\u90E8\u5206\u63D2\u4EF6\u5373\u65F6\u751F\u6548\uFF09\u3002", "\u914D\u7F6E\u5DF2\u4FDD\u5B58");
+    }, [anyApi]);
+    const onInstallMarket = (0, import_react14.useCallback)(async (it, isUpgrade) => {
+      const remote = marketRemote[it.id];
+      const what = isUpgrade ? "\u66F4\u65B0" : "\u5B89\u88C5";
+      const lines = [it.id];
+      if (it.description) lines.push(it.description);
+      if (remote && remote.ok) {
+        if (remote.version) lines.push("\u7248\u672C\uFF1Av" + remote.version);
+      }
+      const ok = await ckConfirm("\u786E\u5B9A" + what + "\u8BE5\u63D2\u4EF6\uFF1F\n\n" + lines.join("\n") + "\n\n\u88C5\u597D\u540E\u9ED8\u8BA4\u7981\u7528\uFF0C\u9700\u5728\u300C\u5DF2\u5B89\u88C5\u300D\u5904\u6253\u5F00\u5F00\u5173\u624D\u751F\u6548\u3002", what + "\u63D2\u4EF6");
+      if (!ok) return;
+      if (!api.pluginInstall) return;
+      const r = await api.pluginInstall(it.id, it.defaultBranch || "", !!isUpgrade);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || what + "\u5931\u8D25", what + "\u5931\u8D25");
+        return;
+      }
+      await ckAlert((r.upgraded ? "\u5DF2\u66F4\u65B0\uFF1A" : "\u5DF2\u5B89\u88C5\uFF1A") + (r.plugin && r.plugin.name || it.id), r.upgraded ? "\u66F4\u65B0\u5B8C\u6210" : "\u5B89\u88C5\u5B8C\u6210");
+      loadAll();
+    }, [marketRemote, loadAll]);
+    const onToggleDsh = (0, import_react14.useCallback)(async (p, v) => {
+      const r = await anyApi.cuckooPluginToggle(p.id, v);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u64CD\u4F5C\u5931\u8D25");
+        return;
+      }
+      loadDsh();
+    }, [anyApi, loadDsh]);
+    const onUninstallDsh = (0, import_react14.useCallback)(async (p) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5378\u8F7D\u63D2\u4EF6\u300C" + p.id + "\u300D\uFF1F\n\uFF08\u5DE5\u5177\u9700\u91CD\u542F\u540E\u79FB\u9664\uFF09")) return;
+      const r = await anyApi.cuckooPluginUninstall(p.id);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u5378\u8F7D\u5931\u8D25");
+        return;
+      }
+      loadDsh();
+    }, [anyApi, loadDsh]);
+    const onInstallDsh = (0, import_react14.useCallback)(async () => {
+      if (typeof anyApi.cuckooPluginInstall !== "function") return;
+      const pkgName = await ckPrompt({ title: "\u5B89\u88C5 DSH \u63D2\u4EF6", placeholder: "npm \u5305\u540D\uFF0C\u5982 @scope/dsh-plugin-xxx", value: "" });
+      if (!pkgName) return;
+      const r = await anyApi.cuckooPluginInstall(pkgName);
+      if (!r || !r.success) {
+        await ckAlert(r && r.error || "\u5B89\u88C5\u5931\u8D25", "\u5B89\u88C5\u5931\u8D25");
+        return;
+      }
+      const tools = (r.tools || []).join(", ");
+      await ckAlert("\u5DF2\u5B89\u88C5\uFF1A" + (r.pluginName || r.id) + "\n\u5DE5\u5177\uFF1A" + (tools || "(\u65E0)") + "\n\n\u91CD\u542F\u5E94\u7528\u540E\u5DE5\u5177\u751F\u6548\u3002", "\u5B89\u88C5\u5B8C\u6210");
+      loadDsh();
+    }, [anyApi, loadDsh]);
+    const marketState = (it) => {
+      const inst = installedMap[it.id];
+      if (!inst) return "none";
+      const remote = marketRemote[it.id];
+      if (remote && remote.ok && remote.version) return isNewer(remote.version, inst.version) ? "update" : "installed";
+      if (it.pushedAt && inst.installedAt) {
+        const p = Date.parse(it.pushedAt);
+        const i = Date.parse(inst.installedAt);
+        if (Number.isFinite(p) && Number.isFinite(i) && p > i) return "update";
+      }
+      return "installed";
+    };
+    const instList = installed || [];
+    const dshList = dsh || [];
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      // 已安装
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react14.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DF2\u5B89\u88C5\u63D2\u4EF6"),
+        (0, import_react14.createElement)("button", { className: "ck-icon-btn", title: "\u6253\u5F00\u63D2\u4EF6\u76EE\u5F55", onClick: async () => {
+          if (api.pluginOpenDir) {
+            const r = await api.pluginOpenDir();
+            if (r && !r.success) await ckAlert(r.error || "\u6253\u5F00\u76EE\u5F55\u5931\u8D25");
+          }
+        } }, (0, import_react14.createElement)(Svg5, { d: I4.folder })),
+        (0, import_react14.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\uFF08\u91CD\u65B0\u641C\u7D22\u5E02\u573A\uFF09", onClick: () => loadMarket(true) }, (0, import_react14.createElement)(Svg5, { d: I4.refresh }))
+      ),
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-list" },
+        installed === null ? (0, import_react14.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : instList.length === 0 ? (0, import_react14.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u63D2\u4EF6", (0, import_react14.createElement)("br"), "\u4ECE\u4E0B\u65B9\u5E02\u573A\u5B89\u88C5") : instList.map((p) => (0, import_react14.createElement)(InstalledItem, { key: p.id, p, onToggle: (v) => onToggleInstalled(p, v), onUninstall: () => onUninstallInstalled(p), onConfig: () => onConfig(p.id) }))
+      ),
+      // 市场
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react14.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5E02\u573A"),
+        (0, import_react14.createElement)("span", { className: "ck-snip-badge", title: "\u552F\u4E00\u641C\u7D22\u6E90" }, "topic:cuckoo-plugin")
+      ),
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-list" },
+        market.length === 0 ? (0, import_react14.createElement)("div", { className: "ck-list-empty" }, marketNotice || "\u6682\u65E0\u63D2\u4EF6", (0, import_react14.createElement)("br"), (0, import_react14.createElement)("br"), "\u7ED9\u4F60\u7684\u4ED3\u5E93\u6253\u4E0A ", (0, import_react14.createElement)("b", null, "cuckoo-plugin"), " topic\uFF0C", (0, import_react14.createElement)("br"), "\u5B83\u5C31\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC") : market.map((it) => (0, import_react14.createElement)(MarketCard, { key: it.id, it, state: marketState(it), remote: marketRemote[it.id], onInstall: (u) => onInstallMarket(it, u) }))
+      ),
+      // DSH 插件
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react14.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "DSH \u63D2\u4EF6\uFF08npm\uFF09"),
+        (0, import_react14.createElement)("button", { className: "ck-icon-btn", title: "\u6253\u5F00\u63D2\u4EF6\u76EE\u5F55", onClick: async () => {
+          if (typeof anyApi.cuckooPluginOpenDir === "function") {
+            const r = await anyApi.cuckooPluginOpenDir();
+            if (r && !r.success) await ckAlert(r.error || "\u6253\u5F00\u76EE\u5F55\u5931\u8D25");
+          }
+        } }, (0, import_react14.createElement)(Svg5, { d: I4.folder })),
+        (0, import_react14.createElement)("button", { className: "ck-icon-btn", title: "\u5B89\u88C5 DSH \u63D2\u4EF6\uFF08\u8F93\u5165 npm \u5305\u540D\uFF09", onClick: onInstallDsh }, (0, import_react14.createElement)(Svg5, { d: I4.plus }))
+      ),
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-list" },
+        dsh === null ? (0, import_react14.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : dshList.length === 0 ? (0, import_react14.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0 DSH \u63D2\u4EF6\uFF08\u70B9 + \u5B89\u88C5\uFF09") : dshList.map((p) => (0, import_react14.createElement)(
+          "div",
+          { key: p.id, className: "ck-list-item" },
+          (0, import_react14.createElement)(
+            "div",
+            { className: "ck-list-main" },
+            (0, import_react14.createElement)("div", { className: "ck-list-title" }, p.name || p.id, p.version ? (0, import_react14.createElement)("span", { className: "ck-plugin-ver" }, "v" + p.version) : null),
+            p.description ? (0, import_react14.createElement)("div", { className: "ck-list-desc" }, p.description) : null,
+            (0, import_react14.createElement)("div", { className: "ck-plugin-meta" }, (0, import_react14.createElement)("span", null, p.id))
+          ),
+          (0, import_react14.createElement)(
+            "label",
+            { className: "ck-switch", title: p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528" },
+            (0, import_react14.createElement)("input", { type: "checkbox", checked: !!p.enabled, onChange: (e) => onToggleDsh(p, e.target.checked) }),
+            (0, import_react14.createElement)("span", { className: "ck-switch-track" })
+          ),
+          (0, import_react14.createElement)("button", { className: "ck-icon-btn", title: "\u5378\u8F7D", onClick: () => onUninstallDsh(p) }, (0, import_react14.createElement)(Svg5, { d: I4.trash }))
+        ))
+      )
+    );
+  }
+
   // src/ui/shell/scripts/main.ts
   registerTab("workspaces", loadWorkspaces);
   registerTab("files", loadFiles);
@@ -30907,6 +31286,7 @@
     registerPage("files", FilesPage);
     registerPage("windows", WindowsPage);
     registerPage("workspaces", WorkspacesPage);
+    registerPage("plugins", PluginsPage);
     mountShellFrame();
   } catch (e) {
     console.error("[react-shell] \u6302\u8F7D\u5931\u8D25", e);
