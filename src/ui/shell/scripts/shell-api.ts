@@ -12,6 +12,8 @@ export interface ShellAPI {
   home?: () => void;
   onUrlUpdated?: (cb: (data: any) => void) => void;
   toggleSidebar?: (width: number) => void;
+  /** 隐藏/显示 AI 视图（弹窗盖过 AI 区域时用） */
+  setAiViewVisible?: (visible: boolean) => Promise<any>;
   startSidebarDrag?: () => void;
   endSidebarDrag?: () => void;
   onSidebarDrag?: (cb: (width: number) => void) => void;

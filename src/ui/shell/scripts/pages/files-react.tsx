@@ -9,6 +9,7 @@
  */
 import { createElement, useState, useEffect, useCallback, useRef, memo } from 'react';
 import { api } from '../shared.js';
+import { showInMonaco } from '../preview-monaco.js';
 
 interface TreeNode { name: string; path: string; type: 'dir' | 'file'; children?: TreeNode[] }
 
@@ -41,6 +42,12 @@ const EXT_BADGE: Record<string, string> = {
 };
 const MEDIA_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico', 'avif', 'mp4', 'mp3', 'wav', 'mov', 'webm']);
 
+function fmtSize(n: any): string {
+  if (typeof n !== 'number') return '';
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1024 / 1024).toFixed(2) + ' MB';
+}
 function extOf(name: string): string { const dot = name.lastIndexOf('.'); return dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''; }
 function colorCls(name: string, type: 'dir' | 'file'): string {
   if (type === 'dir') return '';
@@ -102,23 +109,69 @@ function TreeNodes({ nodes, depth, expanded, onToggle, onFile }: { nodes: TreeNo
 
 function flatten(nodes: TreeNode[], out: TreeNode[]): TreeNode[] { for (const n of nodes) { out.push(n); if (n.children) flatten(n.children, out); } return out; }
 
-/** 预览面板（静态骨架，交给 preview.js/Monaco；memo 确保 React 不重渲染它） */
-const PreviewPane = memo(function PreviewPane() {
-  return createElement('div', { className: 'ck-preview-pane', id: 'ck-preview-pane' },
-    createElement('div', { className: 'ck-preview-head' },
-      createElement('span', { className: 'ck-preview-name', id: 'ck-preview-name' }, '文件预览'),
-      createElement('span', { className: 'ck-preview-size', id: 'ck-preview-size' }),
-      createElement('span', { className: 'ck-preview-acts' },
-        createElement('span', { className: 'ck-preview-btn', id: 'ck-preview-ext', title: '用系统程序打开' }, '↗'),
-        createElement('span', { className: 'ck-preview-btn', id: 'ck-preview-close', title: '关闭预览' }, '✕'),
+/** 文件预览弹窗（应用内模态，feat/shell-react 改版） */
+function FilePreviewModal({ path, onClose }: { path: string; onClose: () => void }) {
+  const [state, setState] = useState<{ status: 'loading' | 'ok' | 'err'; size?: number; error?: string }>({ status: 'loading' });
+  const monacoRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r: any = await (api as any).readProjectFile(path);
+        if (cancelled) return;
+        if (!r || !r.success) { setState({ status: 'err', error: (r && r.error) || '读取失败' }); return; }
+        setState({ status: 'ok', size: r.size });
+        setTimeout(async () => {
+          if (cancelled || !monacoRef.current) return;
+          try { await showInMonaco(monacoRef.current, path, r.content); } catch (_) {}
+        }, 0);
+      } catch (e: any) {
+        if (!cancelled) setState({ status: 'err', error: e && e.message ? e.message : String(e) });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [path]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // 弹窗打开时隐藏 AI 视图（原生视图永远在网页之上），关闭时恢复
+  useEffect(() => {
+    const anyApi = api as any;
+    if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {});
+    return () => { if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {}); };
+  }, []);
+
+  const openExternal = useCallback(() => { if ((api as any).openFileExternal) (api as any).openFileExternal(path).catch(() => {}); }, [path]);
+
+  return createElement('div', {
+    style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    onClick: (e: any) => { if (e.target === e.currentTarget) onClose(); },
+  },
+    createElement('div', {
+      style: { background: 'var(--ck-bg, #fff)', borderRadius: 10, width: '88vw', height: '85vh', maxWidth: 1200, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,.35)', border: '1px solid var(--ck-border, #e0e0e0)' },
+      onClick: (e: any) => e.stopPropagation(),
+    },
+      createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: '1px solid var(--ck-border, #e0e0e0)', flexShrink: 0 } },
+        createElement('span', { style: { fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: path }, path),
+        state.size !== undefined ? createElement('span', { style: { fontSize: 12, opacity: .6 } }, fmtSize(state.size)) : null,
+        createElement('button', { title: '用系统程序打开', onClick: openExternal, style: { border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, padding: '2px 8px' } }, '↗'),
+        createElement('button', { title: '关闭', onClick: onClose, style: { border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, padding: '2px 8px' } }, '✕'),
+      ),
+      createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative' } },
+        state.status === 'loading' ? createElement('div', { style: { padding: 20, opacity: .6 } }, '加载中…')
+          : state.status === 'err' ? createElement('div', { style: { padding: 20, color: '#e55' } }, state.error)
+          : createElement('div', { ref: monacoRef, style: { width: '100%', height: '100%' } }),
       ),
     ),
-    createElement('div', { className: 'ck-preview-body', id: 'ck-preview-body' },
-      createElement('div', { className: 'ck-preview-empty', id: 'ck-preview-empty' }, '点击左侧文件查看内容'),
-      createElement('div', { className: 'ck-monaco', id: 'ck-monaco', style: { display: 'none' } }),
-    ),
   );
-});
+}
+
+// PreviewPane 已被 FilePreviewModal 取代（旧组件删除）
 
 function RefreshIcon() {
   return createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, createElement('path', { d: 'M21 12a9 9 0 1 1-2.64-6.36' }), createElement('path', { d: 'M21 3v6h-6' }));
@@ -132,6 +185,7 @@ export function FilesPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [truncated, setTruncated] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!api.listProjectTree) return;
@@ -152,7 +206,7 @@ export function FilesPage() {
   }, [load]);
 
   const onToggle = useCallback((p: string) => { setExpanded((s) => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n; }); }, []);
-  const onFile = useCallback(async (p: string) => { try { const { openPreview } = await import('../preview.js'); await openPreview(p); } catch (_) {} }, []);
+  const onFile = useCallback((p: string) => { setPreviewPath(p); }, []);
 
   // 搜索过滤
   let body;
@@ -192,7 +246,7 @@ export function FilesPage() {
     ),
     createElement('div', { className: 'ck-files-cols' },
       createElement('div', { className: 'ck-list ck-ft', id: 'ft-list' }, body),
-      createElement(PreviewPane),
     ),
+    previewPath ? createElement(FilePreviewModal, { path: previewPath, onClose: () => setPreviewPath(null) }) : null,
   );
 }

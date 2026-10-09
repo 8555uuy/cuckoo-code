@@ -1783,24 +1783,12 @@
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __esm = (fn, res, err) => function __init() {
-    if (err) throw err[0];
-    try {
-      return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-    } catch (e) {
-      throw err = [e], e;
-    }
-  };
   var __commonJS = (cb, mod) => function __require() {
     try {
       return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
     } catch (e) {
       throw mod = 0, e;
     }
-  };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
   };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
@@ -1818,460 +1806,6 @@
     isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
     mod
   ));
-
-  // src/ui/shell/scripts/shared.ts
-  function ckDialog(opts) {
-    return new Promise((resolve) => {
-      const mask = document.getElementById("ck-dialog");
-      const titleEl = document.getElementById("ck-dialog-title");
-      const msgEl = document.getElementById("ck-dialog-msg");
-      const okBtn = document.getElementById("ck-dialog-ok");
-      const cancelBtn = document.getElementById("ck-dialog-cancel");
-      if (!mask || !okBtn || !cancelBtn) {
-        resolve(true);
-        return;
-      }
-      if (titleEl) titleEl.textContent = opts.title || "\u63D0\u793A";
-      if (msgEl) msgEl.textContent = opts.message || "";
-      cancelBtn.classList.toggle("cuckoo-hidden", !opts.confirm);
-      function cleanup() {
-        mask.classList.add("cuckoo-hidden");
-        okBtn.removeEventListener("click", onOk);
-        cancelBtn.removeEventListener("click", onCancel);
-        mask.removeEventListener("click", onMask);
-      }
-      function onOk() {
-        cleanup();
-        resolve(true);
-      }
-      function onCancel() {
-        cleanup();
-        resolve(false);
-      }
-      function onMask(e) {
-        if (e.target === mask) {
-          cleanup();
-          resolve(false);
-        }
-      }
-      okBtn.addEventListener("click", onOk);
-      cancelBtn.addEventListener("click", onCancel);
-      mask.addEventListener("click", onMask);
-      mask.classList.remove("cuckoo-hidden");
-    });
-  }
-  function ckConfirm(message, title) {
-    return ckDialog({ title: title || "\u786E\u8BA4", message, confirm: true });
-  }
-  function ckAlert(message, title) {
-    return ckDialog({ title: title || "\u63D0\u793A", message, confirm: false });
-  }
-  function ckPrompt(opts) {
-    return new Promise((resolve) => {
-      const mask = document.getElementById("input-modal");
-      const titleEl = document.getElementById("input-modal-title");
-      const inputEl = document.getElementById("input-modal-value");
-      const okBtn = document.getElementById("input-modal-ok");
-      const cancelBtn = document.getElementById("input-modal-cancel");
-      if (!mask || !okBtn || !cancelBtn || !inputEl) {
-        resolve(null);
-        return;
-      }
-      if (titleEl) titleEl.textContent = opts.title || "\u8F93\u5165";
-      inputEl.placeholder = opts.placeholder || "";
-      inputEl.value = opts.value || "";
-      function cleanup() {
-        mask.classList.add("cuckoo-hidden");
-        okBtn.removeEventListener("click", onOk);
-        cancelBtn.removeEventListener("click", onCancel);
-        mask.removeEventListener("click", onMask);
-        inputEl.removeEventListener("keydown", onKey);
-      }
-      function onOk() {
-        const v = String(inputEl.value || "").trim();
-        cleanup();
-        resolve(v || null);
-      }
-      function onCancel() {
-        cleanup();
-        resolve(null);
-      }
-      function onMask(e) {
-        if (e.target === mask) {
-          cleanup();
-          resolve(null);
-        }
-      }
-      function onKey(e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          onOk();
-        } else if (e.key === "Escape") {
-          onCancel();
-        }
-      }
-      okBtn.addEventListener("click", onOk);
-      cancelBtn.addEventListener("click", onCancel);
-      mask.addEventListener("click", onMask);
-      inputEl.addEventListener("keydown", onKey);
-      mask.classList.remove("cuckoo-hidden");
-      setTimeout(() => {
-        inputEl.focus();
-        inputEl.select();
-      }, 50);
-    });
-  }
-  function escapeHtml(s) {
-    return String(s === null || s === void 0 ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
-  function formatTokenCount(n) {
-    if (!isFinite(n) || n < 0) return "0";
-    if (n >= 1e8) return (n / 1e8).toFixed(2) + "\u4EBF";
-    if (n >= 1e4) return (n / 1e4).toFixed(2) + "\u4E07";
-    return String(Math.round(n));
-  }
-  function formatShort(n) {
-    if (!isFinite(n) || n <= 0) return "0";
-    if (n >= 1e8) return (n / 1e8).toFixed(1) + "\u4EBF";
-    if (n >= 1e4) return (n / 1e4).toFixed(1) + "\u4E07";
-    return String(Math.round(n));
-  }
-  var api;
-  var init_shared = __esm({
-    "src/ui/shell/scripts/shared.ts"() {
-      "use strict";
-      api = window.shellAPI || {};
-    }
-  });
-
-  // src/ui/shell/scripts/preview-monaco.ts
-  function langOf(name) {
-    const dot = name.lastIndexOf(".");
-    if (dot < 0) return "plaintext";
-    return LANG_MAP[name.slice(dot + 1).toLowerCase()] || "plaintext";
-  }
-  function loadMonaco() {
-    if (monacoPromise) return monacoPromise;
-    monacoPromise = new Promise((resolve, reject) => {
-      const req = window.require;
-      if (!req) {
-        reject(new Error("Monaco loader \u672A\u52A0\u8F7D"));
-        return;
-      }
-      try {
-        req.config({ paths: { vs: "vendor/monaco/vs" } });
-        window.MonacoEnvironment = {
-          getWorkerUrl: function(moduleId, label) {
-            const base = "vendor/monaco/vs/";
-            if (label === "json") return base + "language/json/json.worker.js";
-            if (label === "css" || label === "scss" || label === "less") return base + "language/css/css.worker.js";
-            if (label === "html" || label === "handlebars" || label === "razor") return base + "language/html/html.worker.js";
-            if (label === "typescript" || label === "javascript") return base + "language/typescript/ts.worker.js";
-            return base + "editor/editor.worker.js";
-          }
-        };
-        req(["vs/editor/editor.main"], () => {
-          resolve(window.monaco);
-        }, (err) => reject(err || new Error("\u52A0\u8F7D\u5931\u8D25")));
-      } catch (e) {
-        reject(e);
-      }
-    });
-    return monacoPromise;
-  }
-  function themeName() {
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs";
-  }
-  async function showInMonaco(container, fileName, content) {
-    const monaco = await loadMonaco();
-    const lang = langOf(fileName);
-    if (!editor) {
-      editor = monaco.editor.create(container, {
-        value: content,
-        language: lang,
-        theme: themeName(),
-        readOnly: true,
-        automaticLayout: true,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        fontSize: 12.5,
-        lineNumbers: "on",
-        renderWhitespace: "none",
-        wordWrap: "off"
-      });
-    } else {
-      const model = monaco.editor.createModel(content, lang);
-      const old = editor.getModel();
-      editor.setModel(model);
-      if (old) old.dispose();
-    }
-  }
-  function syncMonacoTheme() {
-    if (editor) {
-      try {
-        window.monaco.editor.setTheme(themeName());
-      } catch (_) {
-      }
-    }
-  }
-  var monacoPromise, editor, LANG_MAP;
-  var init_preview_monaco = __esm({
-    "src/ui/shell/scripts/preview-monaco.ts"() {
-      "use strict";
-      monacoPromise = null;
-      editor = null;
-      LANG_MAP = {
-        ts: "typescript",
-        tsx: "typescript",
-        mts: "typescript",
-        cts: "typescript",
-        js: "javascript",
-        jsx: "javascript",
-        mjs: "javascript",
-        cjs: "javascript",
-        json: "json",
-        json5: "json",
-        md: "markdown",
-        markdown: "markdown",
-        mdx: "markdown",
-        css: "css",
-        scss: "scss",
-        less: "less",
-        sass: "scss",
-        html: "html",
-        htm: "html",
-        vue: "html",
-        svelte: "html",
-        py: "python",
-        pyw: "python",
-        java: "java",
-        kt: "kotlin",
-        kts: "kotlin",
-        go: "go",
-        rs: "rust",
-        rb: "ruby",
-        php: "php",
-        c: "c",
-        h: "c",
-        cc: "cpp",
-        cpp: "cpp",
-        hpp: "cpp",
-        cxx: "cpp",
-        cs: "csharp",
-        sh: "shell",
-        bash: "shell",
-        zsh: "shell",
-        bat: "bat",
-        cmd: "bat",
-        ps1: "powershell",
-        yml: "yaml",
-        yaml: "yaml",
-        xml: "xml",
-        svg: "xml",
-        sql: "sql",
-        txt: "plaintext",
-        log: "plaintext",
-        lock: "plaintext"
-      };
-      if (window.matchMedia) {
-        try {
-          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncMonacoTheme);
-        } catch (_) {
-        }
-      }
-    }
-  });
-
-  // src/ui/shell/scripts/preview.ts
-  var preview_exports = {};
-  __export(preview_exports, {
-    dismissPreview: () => dismissPreview,
-    hidePreview: () => hidePreview,
-    openPreview: () => openPreview,
-    restorePreview: () => restorePreview
-  });
-  function pane() {
-    return document.getElementById("ck-preview-pane");
-  }
-  function listEl() {
-    return document.getElementById("ft-list");
-  }
-  function sidebarEl() {
-    return document.getElementById("ck-sidebar");
-  }
-  function colsEl() {
-    return document.querySelector(".ck-files-cols");
-  }
-  function getPreviewWidth() {
-    try {
-      const v = Number(localStorage.getItem(PREVIEW_W_KEY));
-      if (Number.isFinite(v) && v >= MIN_PREVIEW_W && v <= 1600) return Math.round(v);
-    } catch (_) {
-    }
-    return 420;
-  }
-  function maxPreviewWidth() {
-    const avail = window.innerWidth - baseSidebarWidth() - 300;
-    return Math.max(MIN_PREVIEW_W, avail);
-  }
-  function savePreviewWidth(w) {
-    try {
-      localStorage.setItem(PREVIEW_W_KEY, String(w));
-    } catch (_) {
-    }
-  }
-  function baseSidebarWidth() {
-    try {
-      const v = Number(localStorage.getItem("cuckoo-sidebar-width"));
-      if (Number.isFinite(v) && v >= 320) return Math.round(v);
-    } catch (_) {
-    }
-    return 320;
-  }
-  function setSidebarWidth(total) {
-    let ww = Math.round(total);
-    const max = Math.round(window.innerWidth * 0.75);
-    if (ww > max) ww = max;
-    if (ww < 320) ww = 320;
-    const sb = sidebarEl();
-    if (sb && !sb.classList.contains("ck-collapsed")) sb.style.width = ww + "px";
-    if (api.toggleSidebar) api.toggleSidebar(ww);
-  }
-  function fmtSize(n) {
-    if (typeof n !== "number") return "";
-    if (n < 1024) return n + " B";
-    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
-    return (n / 1024 / 1024).toFixed(2) + " MB";
-  }
-  async function loadFile(relPath) {
-    const nameEl = document.getElementById("ck-preview-name");
-    const sizeEl = document.getElementById("ck-preview-size");
-    const emptyEl = document.getElementById("ck-preview-empty");
-    const monacoEl = document.getElementById("ck-monaco");
-    if (nameEl) {
-      nameEl.textContent = relPath;
-      nameEl.title = relPath;
-    }
-    if (sizeEl) sizeEl.textContent = "";
-    if (emptyEl) {
-      emptyEl.style.display = "block";
-      emptyEl.textContent = "\u52A0\u8F7D\u4E2D\u2026";
-    }
-    if (monacoEl) monacoEl.style.display = "none";
-    try {
-      const r = await api.readProjectFile(relPath);
-      if (!r || !r.success) {
-        if (emptyEl) {
-          emptyEl.style.display = "block";
-          emptyEl.textContent = r && r.error || "\u8BFB\u53D6\u5931\u8D25";
-        }
-        return;
-      }
-      if (sizeEl) sizeEl.textContent = fmtSize(r.size);
-      if (monacoEl) {
-        monacoEl.style.display = "block";
-        if (emptyEl) emptyEl.style.display = "none";
-        await showInMonaco(monacoEl, relPath, r.content);
-      }
-    } catch (err) {
-      if (emptyEl) {
-        emptyEl.style.display = "block";
-        emptyEl.textContent = "\u8BFB\u53D6\u5931\u8D25: " + escapeHtml(err.message);
-      }
-      if (monacoEl) monacoEl.style.display = "none";
-    }
-  }
-  async function openPreview(relPath) {
-    const p = pane();
-    if (!p) return;
-    currentRelPath = relPath;
-    if (!p.classList.contains("open")) {
-      const l = listEl();
-      openedBaseWidth = baseSidebarWidth();
-      if (l) {
-        const treeW = Math.round(l.getBoundingClientRect().width);
-        l.style.flex = "0 0 " + treeW + "px";
-        l.style.width = treeW + "px";
-      }
-      p.classList.add("open");
-      p.style.flex = "1 1 0";
-      p.style.width = "";
-      setSidebarWidth(openedBaseWidth + Math.min(getPreviewWidth(), maxPreviewWidth()));
-    }
-    await loadFile(relPath);
-  }
-  function hidePreview() {
-    const p = pane();
-    if (!p || !p.classList.contains("open")) return;
-    p.classList.remove("open");
-    const l = listEl();
-    if (l) {
-      l.style.flex = "";
-      l.style.width = "";
-    }
-    if (openedBaseWidth > 0) setSidebarWidth(openedBaseWidth);
-    openedBaseWidth = 0;
-  }
-  function dismissPreview() {
-    currentRelPath = "";
-    hidePreview();
-  }
-  function restorePreview() {
-    if (!currentRelPath) return;
-    openPreview(currentRelPath);
-  }
-  var PREVIEW_W_KEY, MIN_PREVIEW_W, MIN_TREE_W, openedBaseWidth, currentRelPath;
-  var init_preview = __esm({
-    "src/ui/shell/scripts/preview.ts"() {
-      "use strict";
-      init_shared();
-      init_preview_monaco();
-      PREVIEW_W_KEY = "cuckoo-preview-width";
-      MIN_PREVIEW_W = 180;
-      MIN_TREE_W = 120;
-      openedBaseWidth = 0;
-      currentRelPath = "";
-      document.getElementById("ck-preview-close")?.addEventListener("click", dismissPreview);
-      document.getElementById("ck-preview-ext")?.addEventListener("click", () => {
-        if (currentRelPath && api.openFileExternal) api.openFileExternal(currentRelPath).catch(() => {
-        });
-      });
-      {
-        const p = pane();
-        if (p) {
-          const rz = document.createElement("div");
-          rz.className = "ck-preview-resizer";
-          rz.title = "\u62D6\u52A8\u8C03\u6574\uFF1A\u6587\u4EF6\u6811 / \u5185\u5BB9\u533A";
-          p.appendChild(rz);
-          rz.addEventListener("mousedown", (e) => {
-            e.preventDefault();
-            const startX = e.clientX;
-            const l = listEl();
-            const cols = colsEl();
-            if (!l || !cols) return;
-            const startTreeW = l.getBoundingClientRect().width;
-            const totalW = cols.getBoundingClientRect().width;
-            const onMove = (ev) => {
-              let treeW = Math.round(startTreeW + (ev.clientX - startX));
-              const maxTree = Math.max(MIN_TREE_W, totalW - MIN_PREVIEW_W);
-              if (treeW < MIN_TREE_W) treeW = MIN_TREE_W;
-              if (treeW > maxTree) treeW = maxTree;
-              l.style.flex = "0 0 " + treeW + "px";
-              l.style.width = treeW + "px";
-            };
-            const onUp = () => {
-              document.removeEventListener("mousemove", onMove);
-              document.removeEventListener("mouseup", onUp);
-              const treeW = l.getBoundingClientRect().width;
-              savePreviewWidth(Math.max(MIN_PREVIEW_W, Math.round(totalW - treeW)));
-            };
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-          });
-        }
-      }
-    }
-  });
 
   // node_modules/react/cjs/react.development.js
   var require_react_development = __commonJS({
@@ -25829,11 +25363,126 @@
     }
   });
 
-  // src/ui/shell/scripts/main.ts
-  init_shared();
+  // src/ui/shell/scripts/shared.ts
+  var api = window.shellAPI || {};
+  function ckDialog(opts) {
+    return new Promise((resolve) => {
+      const mask = document.getElementById("ck-dialog");
+      const titleEl = document.getElementById("ck-dialog-title");
+      const msgEl = document.getElementById("ck-dialog-msg");
+      const okBtn = document.getElementById("ck-dialog-ok");
+      const cancelBtn = document.getElementById("ck-dialog-cancel");
+      if (!mask || !okBtn || !cancelBtn) {
+        resolve(true);
+        return;
+      }
+      if (titleEl) titleEl.textContent = opts.title || "\u63D0\u793A";
+      if (msgEl) msgEl.textContent = opts.message || "";
+      cancelBtn.classList.toggle("cuckoo-hidden", !opts.confirm);
+      function cleanup() {
+        mask.classList.add("cuckoo-hidden");
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        mask.removeEventListener("click", onMask);
+      }
+      function onOk() {
+        cleanup();
+        resolve(true);
+      }
+      function onCancel() {
+        cleanup();
+        resolve(false);
+      }
+      function onMask(e) {
+        if (e.target === mask) {
+          cleanup();
+          resolve(false);
+        }
+      }
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      mask.addEventListener("click", onMask);
+      mask.classList.remove("cuckoo-hidden");
+    });
+  }
+  function ckConfirm(message, title) {
+    return ckDialog({ title: title || "\u786E\u8BA4", message, confirm: true });
+  }
+  function ckAlert(message, title) {
+    return ckDialog({ title: title || "\u63D0\u793A", message, confirm: false });
+  }
+  function ckPrompt(opts) {
+    return new Promise((resolve) => {
+      const mask = document.getElementById("input-modal");
+      const titleEl = document.getElementById("input-modal-title");
+      const inputEl = document.getElementById("input-modal-value");
+      const okBtn = document.getElementById("input-modal-ok");
+      const cancelBtn = document.getElementById("input-modal-cancel");
+      if (!mask || !okBtn || !cancelBtn || !inputEl) {
+        resolve(null);
+        return;
+      }
+      if (titleEl) titleEl.textContent = opts.title || "\u8F93\u5165";
+      inputEl.placeholder = opts.placeholder || "";
+      inputEl.value = opts.value || "";
+      function cleanup() {
+        mask.classList.add("cuckoo-hidden");
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        mask.removeEventListener("click", onMask);
+        inputEl.removeEventListener("keydown", onKey);
+      }
+      function onOk() {
+        const v = String(inputEl.value || "").trim();
+        cleanup();
+        resolve(v || null);
+      }
+      function onCancel() {
+        cleanup();
+        resolve(null);
+      }
+      function onMask(e) {
+        if (e.target === mask) {
+          cleanup();
+          resolve(null);
+        }
+      }
+      function onKey(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          onOk();
+        } else if (e.key === "Escape") {
+          onCancel();
+        }
+      }
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      mask.addEventListener("click", onMask);
+      inputEl.addEventListener("keydown", onKey);
+      mask.classList.remove("cuckoo-hidden");
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.select();
+      }, 50);
+    });
+  }
+  function escapeHtml(s) {
+    return String(s === null || s === void 0 ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function formatTokenCount(n) {
+    if (!isFinite(n) || n < 0) return "0";
+    if (n >= 1e8) return (n / 1e8).toFixed(2) + "\u4EBF";
+    if (n >= 1e4) return (n / 1e4).toFixed(2) + "\u4E07";
+    return String(Math.round(n));
+  }
+  function formatShort(n) {
+    if (!isFinite(n) || n <= 0) return "0";
+    if (n >= 1e8) return (n / 1e8).toFixed(1) + "\u4EBF";
+    if (n >= 1e4) return (n / 1e4).toFixed(1) + "\u4E07";
+    return String(Math.round(n));
+  }
 
   // src/ui/shell/scripts/toolbar.ts
-  init_shared();
   var input = document.getElementById("url-input");
   var btnBack = document.getElementById("btn-back");
   var btnForward = document.getElementById("btn-forward");
@@ -25956,11 +25605,147 @@
     if (api.windowMaximize) api.windowMaximize();
   });
 
-  // src/ui/shell/scripts/main.ts
-  init_preview();
+  // src/ui/shell/scripts/preview-monaco.ts
+  var monacoPromise = null;
+  var editor = null;
+  var editorContainer = null;
+  var LANG_MAP = {
+    ts: "typescript",
+    tsx: "typescript",
+    mts: "typescript",
+    cts: "typescript",
+    js: "javascript",
+    jsx: "javascript",
+    mjs: "javascript",
+    cjs: "javascript",
+    json: "json",
+    json5: "json",
+    md: "markdown",
+    markdown: "markdown",
+    mdx: "markdown",
+    css: "css",
+    scss: "scss",
+    less: "less",
+    sass: "scss",
+    html: "html",
+    htm: "html",
+    vue: "html",
+    svelte: "html",
+    py: "python",
+    pyw: "python",
+    java: "java",
+    kt: "kotlin",
+    kts: "kotlin",
+    go: "go",
+    rs: "rust",
+    rb: "ruby",
+    php: "php",
+    c: "c",
+    h: "c",
+    cc: "cpp",
+    cpp: "cpp",
+    hpp: "cpp",
+    cxx: "cpp",
+    cs: "csharp",
+    sh: "shell",
+    bash: "shell",
+    zsh: "shell",
+    bat: "bat",
+    cmd: "bat",
+    ps1: "powershell",
+    yml: "yaml",
+    yaml: "yaml",
+    xml: "xml",
+    svg: "xml",
+    sql: "sql",
+    txt: "plaintext",
+    log: "plaintext",
+    lock: "plaintext"
+  };
+  function langOf(name) {
+    const dot = name.lastIndexOf(".");
+    if (dot < 0) return "plaintext";
+    return LANG_MAP[name.slice(dot + 1).toLowerCase()] || "plaintext";
+  }
+  function loadMonaco() {
+    if (monacoPromise) return monacoPromise;
+    monacoPromise = new Promise((resolve, reject) => {
+      const req = window.require;
+      if (!req) {
+        reject(new Error("Monaco loader \u672A\u52A0\u8F7D"));
+        return;
+      }
+      try {
+        req.config({ paths: { vs: "vendor/monaco/vs" } });
+        window.MonacoEnvironment = {
+          getWorkerUrl: function(moduleId, label) {
+            const base = "vendor/monaco/vs/";
+            if (label === "json") return base + "language/json/json.worker.js";
+            if (label === "css" || label === "scss" || label === "less") return base + "language/css/css.worker.js";
+            if (label === "html" || label === "handlebars" || label === "razor") return base + "language/html/html.worker.js";
+            if (label === "typescript" || label === "javascript") return base + "language/typescript/ts.worker.js";
+            return base + "editor/editor.worker.js";
+          }
+        };
+        req(["vs/editor/editor.main"], () => {
+          resolve(window.monaco);
+        }, (err) => reject(err || new Error("\u52A0\u8F7D\u5931\u8D25")));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    return monacoPromise;
+  }
+  function themeName() {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "vs-dark" : "vs";
+  }
+  async function showInMonaco(container, fileName, content) {
+    const monaco = await loadMonaco();
+    const lang = langOf(fileName);
+    if (!editor || editorContainer !== container) {
+      if (editor) {
+        try {
+          editor.dispose();
+        } catch (_) {
+        }
+      }
+      editor = monaco.editor.create(container, {
+        value: content,
+        language: lang,
+        theme: themeName(),
+        readOnly: true,
+        automaticLayout: true,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        fontSize: 12.5,
+        lineNumbers: "on",
+        renderWhitespace: "none",
+        wordWrap: "off"
+      });
+      editorContainer = container;
+    } else {
+      const model = monaco.editor.createModel(content, lang);
+      const old = editor.getModel();
+      editor.setModel(model);
+      if (old) old.dispose();
+    }
+  }
+  function syncMonacoTheme() {
+    if (editor) {
+      try {
+        window.monaco.editor.setTheme(themeName());
+      } catch (_) {
+      }
+    }
+  }
+  if (window.matchMedia) {
+    try {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncMonacoTheme);
+    } catch (_) {
+    }
+  }
 
   // src/ui/shell/scripts/platform.ts
-  init_shared();
   function setPlatformSelectingMode(selecting) {
     const sb = document.getElementById("ck-sidebar");
     if (sb) {
@@ -25975,7 +25760,6 @@
   if (api.onPlatformMode) api.onPlatformMode((d) => setPlatformSelectingMode(d && d.selecting));
 
   // src/ui/shell/scripts/plugin-shell.ts
-  init_shared();
   var mountedStatus = /* @__PURE__ */ new Set();
   var mountedToolbar = /* @__PURE__ */ new Set();
   function mountStatusbar(m) {
@@ -26208,7 +25992,6 @@
   }
 
   // src/ui/shell/scripts/theme-presenter.ts
-  init_shared();
   var DARK_ATTRIBUTE = "data-ck-dark";
   var THEME_SOURCE_ATTRIBUTE = "data-ck-theme-source";
   var appliedTokens = [];
@@ -26255,7 +26038,6 @@
   // src/ui/shell/scripts/shell-frame.tsx
   var import_react = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
-  init_shared();
   var SIDEBAR_COLLAPSED = 46;
   var MIN_WIDTH = 320;
   var MAX_WIDTH = 4e3;
@@ -26357,13 +26139,17 @@
   function mountShellFrame() {
     const sidebar = document.getElementById("ck-sidebar");
     if (!sidebar) return;
-    if (!sidebar.dataset.ckOldWrapped) {
-      const wrap = document.createElement("div");
-      wrap.id = "ck-old-shell";
-      wrap.style.display = "none";
-      while (sidebar.firstChild) wrap.appendChild(sidebar.firstChild);
-      sidebar.appendChild(wrap);
-      sidebar.dataset.ckOldWrapped = "1";
+    if (!sidebar.dataset.ckOldRemoved) {
+      const keep = document.getElementById("ck-shell-react");
+      [...sidebar.childNodes].forEach((n) => {
+        if (n !== keep) {
+          try {
+            sidebar.removeChild(n);
+          } catch (_) {
+          }
+        }
+      });
+      sidebar.dataset.ckOldRemoved = "1";
     }
     let host = document.getElementById("ck-shell-react");
     if (!host) {
@@ -26417,10 +26203,8 @@
   // src/ui/shell/scripts/statusbar.tsx
   var import_react2 = __toESM(require_react(), 1);
   var import_client2 = __toESM(require_client(), 1);
-  init_shared();
 
   // src/ui/shell/scripts/recent.ts
-  init_shared();
   var KEY = "cuckoo-shell-recent-tools";
   var MAX = 5;
   function snippetText(type, name) {
@@ -26619,7 +26403,6 @@
 
   // src/ui/shell/scripts/pages/skills-react.tsx
   var import_react4 = __toESM(require_react(), 1);
-  init_shared();
   function SkillItem({ s, onClick }) {
     return (0, import_react4.createElement)(
       "div",
@@ -26697,7 +26480,6 @@
 
   // src/ui/shell/scripts/pages/mcp-react.tsx
   var import_react5 = __toESM(require_react(), 1);
-  init_shared();
   function RefreshIcon() {
     return (0, import_react5.createElement)(
       "svg",
@@ -26781,7 +26563,6 @@
 
   // src/ui/shell/scripts/pages/snippets-react.tsx
   var import_react6 = __toESM(require_react(), 1);
-  init_shared();
   var I = {
     refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
     plus: "M12 5v14M5 12h14",
@@ -26959,7 +26740,6 @@
 
   // src/ui/shell/scripts/pages/conversations-react.tsx
   var import_react7 = __toESM(require_react(), 1);
-  init_shared();
   function RefreshIcon2() {
     return (0, import_react7.createElement)(
       "svg",
@@ -27058,7 +26838,6 @@
 
   // src/ui/shell/scripts/pages/token-react.tsx
   var import_react8 = __toESM(require_react(), 1);
-  init_shared();
   function CompactIcon() {
     return (0, import_react8.createElement)(
       "svg",
@@ -27224,7 +27003,6 @@
 
   // src/ui/shell/scripts/pages/feishu-react.tsx
   var import_react9 = __toESM(require_react(), 1);
-  init_shared();
   function ToggleRow({ label, checked, onChange }) {
     return (0, import_react9.createElement)(
       "div",
@@ -27410,7 +27188,6 @@
 
   // src/ui/shell/scripts/pages/settings-react.tsx
   var import_react10 = __toESM(require_react(), 1);
-  init_shared();
   var THEME_BUILTINS = [["system", "\u8DDF\u968F\u7CFB\u7EDF"], ["light", "\u6D45\u8272"], ["dark", "\u6DF1\u8272"]];
   function RefreshIcon3() {
     return (0, import_react10.createElement)(
@@ -27602,7 +27379,6 @@
 
   // src/ui/shell/scripts/pages/agents-react.tsx
   var import_react11 = __toESM(require_react(), 1);
-  init_shared();
   var I2 = {
     edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
     del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
@@ -27778,7 +27554,6 @@
 
   // src/ui/shell/scripts/pages/files-react.tsx
   var import_react12 = __toESM(require_react(), 1);
-  init_shared();
   var CARET = "M6 3l5 5-5 5";
   var FOLDER = "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z";
   var FILE = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6";
@@ -27913,6 +27688,12 @@
     lock: "LCK"
   };
   var MEDIA_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "avif", "mp4", "mp3", "wav", "mov", "webm"]);
+  function fmtSize(n) {
+    if (typeof n !== "number") return "";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1024 / 1024).toFixed(2) + " MB";
+  }
   function extOf(name) {
     const dot = name.lastIndexOf(".");
     return dot >= 0 ? name.slice(dot + 1).toLowerCase() : "";
@@ -27990,30 +27771,85 @@
     }
     return out;
   }
-  var PreviewPane = (0, import_react12.memo)(function PreviewPane2() {
+  function FilePreviewModal({ path, onClose }) {
+    const [state, setState] = (0, import_react12.useState)({ status: "loading" });
+    const monacoRef = (0, import_react12.useRef)(null);
+    (0, import_react12.useEffect)(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          const r = await api.readProjectFile(path);
+          if (cancelled) return;
+          if (!r || !r.success) {
+            setState({ status: "err", error: r && r.error || "\u8BFB\u53D6\u5931\u8D25" });
+            return;
+          }
+          setState({ status: "ok", size: r.size });
+          setTimeout(async () => {
+            if (cancelled || !monacoRef.current) return;
+            try {
+              await showInMonaco(monacoRef.current, path, r.content);
+            } catch (_) {
+            }
+          }, 0);
+        } catch (e) {
+          if (!cancelled) setState({ status: "err", error: e && e.message ? e.message : String(e) });
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [path]);
+    (0, import_react12.useEffect)(() => {
+      const onKey = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+    (0, import_react12.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {
+      });
+      return () => {
+        if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {
+        });
+      };
+    }, []);
+    const openExternal = (0, import_react12.useCallback)(() => {
+      if (api.openFileExternal) api.openFileExternal(path).catch(() => {
+      });
+    }, [path]);
     return (0, import_react12.createElement)(
       "div",
-      { className: "ck-preview-pane", id: "ck-preview-pane" },
+      {
+        style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 1e4, display: "flex", alignItems: "center", justifyContent: "center" },
+        onClick: (e) => {
+          if (e.target === e.currentTarget) onClose();
+        }
+      },
       (0, import_react12.createElement)(
         "div",
-        { className: "ck-preview-head" },
-        (0, import_react12.createElement)("span", { className: "ck-preview-name", id: "ck-preview-name" }, "\u6587\u4EF6\u9884\u89C8"),
-        (0, import_react12.createElement)("span", { className: "ck-preview-size", id: "ck-preview-size" }),
+        {
+          style: { background: "var(--ck-bg, #fff)", borderRadius: 10, width: "88vw", height: "85vh", maxWidth: 1200, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,.35)", border: "1px solid var(--ck-border, #e0e0e0)" },
+          onClick: (e) => e.stopPropagation()
+        },
         (0, import_react12.createElement)(
-          "span",
-          { className: "ck-preview-acts" },
-          (0, import_react12.createElement)("span", { className: "ck-preview-btn", id: "ck-preview-ext", title: "\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u6253\u5F00" }, "\u2197"),
-          (0, import_react12.createElement)("span", { className: "ck-preview-btn", id: "ck-preview-close", title: "\u5173\u95ED\u9884\u89C8" }, "\u2715")
+          "div",
+          { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--ck-border, #e0e0e0)", flexShrink: 0 } },
+          (0, import_react12.createElement)("span", { style: { fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: path }, path),
+          state.size !== void 0 ? (0, import_react12.createElement)("span", { style: { fontSize: 12, opacity: 0.6 } }, fmtSize(state.size)) : null,
+          (0, import_react12.createElement)("button", { title: "\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u6253\u5F00", onClick: openExternal, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2197"),
+          (0, import_react12.createElement)("button", { title: "\u5173\u95ED", onClick: onClose, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2715")
+        ),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { flex: 1, minHeight: 0, position: "relative" } },
+          state.status === "loading" ? (0, import_react12.createElement)("div", { style: { padding: 20, opacity: 0.6 } }, "\u52A0\u8F7D\u4E2D\u2026") : state.status === "err" ? (0, import_react12.createElement)("div", { style: { padding: 20, color: "#e55" } }, state.error) : (0, import_react12.createElement)("div", { ref: monacoRef, style: { width: "100%", height: "100%" } })
         )
-      ),
-      (0, import_react12.createElement)(
-        "div",
-        { className: "ck-preview-body", id: "ck-preview-body" },
-        (0, import_react12.createElement)("div", { className: "ck-preview-empty", id: "ck-preview-empty" }, "\u70B9\u51FB\u5DE6\u4FA7\u6587\u4EF6\u67E5\u770B\u5185\u5BB9"),
-        (0, import_react12.createElement)("div", { className: "ck-monaco", id: "ck-monaco", style: { display: "none" } })
       )
     );
-  });
+  }
   function RefreshIcon4() {
     return (0, import_react12.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react12.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }), (0, import_react12.createElement)("path", { d: "M21 3v6h-6" }));
   }
@@ -28024,6 +27860,7 @@
     const [expanded, setExpanded] = (0, import_react12.useState)(/* @__PURE__ */ new Set());
     const [truncated, setTruncated] = (0, import_react12.useState)(false);
     const [err, setErr] = (0, import_react12.useState)(null);
+    const [previewPath, setPreviewPath] = (0, import_react12.useState)(null);
     const load = (0, import_react12.useCallback)(async () => {
       if (!api.listProjectTree) return;
       try {
@@ -28057,12 +27894,8 @@
         return n;
       });
     }, []);
-    const onFile = (0, import_react12.useCallback)(async (p) => {
-      try {
-        const { openPreview: openPreview2 } = await Promise.resolve().then(() => (init_preview(), preview_exports));
-        await openPreview2(p);
-      } catch (_) {
-      }
+    const onFile = (0, import_react12.useCallback)((p) => {
+      setPreviewPath(p);
     }, []);
     let body;
     if (err) body = (0, import_react12.createElement)("div", { className: "ck-list-empty" }, err);
@@ -28113,15 +27946,14 @@
       (0, import_react12.createElement)(
         "div",
         { className: "ck-files-cols" },
-        (0, import_react12.createElement)("div", { className: "ck-list ck-ft", id: "ft-list" }, body),
-        (0, import_react12.createElement)(PreviewPane)
-      )
+        (0, import_react12.createElement)("div", { className: "ck-list ck-ft", id: "ft-list" }, body)
+      ),
+      previewPath ? (0, import_react12.createElement)(FilePreviewModal, { path: previewPath, onClose: () => setPreviewPath(null) }) : null
     );
   }
 
   // src/ui/shell/scripts/pages/windows-react.tsx
   var import_react13 = __toESM(require_react(), 1);
-  init_shared();
   var PROVIDER_COLORS = {
     deepseek: "linear-gradient(135deg, #4d6bfe, #3b5bdb)",
     claude: "linear-gradient(135deg, #d97757, #c05a3a)",
@@ -28401,7 +28233,6 @@
 
   // src/ui/shell/scripts/pages/workspaces-react.tsx
   var import_react14 = __toESM(require_react(), 1);
-  init_shared();
   function baseName(dir) {
     if (!dir) return "\u672A\u547D\u540D";
     const parts = String(dir).replace(/[\\/]+$/, "").split(/[\\/]/);
@@ -28742,7 +28573,6 @@
 
   // src/ui/shell/scripts/pages/plugins-react.tsx
   var import_react15 = __toESM(require_react(), 1);
-  init_shared();
   var I4 = {
     install: "M12 3v12M7 10l5 5 5-5M5 21h14",
     update: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",

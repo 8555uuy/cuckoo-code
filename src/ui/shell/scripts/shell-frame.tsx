@@ -109,14 +109,14 @@ function ShellFrame() {
 export function mountShellFrame(): void {
   const sidebar = document.getElementById('ck-sidebar');
   if (!sidebar) return;
-  // 1) 把旧的原生结构整体包起来隐藏
-  if (!sidebar.dataset.ckOldWrapped) {
-    const wrap = document.createElement('div');
-    wrap.id = 'ck-old-shell';
-    wrap.style.display = 'none';
-    while (sidebar.firstChild) wrap.appendChild(sidebar.firstChild);
-    sidebar.appendChild(wrap);
-    sidebar.dataset.ckOldWrapped = '1';
+  // 1) 旧的原生结构：从 DOM 里【移除】（不是隐藏——隐藏时 ID 还在，getElementById 会拿到旧元素，造成 ID 冲突）
+  if (!sidebar.dataset.ckOldRemoved) {
+    // 把所有"非 React 挂载点"的子节点移除
+    const keep = document.getElementById('ck-shell-react');
+    [...sidebar.childNodes].forEach((n) => {
+      if (n !== keep) { try { sidebar.removeChild(n); } catch (_) {} }
+    });
+    sidebar.dataset.ckOldRemoved = '1';
   }
   // 2) React 挂载点
   let host = document.getElementById('ck-shell-react');

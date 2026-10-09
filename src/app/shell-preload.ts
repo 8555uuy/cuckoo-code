@@ -38,6 +38,8 @@ const shellAPI = {
     ipcRenderer.on('shell-project-dir', (_e: any, dir: any) => cb(dir));
   },
   toggleSidebar: (width: number) => ipcRenderer.invoke('shell-toggle-sidebar', { width }),
+  // 隐藏/显示 AI 视图（壳页面弹窗需要盖过 AI 区域时用）
+  setAiViewVisible: (visible: boolean) => ipcRenderer.invoke('shell-set-ai-view-visible', { visible }),
   // 侧边栏拖拽调宽（AI 视图会临时移出，鼠标事件全落在壳页面；主进程轮询算宽度后推回）
   startSidebarDrag: () => ipcRenderer.send('shell-sidebar-drag-start'),
   endSidebarDrag: () => ipcRenderer.send('shell-sidebar-drag-end'),

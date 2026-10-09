@@ -387,6 +387,20 @@ function registerShellIpc(): void {
     try { if (typeof win.__ckLayout === 'function') win.__ckLayout(); } catch (_) {}
     return { success: true };
   });
+
+  // 隐藏/显示 AI 视图（+ harness 视图）—— 壳页面弹窗需要"盖过 AI 区域"时用（AI 是原生 WebContentsView，永远在网页之上）
+  ipcMain.handle('shell-set-ai-view-visible', async (event: any, { visible }: any) => {
+    const ctx = windowState.getContextByWebContents(event.sender);
+    if (!ctx || !ctx.win || ctx.win.isDestroyed()) return { success: false };
+    const win = ctx.win;
+    const view = ctx.view;
+    try { if (view && !view.webContents.isDestroyed()) view.setVisible(!!visible); } catch (_) { /* ignore */ }
+    try {
+      const hv = win.__ckHarnessView;
+      if (hv && !hv.webContents.isDestroyed()) hv.setVisible(!!visible);
+    } catch (_) { /* ignore */ }
+    return { success: true };
+  });
 }
 
 export { registerShellIpc, pushUrlState, pushTokenUsage, pushProjectDir };
