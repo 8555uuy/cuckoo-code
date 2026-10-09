@@ -26,5 +26,6 @@
 | 020 | feature | [插件市场（GitHub topic 自动发现与安装）](./020-plugin-market.md) | review | feat/020-plugin-market | 2026-10-02 |
 | 021 | feature | [窗口组（多账号限流轮换）](./021-window-groups.md) | done | feat/021-window-groups | 2026-10-05 |
 | 022 | feature | [DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）](./022-dsh-plugin-compat.md) | in_progress | direct-on-master（直接 master 提交） | 2026-10-08 |
+| 023 | feature | [壳页面 React 化（shell UI 迁移）](./023-shell-react.md) | in_progress | feat/shell-react | 2026-10-09 |
 
-共 21 个需求。
+共 22 个需求。
