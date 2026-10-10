@@ -194,6 +194,9 @@ function createWindow(profile: any) {
   (mainWindow as any).__ckOverlayView = null;  // 兼容旧引用名（值为 overlayWin）
   (mainWindow as any).__ckEnsureOverlay = () => ensureOverlayView();
   const ensureOverlayView = (): any => {
+    // 子代理窗口是隐藏的，不需要覆盖层——否则它的 overlay 会浮到主窗口上，
+    // 导致插件面板（如 MCP 内网穿透桥）显示两份。
+    if (profileData.isSubagent) return null;
     if (overlayWin && !overlayWin.isDestroyed()) return overlayWin;
     const ow = new BrowserWindow({
       parent: mainWindow,

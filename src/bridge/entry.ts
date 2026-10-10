@@ -253,9 +253,12 @@ function init(): void {
     initFeishuBridge();
 
     // Cuckoo 插件系统：加载 dsh/*.js 风格插件（异步，不阻塞）
-    initPlugins().catch((err: any) => {
-      console.error('[Cuckoo Code] 加载 DSH 插件失败:', err && err.message ? err.message : err);
-    });
+    // 子代理窗口不加载 UI 插件——否则每个子代理都会注入一份面板（如 MCP 桥）浮到主窗口上。
+    if (!subCfg) {
+      initPlugins().catch((err: any) => {
+        console.error('[Cuckoo Code] 加载 DSH 插件失败:', err && err.message ? err.message : err);
+      });
+    }
     // 监听插件热重载通知（启用/禁用插件时主进程推送）
     bindPluginReload();
 

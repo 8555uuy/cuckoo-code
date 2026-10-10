@@ -147,8 +147,8 @@ try {
 } catch (_) { /* ignore */ }
 setInterval(() => {
   const el = document.getElementById('agent-running-list');
-  if (el && el.innerHTML) loadRunningSubagents();
-}, 3000);
+  if (el) loadRunningSubagents();
+}, 1500);
 
 document.getElementById('agent-new')?.addEventListener('click', openAgentModal);
 document.getElementById('agent-cancel')?.addEventListener('click', closeAgentModal);
