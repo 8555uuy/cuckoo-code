@@ -9,7 +9,6 @@
 import { PluginHost } from '../plugins/runtime/index.js';
 import type { HostCapabilities, CuckooEventSource, PendingPluginSource } from '../plugins/runtime/index.js';
 import { bindCuckooEvents } from '../plugins/runtime/index.js';
-import { registerPromptSection } from '../plugins/dsh-compat/prompt-sections.js';
 import { sendToChat } from '../overlay/chat-input.js';
 import { getProviderByUrl } from '../providers/registry.js';
 import { onInterceptedResponse, onStream, onTaskIdle, onToolCall, onAiError } from './intercept/observer.js';
