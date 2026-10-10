@@ -20,7 +20,7 @@ const TOOL_BOOTSTRAP = [
   "  globalThis.readLines = async function (filePath, options) {\n      options = options || {};\n      return await __call('readLines', {\n          filePath: filePath,\n          offset: options.offset,\n          limit: options.limit,\n      });\n  };",
   "  globalThis.read = async function (filePath, options) {\n      options = options || {};\n      return await __call('read', {\n          filePath: filePath,\n          offset: options.offset,\n          limit: options.limit,\n      });\n  };",
   "  globalThis.remember = async function (text) {\n      return await __call('remember', { text: text });\n  };\n  globalThis.forgetMemory = async function (id) {\n      return await __call('forgetMemory', { id: id });\n  };",
-  "  globalThis.runAgent = async function (name, task) {\n      return await __call('runAgent', { name, task });\n  };",
+  "  globalThis.runAgent = async function (name, task) {\n      return await __call('runAgent', { name, task });\n  };\n  globalThis.runAgents = async function (tasks) {\n      return await __call('runAgents', { tasks });\n  };",
   "  globalThis.createSnapshot = async function (name, description) {\n      return await __call('createSnapshot', { name: name, description: description });\n  };\n  globalThis.listSnapshots = async function () {\n      return await __call('listSnapshots', {});\n  };\n  globalThis.restoreSnapshot = async function (id) {\n      return await __call('restoreSnapshot', { id: id });\n  };",
   "  globalThis.todoWrite = async function (todos) {\n      return await __call('todoWrite', { todos: todos });\n  };",
   "  globalThis.webFetch = async function (url) {\n      return await __call('webFetch', { url: url });\n  };",

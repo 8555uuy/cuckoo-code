@@ -140,6 +140,8 @@ function createWindow(profile: any) {
     ...(defaultBounds.x !== undefined ? { x: defaultBounds.x + cascadeOffset, y: (defaultBounds.y || 0) + cascadeOffset } : {}),
     icon: resolveAsset('assets/icon.png'),
     title: 'Cuckoo Code Pro - ' + (provider ? provider.name : '未选择平台') + ' - ' + profileData.name,
+    // 子代理窗口：隐藏（不弹窗、不占任务栏）；跑完由主进程主动关闭
+    ...(profileData.isSubagent ? { show: false, skipTaskbar: true } : {}),
     webPreferences: {
       // 壳页面 preload（只负责地址栏导航，与 AI 页面 preload 分离）
       preload: path.join(import.meta.dirname, 'shell-preload.js'),

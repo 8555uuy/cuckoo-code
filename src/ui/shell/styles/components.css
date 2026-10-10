@@ -119,6 +119,29 @@
     overflow: hidden;
   }
   /* 技能卡片（无边�?+ 分割�?+ 悬停浅底�?*/
+  /* 运行中子代理卡片 */
+  .ck-agent-running { border-left: 2px solid var(--ck-accent, #4c8dff); }
+  .ck-agent-running .ck-skill-desc { display: block; }
+  .ck-agent-running-status { margin-left: auto; font-size: 11px; color: var(--ck-text-dim); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .ck-agent-running-preview {
+    margin-top: 4px; padding: 6px 8px;
+    background: rgba(0,0,0,.15);
+    border-radius: 5px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 11px; line-height: 1.5;
+    color: var(--ck-text-dim);
+    white-space: pre-wrap; word-break: break-all;
+    max-height: 72px; overflow: hidden;
+  }
+  .ck-agent-running .ck-skill-name::before {
+    content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #34d399; margin-right: 7px; vertical-align: middle;
+    animation: ck-agent-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ck-agent-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,211,153,.5); }
+    50% { opacity: .6; box-shadow: 0 0 0 4px rgba(52,211,153,0); }
+  }
   .ck-skill-item {
     display: flex; flex-direction: column; gap: 6px;
     background: transparent; border: none;

@@ -94,6 +94,8 @@ export interface ShellAPI {
   // 技能 / 子代理
   listSkills?: () => Promise<any>;
   listAgents?: () => Promise<any>;
+  listRunningSubagents?: (parentWindowId?: number) => Promise<any>;
+  onSubagentsChanged?: (cb: () => void) => void;
   createAgentFile?: (name: string, scope: string) => Promise<any>;
   openAgentFile?: (agentPath: string) => Promise<any>;
   renameAgent?: (agentPath: string, newName: string) => Promise<any>;

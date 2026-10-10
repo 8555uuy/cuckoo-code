@@ -126,6 +126,11 @@ const shellAPI = {
   onSessionsChanged: (cb: () => void) => {
     ipcRenderer.on('shell-sessions-changed', () => cb());
   },
+  // ========== 子代理 ==========
+  listRunningSubagents: (parentWindowId?: number) => ipcRenderer.invoke('subagent-list', { parentWindowId }),
+  onSubagentsChanged: (cb: () => void) => {
+    ipcRenderer.on('shell-subagents-changed', () => cb());
+  },
   // ========== 自绘标题栏：窗口控制 ==========
   windowMinimize: () => ipcRenderer.invoke('shell-window-minimize'),
   windowMaximize: () => ipcRenderer.invoke('shell-window-maximize'),

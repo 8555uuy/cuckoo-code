@@ -4,7 +4,34 @@
 import { api, ckAlert, ckConfirm, escapeHtml, escapeAttr } from '../shared.js';
 import { addRecent } from '../recent.js';
 
+/** 加载"运行中子代理"区块（实时进度） */
+export async function loadRunningSubagents(): Promise<void> {
+  const el = document.getElementById('agent-running-list');
+  if (!el) return;
+  const apiAny: any = api as any;
+  if (typeof apiAny.listRunningSubagents !== 'function') return;
+  try {
+    const r = await apiAny.listRunningSubagents();
+    const list = (r && r.success && r.subagents) ? r.subagents : [];
+    if (!list.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="ck-mcp-group-title">运行中</div>' + list.map((s: any) => {
+      const elapsed = Math.max(0, Math.round((Date.now() - (s.startedAt || Date.now())) / 1000));
+      const statusText = s.status === 'done' ? '完成' : (s.status === 'error' ? '出错' : '运行中');
+      const preview = (s.preview || '').slice(-120).replace(/</g, '&lt;');
+      return '<div class="ck-skill-item ck-agent-running">' +
+        '<div class="ck-skill-top">' +
+          '<span class="ck-skill-name">' + escapeHtml(s.agentName) + '</span>' +
+          '<span class="ck-agent-running-status">' + statusText + ' · ' + elapsed + 's' + (s.turn ? ' · ' + s.turn + ' 轮' : '') + '</span>' +
+        '</div>' +
+        '<div class="ck-skill-desc">' + escapeHtml(s.task || '') + '</div>' +
+        (preview ? '<div class="ck-agent-running-preview">' + preview + '</div>' : '') +
+      '</div>';
+    }).join('');
+  } catch (_) { /* ignore */ }
+}
+
 export async function loadAgents(): Promise<void> {
+  loadRunningSubagents();
   const listEl = document.getElementById('agent-list');
   if (!listEl || !api.listAgents) return;
   try {
@@ -112,6 +139,16 @@ function openAgentEditModal(agentPath: string, curName: string): void {
 function closeAgentModal(): void {
   document.getElementById('agent-modal')?.classList.add('cuckoo-hidden');
 }
+
+// 运行中子代理：变化即刷新 + 定时刷新（更新耗时）
+try {
+  const apiAny: any = api as any;
+  if (typeof apiAny.onSubagentsChanged === 'function') apiAny.onSubagentsChanged(() => loadRunningSubagents());
+} catch (_) { /* ignore */ }
+setInterval(() => {
+  const el = document.getElementById('agent-running-list');
+  if (el && el.innerHTML) loadRunningSubagents();
+}, 3000);
 
 document.getElementById('agent-new')?.addEventListener('click', openAgentModal);
 document.getElementById('agent-cancel')?.addEventListener('click', closeAgentModal);

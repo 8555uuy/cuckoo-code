@@ -20,6 +20,19 @@ export const apiMetas: ToolApiMeta[] = [
     returnsDoc: '子代理的最终文本结果',
     throws: '代理不存在、父窗口上下文缺失或执行超时时抛出异常',
   },
+  {
+    order: 15,
+    category: 'Agent',
+    name: 'runAgents',
+    doc: '并行委派多个子代理（每个独立上下文），全部完成后按顺序返回结果。适合多个互不依赖的子任务同时推进，比逐个 runAgent 快得多。',
+    params: 'tasks: { name: string, task: string }[]',
+    returns: 'Promise<string>',
+    paramDocs: {
+      tasks: '任务数组，每项 { name: 子代理名, task: 任务描述 }',
+    },
+    returnsDoc: '各子代理结果的汇总文本（按输入顺序）',
+    throws: 'tasks 为空或格式非法、父窗口上下文缺失时抛出异常',
+  },
 ];
 
 /**
@@ -45,6 +58,76 @@ export function injectAgentRunner(fn: AgentRunner): void {
 /** 由 app 层注入"是否子代理窗口"判定（防递归用） */
 export function injectSubagentChecker(fn: SubagentChecker): void {
   _isSubagentWindow = fn;
+}
+
+class RunAgentsTool extends Tool {
+  constructor() {
+    super(
+      'runAgents',
+      '并行委派多个子代理（各自独立上下文），全部完成后按顺序返回结果。',
+      {
+        type: 'object',
+        properties: {
+          tasks: {
+            type: 'array',
+            description: '任务数组，每项 { name: 子代理名, task: 任务描述 }',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', description: '子代理名称' },
+                task: { type: 'string', description: '任务描述' },
+              },
+              required: ['name', 'task'],
+            },
+          },
+        },
+        required: ['tasks'],
+        additionalProperties: false,
+      },
+      'runAgents(tasks)'
+    );
+  }
+
+  getPromptSection() {
+    return {
+      name: 'tool:runAgents',
+      order: 114,
+      text: '使用 runAgents(tasks) 并行委派多个子代理（tasks 是 { name, task } 数组）。适合多个互不依赖的子任务同时推进，比逐个 runAgent 快。全部完成后按顺序返回结果。',
+    };
+  }
+
+  async execute(params: any): Promise<ToolResult> {
+    const { tasks, projectDir, currentWindowId } = params;
+    if (!Array.isArray(tasks) || tasks.length === 0) return ToolResult.error('tasks 必填且为非空数组');
+    if (typeof currentWindowId !== 'number') return ToolResult.error('缺少窗口上下文');
+    try {
+      if (_isSubagentWindow && _isSubagentWindow(currentWindowId)) {
+        return ToolResult.error('子代理不允许再调用 runAgents（防递归）');
+      }
+    } catch (_) { /* ignore */ }
+    if (!_runner) return ToolResult.error('子代理执行器未初始化');
+
+    const agents = scanAgents(projectDir || null, getPluginScanRoots().agentDirs);
+    // 逐个校验并并行执行
+    const jobs = tasks.map((t: any, i: number) => {
+      const name = t && t.name;
+      const task = t && t.task;
+      if (!name || !task) return Promise.resolve({ index: i, name: name || '?', ok: false, text: '任务 #' + (i + 1) + ' 缺 name 或 task' });
+      const agent = agents.find((a) => a.name === name);
+      if (!agent) return Promise.resolve({ index: i, name, ok: false, text: '未找到子代理: ' + name });
+      return _runner!({ agent, task, currentWindowId })
+        .then((text) => ({ index: i, name, ok: true, text }))
+        .catch((err: any) => ({ index: i, name, ok: false, text: '执行失败: ' + (err && err.message ? err.message : err) }));
+    });
+
+    const results = await Promise.all(jobs);
+    results.sort((a, b) => a.index - b.index);
+    const lines = results.map((r) => {
+      const head = '### ' + r.name + (r.ok ? '' : '（失败）');
+      return head + '\n' + r.text;
+    });
+    return ToolResult.success(lines.join('\n\n'));
+  }
 }
 
 class RunAgentTool extends Tool {
@@ -105,6 +188,9 @@ export function bootstrap(__call: any): void {
   (globalThis as any).runAgent = async function (name: any, task: any) {
     return await __call('runAgent', { name, task });
   };
+  (globalThis as any).runAgents = async function (tasks: any) {
+    return await __call('runAgents', { tasks });
+  };
 }
 
-export { RunAgentTool };
+export { RunAgentTool, RunAgentsTool };

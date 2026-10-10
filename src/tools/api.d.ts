@@ -313,6 +313,17 @@ declare function runAgent(name: string, task: string): Promise<string>;
 declare function attachFile(filePath: string): Promise<{ fileName: string; size: number; message: string }>;
 
 
+// ================= Agent =================
+
+/**
+ * 并行委派多个子代理（每个独立上下文），全部完成后按顺序返回结果。适合多个互不依赖的子任务同时推进，比逐个 runAgent 快得多。
+ * @param tasks 任务数组，每项 { name: 子代理名, task: 任务描述 }
+ * @returns 各子代理结果的汇总文本（按输入顺序）
+ * @throws tasks 为空或格式非法、父窗口上下文缺失时抛出异常
+ */
+declare function runAgents(tasks: { name: string, task: string }[]): Promise<string>;
+
+
 // ================= MCP =================
 
 /**

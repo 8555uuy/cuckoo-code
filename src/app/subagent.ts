@@ -25,10 +25,74 @@ const pending = new Map<number, (text: string) => void>();
 /** 每个 profile 正在跑的子代理数量（用于飞书消息拦截等） */
 const runningByProfile = new Map<string, number>();
 
+/** ===== 运行中子代理注册表（供壳页面展示进度）===== */
+export interface RunningSubagent {
+  windowId: number;
+  parentWindowId: number;
+  agentName: string;
+  task: string;
+  startedAt: number;
+  status: 'starting' | 'running' | 'done' | 'error';
+  turn: number;
+  preview: string;
+  error?: string;
+}
+const runningSubagents = new Map<number, RunningSubagent>();
+
+/** 注册一个刚开始的子代理 */
+function registerRunning(info: { windowId: number; parentWindowId: number; agentName: string; task: string }): void {
+  runningSubagents.set(info.windowId, {
+    windowId: info.windowId,
+    parentWindowId: info.parentWindowId,
+    agentName: info.agentName,
+    task: info.task,
+    startedAt: Date.now(),
+    status: 'starting',
+    turn: 0,
+    preview: '',
+  });
+  notifyParent(info.parentWindowId);
+}
+
+/** 更新运行中子代理的状态（进度/轮次/预览） */
+function updateRunning(windowId: number, patch: Partial<RunningSubagent>): void {
+  const cur = runningSubagents.get(windowId);
+  if (!cur) return;
+  Object.assign(cur, patch);
+  notifyParent(cur.parentWindowId);
+}
+
+/** 移除（结束） */
+function removeRunning(windowId: number): void {
+  const cur = runningSubagents.get(windowId);
+  if (!cur) return;
+  runningSubagents.delete(windowId);
+  notifyParent(cur.parentWindowId);
+}
+
+/** 列出某父窗口下的运行中子代理 */
+function listRunning(parentWindowId?: number): RunningSubagent[] {
+  const all = Array.from(runningSubagents.values());
+  const list = parentWindowId ? all.filter((s) => s.parentWindowId === parentWindowId) : all;
+  return list.sort((a, b) => a.startedAt - b.startedAt);
+}
+
+/** 通知父窗口壳页面刷新（静默，失败忽略） */
+function notifyParent(parentWindowId: number): void {
+  try {
+    const ctx = windowState.getWindowContext(parentWindowId);
+    if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+      ctx.win.webContents.send('shell-subagents-changed');
+    }
+  } catch (_) { /* ignore */ }
+}
+
 /** 该 profile 是否有子代理正在运行 */
 export function hasRunningSubagent(profileId: string): boolean {
   return !!profileId && (runningByProfile.get(profileId) || 0) > 0;
 }
+
+export { listRunning, updateRunning };
 
 function incRunning(profileId: string): void {
   if (!profileId) return;
@@ -115,6 +179,7 @@ export async function runAgent(opts: {
   console.log('[子代理] 启动 ' + opts.agentName + ' (父窗口 ' + opts.parentWindowId + ', 项目目录 ' + (projectDir || '无') + ')');
   incRunning(opts.parentProfileId);
   const windowId = _createWindow(subProfile);
+  registerRunning({ windowId, parentWindowId: opts.parentWindowId, agentName: opts.agentName, task: opts.task });
 
   // 关键：把父窗口的项目目录写入子代理窗口的 sessionStore，
   // 否则子代理执行工具（execute-js 从 ctx.sessionStore.state.selectedProjectDir 取）
@@ -134,9 +199,14 @@ export async function runAgent(opts: {
   try {
     const text = await waitForDone(windowId, timeoutMs);
     if (text === '__SUBAGENT_TIMEOUT__') throw new Error('子代理执行超时');
+    updateRunning(windowId, { status: 'done', preview: (text || '').slice(0, 200) });
     return text;
+  } catch (err: any) {
+    updateRunning(windowId, { status: 'error', error: err && err.message ? err.message : String(err) });
+    throw err;
   } finally {
     decRunning(opts.parentProfileId);
+    removeRunning(windowId);
     // 关闭子代理窗口
     try {
       const ctx = windowState.getWindowContext(windowId);

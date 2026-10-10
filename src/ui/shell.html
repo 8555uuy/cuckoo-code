@@ -393,6 +393,29 @@
     overflow: hidden;
   }
   /* 技能卡片（无边�?+ 分割�?+ 悬停浅底�?*/
+  /* 运行中子代理卡片 */
+  .ck-agent-running { border-left: 2px solid var(--ck-accent, #4c8dff); }
+  .ck-agent-running .ck-skill-desc { display: block; }
+  .ck-agent-running-status { margin-left: auto; font-size: 11px; color: var(--ck-text-dim); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .ck-agent-running-preview {
+    margin-top: 4px; padding: 6px 8px;
+    background: rgba(0,0,0,.15);
+    border-radius: 5px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 11px; line-height: 1.5;
+    color: var(--ck-text-dim);
+    white-space: pre-wrap; word-break: break-all;
+    max-height: 72px; overflow: hidden;
+  }
+  .ck-agent-running .ck-skill-name::before {
+    content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #34d399; margin-right: 7px; vertical-align: middle;
+    animation: ck-agent-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ck-agent-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,211,153,.5); }
+    50% { opacity: .6; box-shadow: 0 0 0 4px rgba(52,211,153,0); }
+  }
   .ck-skill-item {
     display: flex; flex-direction: column; gap: 6px;
     background: transparent; border: none;
@@ -1559,6 +1582,7 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                 </button>
               </div>
+              <div class="ck-list" id="agent-running-list"></div>
               <div class="ck-list" id="agent-list">
                 <div class="ck-list-empty">加载中…</div>
               </div>
@@ -3449,7 +3473,29 @@
 
   // src/ui/shell/scripts/pages/agents.ts
   init_shared();
+  async function loadRunningSubagents() {
+    const el = document.getElementById("agent-running-list");
+    if (!el) return;
+    const apiAny = api;
+    if (typeof apiAny.listRunningSubagents !== "function") return;
+    try {
+      const r = await apiAny.listRunningSubagents();
+      const list = r && r.success && r.subagents ? r.subagents : [];
+      if (!list.length) {
+        el.innerHTML = "";
+        return;
+      }
+      el.innerHTML = '<div class="ck-mcp-group-title">\u8FD0\u884C\u4E2D</div>' + list.map((s) => {
+        const elapsed = Math.max(0, Math.round((Date.now() - (s.startedAt || Date.now())) / 1e3));
+        const statusText = s.status === "done" ? "\u5B8C\u6210" : s.status === "error" ? "\u51FA\u9519" : "\u8FD0\u884C\u4E2D";
+        const preview = (s.preview || "").slice(-120).replace(/</g, "&lt;");
+        return '<div class="ck-skill-item ck-agent-running"><div class="ck-skill-top"><span class="ck-skill-name">' + escapeHtml(s.agentName) + '</span><span class="ck-agent-running-status">' + statusText + " \xB7 " + elapsed + "s" + (s.turn ? " \xB7 " + s.turn + " \u8F6E" : "") + '</span></div><div class="ck-skill-desc">' + escapeHtml(s.task || "") + "</div>" + (preview ? '<div class="ck-agent-running-preview">' + preview + "</div>" : "") + "</div>";
+      }).join("");
+    } catch (_) {
+    }
+  }
   async function loadAgents() {
+    loadRunningSubagents();
     const listEl2 = document.getElementById("agent-list");
     if (!listEl2 || !api.listAgents) return;
     try {
@@ -3543,6 +3589,15 @@
   function closeAgentModal() {
     document.getElementById("agent-modal")?.classList.add("cuckoo-hidden");
   }
+  try {
+    const apiAny = api;
+    if (typeof apiAny.onSubagentsChanged === "function") apiAny.onSubagentsChanged(() => loadRunningSubagents());
+  } catch (_) {
+  }
+  setInterval(() => {
+    const el = document.getElementById("agent-running-list");
+    if (el && el.innerHTML) loadRunningSubagents();
+  }, 3e3);
   document.getElementById("agent-new")?.addEventListener("click", openAgentModal);
   document.getElementById("agent-cancel")?.addEventListener("click", closeAgentModal);
   document.getElementById("agent-refresh")?.addEventListener("click", loadAgents);

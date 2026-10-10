@@ -7,7 +7,7 @@
  */
 import { createRequire } from 'node:module';
 import { extractJsToolBlocks } from './parser/js-detector.js';
-import { onInterceptedResponse } from './intercept/observer.js';
+import { onInterceptedResponse, onStream } from './intercept/observer.js';
 
 const require = createRequire(import.meta.url);
 const { ipcRenderer } = require('electron');
@@ -58,6 +58,27 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
 
   console.log('[Cuckoo Code][子代理] 激活：' + cfg.agentName);
 
+  // ===== 进度上报（节流）：逐字流 → 主进程 → 父窗口 UI =====
+  let lastPushAt = 0;
+  let lastPreview = '';
+  function pushProgress(patch: any): void {
+    try { ipcRenderer.send('subagent-progress', patch); } catch (_) { /* ignore */ }
+  }
+  onStream((ev: any) => {
+    try {
+      const t = (ev && ev.text) || '';
+      if (!t) return;
+      const now = Date.now();
+      // 节流：最多每 400ms 推一次，且内容有变化
+      if (now - lastPushAt < 400) return;
+      const preview = t.slice(-200);
+      if (preview === lastPreview) return;
+      lastPushAt = now;
+      lastPreview = preview;
+      pushProgress({ status: 'running', preview: preview });
+    } catch (_) { /* ignore */ }
+  });
+
   // 监听回复：无工具调用 = 完成；含工具 = 一轮（受 maxTurns 限制）
   let turnCount = 0;
   onInterceptedResponse((text: string) => {
@@ -71,6 +92,7 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
     }
     // 含工具调用 = 一轮
     turnCount++;
+    pushProgress({ turn: turnCount, status: 'running', preview: raw.slice(-200) });
     if (cfg.maxTurns && turnCount >= cfg.maxTurns) {
       console.log('[Cuckoo Code][子代理] 达到 maxTurns=' + cfg.maxTurns + '，停止并上报部分结果');
       ipcRenderer.invoke('subagent-response', { text: raw, partial: true, turns: turnCount }).catch(() => {});
