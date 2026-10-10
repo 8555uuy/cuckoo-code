@@ -37,6 +37,7 @@ import {
   listCuckooPluginDirs,
   getCuckooPluginsDir,
 } from '../../plugins/cuckoo-plugins/paths.js';
+import { registerPromptSection, unregisterPromptSection } from '../../plugins/dsh-compat/prompt-sections.js';
 import {
   isCuckooPluginEnabled,
   setCuckooPluginEnabled,
@@ -561,6 +562,34 @@ function registerPluginIpc(): void {
       // 动态 import 拿 resolve
       import('../plugin-commands.js').then((m) => m.resolvePendingCommandRun(runId, result)).catch(() => {});
     } catch (_) {}
+  });
+
+  // ===== 插件提示词段（渲染进程插件 → 主进程提示词表）=====
+  // 渲染进程与主进程内存不共享，插件在渲染进程注册的提示词段主进程读不到；
+  // 故走 IPC 转发到主进程的 prompt-sections 表（与 prompt-builder 同进程）。
+  const pluginPromptSections = new Map<string, { name: string; order: number; text: string }>();
+  ipcMain.handle('plugin-prompt-section', async (_event: any, { pluginId, sec }: any = {}) => {
+    try {
+      if (!pluginId || !sec || typeof sec.name !== 'string') return { success: false, error: '缺 pluginId 或 sec.name' };
+      const key = pluginId + '::' + sec.name;
+      pluginPromptSections.set(key, {
+        name: sec.name,
+        order: typeof sec.order === 'number' ? sec.order : 100,
+        text: typeof sec.text === 'string' ? sec.text : '',
+      });
+      // 写进主进程的全局提示词表（prompt-builder 读取）
+      registerPromptSection({ name: key, order: pluginPromptSections.get(key)!.order, text: pluginPromptSections.get(key)!.text }, pluginId);
+      return { success: true };
+    } catch (err: any) { return { success: false, error: err && err.message ? err.message : String(err) }; }
+  });
+  ipcMain.handle('plugin-prompt-section-remove', async (_event: any, { pluginId, name }: any = {}) => {
+    try {
+      if (!pluginId || !name) return { success: false, error: '缺 pluginId 或 name' };
+      const key = pluginId + '::' + name;
+      pluginPromptSections.delete(key);
+      unregisterPromptSection(key);
+      return { success: true };
+    } catch (err: any) { return { success: false, error: err && err.message ? err.message : String(err) }; }
   });
 
   // ===== 插件槽位（通用挂载：具名槽位 + order，对标 DSH slots）=====

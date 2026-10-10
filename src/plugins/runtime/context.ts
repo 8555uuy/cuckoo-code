@@ -39,6 +39,8 @@ export interface HostCapabilities {
   /** 读 localStorage 配置 */
   getSetting(key: string): any;
   setSetting(key: string, value: any): void;
+  /** 注册提示词段（由 bridge 接入 dsh-compat 的全局表）；返回注销函数 */
+  registerPromptSection?(sec: { name: string; order?: number; text: string }, pluginName?: string): () => void;
   /** 日志前缀 */
   logPrefix?: string;
 }
@@ -132,6 +134,24 @@ function createContext(name: string, host: HostCapabilities, registry?: ServiceR
     set: (key: string, value: any) => host.setSetting(key, value),
   };
 
+  // ===== 提示词段（跨进程：走 IPC 到主进程提示词表）=====
+  const systemPrompt: any = {
+    section(sec: any) {
+      if (host.registerPromptSection) return host.registerPromptSection(sec, name);
+      // 兜底：直接调渲染进程内的 electronAPI
+      try {
+        const api = (window as any).electronAPI;
+        if (api && typeof api.pluginPromptSection === 'function') {
+          api.pluginPromptSection(name, sec).catch(() => {});
+          return () => {
+            try { if (api.pluginPromptSectionRemove) api.pluginPromptSectionRemove(name, sec && sec.name).catch(() => {}); } catch (_) {}
+          };
+        }
+      } catch (_) {}
+      return () => {};
+    },
+  };
+
   const ctx: PluginContext = {
     name,
     log: (...args: any[]) => console.log('[' + (host.logPrefix || 'plugin') + ':' + name + ']', ...args),
@@ -141,6 +161,7 @@ function createContext(name: string, host: HostCapabilities, registry?: ServiceR
     command,
     sessions,
     settings,
+    systemPrompt,
 
     // 本地 HTTP 服务（静态资源）
     webServer: {

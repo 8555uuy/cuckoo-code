@@ -9,6 +9,7 @@
 import { PluginHost } from '../plugins/runtime/index.js';
 import type { HostCapabilities, CuckooEventSource, PendingPluginSource } from '../plugins/runtime/index.js';
 import { bindCuckooEvents } from '../plugins/runtime/index.js';
+import { registerPromptSection } from '../plugins/dsh-compat/prompt-sections.js';
 import { sendToChat } from '../overlay/chat-input.js';
 import { getProviderByUrl } from '../providers/registry.js';
 import { onInterceptedResponse, onStream, onTaskIdle, onToolCall, onAiError } from './intercept/observer.js';
@@ -107,6 +108,17 @@ function buildHost(): HostCapabilities {
     getTokenStats: () => readTokenStats(),
     getSetting: (key: string) => {
       try { const v = localStorage.getItem(key); return v === null ? undefined : v; } catch (_) { return undefined; }
+    },
+    registerPromptSection: (sec: any, pluginName?: string) => {
+      // 跨进程：主进程才读得到提示词表，故走 IPC 转发
+      try {
+        const api = (window as any).electronAPI;
+        if (api && typeof api.pluginPromptSection === 'function') {
+          api.pluginPromptSection(pluginName || 'plugin', sec).catch(() => {});
+          return () => { try { if (api.pluginPromptSectionRemove) api.pluginPromptSectionRemove(pluginName || 'plugin', sec && sec.name).catch(() => {}); } catch (_) {} };
+        }
+      } catch (_) {}
+      return () => {};
     },
     setSetting: (key: string, value: any) => {
       try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); } catch (_) { /* ignore */ }

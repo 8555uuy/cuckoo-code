@@ -123,6 +123,11 @@ export interface PluginContext {
   sessions: SessionsService;
   settings: SettingsService;
 
+  /** 提示词段：注册后合并进系统提示词（{{TOOL_SECTIONS}}） */
+  systemPrompt?: {
+    section(sec: { name: string; order?: number; text: string }): () => void;
+  };
+
   // ===== 事件 =====
   on(event: string, listener: EventListener): () => void;
   once(event: string, listener: EventListener): () => void;

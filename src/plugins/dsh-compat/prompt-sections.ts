@@ -34,8 +34,11 @@ function getPromptSections(): DshPromptSection[] {
   return Array.from(sections.values()).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
 }
 
+/** 注销一个提示词段 */
+function unregisterPromptSection(name: string): void { sections.delete(name); }
+
 /** 清空（测试/卸载用） */
 function clearPromptSections(): void { sections.clear(); }
 
-export { registerPromptSection, getPromptSections, clearPromptSections };
+export { registerPromptSection, unregisterPromptSection, getPromptSections, clearPromptSections };
 export type { DshPromptSection };

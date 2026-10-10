@@ -135,6 +135,9 @@ let electronAPI: any = {
   shellMount: (pluginId: string, target: string, id: string, spec: any) => {
     return ipcRenderer.invoke('plugin-shell-mount', { pluginId, target, id, spec });
   },
+  /** 插件提示词段：转发到主进程的提示词表（渲染进程与主进程内存不共享） */
+  pluginPromptSection: (pluginId: string, sec: any) => ipcRenderer.invoke('plugin-prompt-section', { pluginId, sec }),
+  pluginPromptSectionRemove: (pluginId: string, name: string) => ipcRenderer.invoke('plugin-prompt-section-remove', { pluginId, name }),
   /** 插件 webServer：注册静态路由（暴露插件目录为 HTTP） */
   webServerServe: (pluginId: string, prefix: string, dir: string) => {
     return ipcRenderer.invoke('plugin-webserver-serve', { pluginId, prefix, dir });
