@@ -49,11 +49,18 @@ function StatusBar() {
   const [tps, setTps] = useState('');
   const [recent, setRecent] = useState<RecentItem[]>(() => loadRecent());
 
-  // 订阅 token / tps
+  // 订阅 token / tps + 挂载时拉取最近一次（避免错过切页前的推送）
   useEffect(() => {
     const anyApi = api as any;
     if (anyApi.onTokenUpdated) anyApi.onTokenUpdated((d: any) => { if (d && typeof d.context === 'number') setContext(d.context); });
     if (anyApi.onTpsUpdated) anyApi.onTpsUpdated((d: any) => { setTps(d && d.tps ? String(d.tps) : ''); });
+    if (anyApi.getTokenUsage) {
+      anyApi.getTokenUsage().then((r: any) => {
+        if (!r || !r.success) return;
+        if (r.data && typeof r.data.context === 'number') setContext(r.data.context);
+        if (typeof r.tps === 'string') setTps(r.tps);
+      }).catch(() => {});
+    }
   }, []);
 
   // 订阅最近使用变更

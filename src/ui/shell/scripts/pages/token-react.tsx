@@ -54,11 +54,16 @@ export function TokenPage() {
   const [auto, setAuto] = useState<{ enabled: boolean; threshold: number }>({ enabled: false, threshold: 80 });
   const [saving, setSaving] = useState(false);
 
-  // 订阅 token 更新
+  // 订阅 token 更新 + 挂载时拉取最近一次（避免错过切页前的推送）
   useEffect(() => {
     const anyApi = api as any;
     if (anyApi.onTokenUpdated) {
       anyApi.onTokenUpdated((d: TokenData) => { if (d) setData(d); });
+    }
+    if (anyApi.getTokenUsage) {
+      anyApi.getTokenUsage().then((r: any) => {
+        if (r && r.success && r.data) setData(r.data);
+      }).catch(() => {});
     }
     if (anyApi.onTotalUpdated) {
       anyApi.onTotalUpdated((d: any) => { if (d && typeof d.systemTotal === 'number') setSystemTotal(d.systemTotal); });

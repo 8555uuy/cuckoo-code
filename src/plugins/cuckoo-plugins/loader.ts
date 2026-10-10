@@ -171,6 +171,12 @@ interface CuckooHost {
   injectJS?: (windowId: string, code: string) => Promise<any>;
   attachFile?: (filePath: string) => Promise<any>;
   runTerminal?: (command: string, opts?: any) => Promise<{ stdout: string; exitCode: number }>;
+  // ===== UI 槽位（对标 DSH slots）=====
+  /** 注册一个 UI 槽位（返回 disposer） */
+  registerSlot?: (spec: { pluginId: string; slot: string; id: string; order?: number; spec?: any }) => () => void;
+  // ===== 宿主服务：webServer（DSH ctx.webServer.register）=====
+  /** 注册一个动态 HTTP 路由（返回 disposer） */
+  registerHttpRoute?: (spec: { pluginId: string; kind?: string; path: string; handler: (req: any, res: any) => any }) => () => void;
 }
 
 /** 一个"假 ctx"——收集插件注册的工具；未知属性用 stub 兜底（够用空接口） */
@@ -236,9 +242,72 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     effect(fn: any) { try { const c = fn(); return typeof c === 'function' ? c : () => {}; } catch (_) { return () => {}; } },
     scope() { return { effect: () => () => {}, on: () => () => {}, dispose() {}, disposed: false }; },
     provide() { return () => {}; },
-    get() { return undefined; },
+    // 服务查找（DSH ctx.get(服务名)）：把已有服务 + 补齐的方法暴露出来
+    get(key: string) {
+      // webServer：动态 HTTP 路由
+      if (key === 'webServer') {
+        return {
+          register: (spec: any) => {
+            if (!host || typeof host.registerHttpRoute !== 'function') return () => {};
+            try { return host.registerHttpRoute({ pluginId: pluginName, kind: spec && spec.kind, path: spec && spec.path, handler: spec && spec.handler }) || (() => {}); }
+            catch (_) { return () => {}; }
+          },
+        };
+      }
+      // agents：会话映射的 agent（已有）
+      if (key === 'agents') return base.agents;
+      // sessions：会话查询（已有）
+      if (key === 'sessions') return base.sessions;
+      // tools：工具注册表（补 schemas）
+      if (key === 'tools') {
+        return {
+          register: base.tools.register,
+          list: base.tools.list,
+          schemas: (_scope?: any) => {
+            const names = (host && host.getToolNames) ? host.getToolNames() : tools.map((t: any) => t.name);
+            return names.map((n: string) => ({ name: n, description: '' }));
+          },
+        };
+      }
+      // sessionPersistence：会话持久化
+      if (key === 'sessionPersistence') {
+        return {
+          list: () => (host && host.listSessions ? host.listSessions().map((s: any) => ({ id: s.id, title: s.title })) : []),
+        };
+      }
+      // workspaceRegistry：工作区注册表（简化为"当前项目目录"）
+      if (key === 'workspaceRegistry') {
+        return {
+          list: () => {
+            const dir = (host && host.getCurrentSession) ? host.getCurrentSession().projectDir : null;
+            if (!dir) return [];
+            const name = String(dir).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || dir;
+            return [{ id: dir, path: dir, name }];
+          },
+        };
+      }
+      // sessionProjectionCache：DSH 内部缓存，暂不提供
+      if (key === 'sessionProjectionCache') return undefined;
+      return undefined;
+    },
     // inject 回调传 ctx 自身（带 stub 兜底），插件拿到 projectionCtx.sessionProjections 等不报错
     inject(_names: any, cb: any) { if (typeof cb === 'function') { try { cb(ctx); } catch (_) { /* 空转 */ } } return () => {}; },
+    // UI 槽位（对标 DSH slots）：ctx.ui.slot.register({ slot, id, order, ...内容 })
+    ui: {
+      slot: {
+        register(spec: any) {
+          const s = spec || {};
+          if (!host || typeof host.registerSlot !== 'function') return () => {};
+          try { return host.registerSlot({ pluginId: pluginName, slot: s.slot, id: s.id, order: s.order, spec: s }) || (() => {}); }
+          catch (_) { return () => {}; }
+        },
+      },
+      // DSH 兼容：ctx.slots（复数）也常见，指向同一套
+      slots: {
+        register(spec: any) { return (base.ui as any).slot.register(spec); },
+        unregister() {},
+      },
+    },
   };
   // 未知属性 → stub 兜底
   const ctx: any = new Proxy(base, {
@@ -273,5 +342,44 @@ async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{
   return { pluginName, tools, runtime, bus };
 }
 
-export { loadCuckooPlugin, resolveEntry, bundlePlugin };
+/** 在某目录里找"客户端入口"：package.json 的 exports['./client'] */
+function findClientIn(dir: string): string | null {
+  let pkg: any = null;
+  try {
+    pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+  } catch (_) { return null; }
+  const ex = pkg && pkg.exports;
+  let rel: string | null = null;
+  if (ex && typeof ex === 'object') {
+    const c = ex['./client'];
+    if (typeof c === 'string') rel = c;
+    else if (c && typeof c === 'object' && typeof c.default === 'string') rel = c.default;
+  }
+  if (!rel) {
+    // 回退：lib/client.js
+    rel = 'lib/client.js';
+  }
+  const abs = path.join(dir, rel);
+  return (fs.existsSync(abs) && fs.statSync(abs).isFile()) ? abs : null;
+}
+
+/**
+ * 找插件的"客户端入口"（DSH 的 ./client）。
+ * 与 resolveEntry 同样处理"壳目录"：直接目录找不到 → 去 dependencies 里找。
+ */
+function resolveClientEntry(pluginDir: string): { file: string; pkgName: string } | null {
+  const direct = findClientIn(pluginDir);
+  if (direct) return { file: direct, pkgName: path.basename(pluginDir) };
+  let pkg: any = null;
+  try { pkg = JSON.parse(fs.readFileSync(path.join(pluginDir, 'package.json'), 'utf-8')); } catch (_) { /* ignore */ }
+  const deps = (pkg && pkg.dependencies) || {};
+  for (const depName of Object.keys(deps)) {
+    const depDir = path.join(pluginDir, 'node_modules', depName);
+    const entry = findClientIn(depDir);
+    if (entry) return { file: entry, pkgName: depName };
+  }
+  return null;
+}
+
+export { loadCuckooPlugin, resolveEntry, bundlePlugin, resolveClientEntry };
 export type { CuckooHost };

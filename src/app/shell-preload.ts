@@ -30,6 +30,8 @@ const shellAPI = {
   onTotalUpdated: (cb: (data: any) => void) => {
     ipcRenderer.on('shell-total-updated', (_e: any, data: any) => cb(data));
   },
+  /** 拉取最近一次 token / tps（页面挂载时用） */
+  getTokenUsage: () => ipcRenderer.invoke('get-token-usage'),
   getSystemTotal: () => ipcRenderer.invoke('get-system-total'),
   getProjectDir: () => ipcRenderer.invoke('get-project-dir'),
   // 点击"项目目录" → 弹目录选择框 + 重新初始化（复用 init-project 通道）
@@ -172,6 +174,8 @@ const shellAPI = {
   // ===== Cuckoo 插件（DSH 兼容）=====
   cuckooPluginList: () => ipcRenderer.invoke('cuckoo-plugin-list'),
   cuckooPluginInstall: (pkgName: string) => ipcRenderer.invoke('cuckoo-plugin-install', { pkgName }),
+  /** DSH 插件 client 入口源码 */
+  cuckooPluginClientSources: () => ipcRenderer.invoke('cuckoo-plugin-client-sources'),
   cuckooPluginUninstall: (id: string) => ipcRenderer.invoke('cuckoo-plugin-uninstall', { id }),
   cuckooPluginToggle: (id: string, enabled: boolean) => ipcRenderer.invoke('cuckoo-plugin-toggle', { id, enabled }),
   cuckooPluginOpenDir: () => ipcRenderer.invoke('cuckoo-plugin-open-dir'),

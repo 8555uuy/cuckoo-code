@@ -112,7 +112,13 @@ export function mountShellFrame(): void {
   if (!sidebar) return;
   // 1) 旧的原生结构：从 DOM 里【移除】（不是隐藏——隐藏时 ID 还在，getElementById 会拿到旧元素，造成 ID 冲突）
   if (!sidebar.dataset.ckOldRemoved) {
-    // 把所有"非 React 挂载点"的子节点移除
+    // 1a) 先把"通用弹窗"移出到 body（ckPrompt/ckAlert 等依赖，不能删）
+    //     它们在 partials/modals.html 里，本被包在侧栏内。
+    ['ck-dialog', 'input-modal', 'wg-modal'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && el.parentNode !== document.body) { try { document.body.appendChild(el); } catch (_) {} }
+    });
+    // 1b) 其余"非 React 挂载点"的子节点移除
     const keep = document.getElementById('ck-shell-react');
     [...sidebar.childNodes].forEach((n) => {
       if (n !== keep) { try { sidebar.removeChild(n); } catch (_) {} }

@@ -33,6 +33,7 @@ import {
   loadPluginFromDir,
   uninstallCuckooPlugin,
 } from '../../plugins/cuckoo-plugins/index.js';
+import { resolveClientEntry } from '../../plugins/cuckoo-plugins/loader.js';
 import {
   listCuckooPluginDirs,
   getCuckooPluginsDir,
@@ -50,6 +51,36 @@ const { ipcMain, shell, app } = require('electron');
 const _os = require('node:os');
 const _fs = require('node:fs');
 const _path = require('node:path');
+
+// ===== 插件槽位存储（对标 DSH slots）=====
+// 提升到模块级：DSH 插件 ctx.ui.slot.register 直接调 registerPluginSlot，
+// 壳页面通过 plugin-slot-register / shell-slot-register 事件消费。
+interface PluginSlot { pluginId: string; slot: string; id: string; order: number; spec: any }
+const pluginSlots: PluginSlot[] = [];
+
+/** 注册/更新一个插件槽位（同 pluginId+slot+id 覆盖），并广播给壳页面 */
+function registerPluginSlot({ pluginId, slot, id, order, spec }: any = {}): { success: boolean; error?: string } {
+  if (!pluginId || !slot || !id) return { success: false, error: '缺 pluginId/slot/id' };
+  const o = typeof order === 'number' ? order : 100;
+  const exist = pluginSlots.find((s) => s.pluginId === pluginId && s.slot === slot && s.id === id);
+  if (exist) { exist.order = o; exist.spec = spec; }
+  else pluginSlots.push({ pluginId, slot, id, order: o, spec });
+  const mainWin: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
+  if (mainWin && mainWin.webContents) mainWin.webContents.send('shell-slot-register', { pluginId, slot, id, order: o, spec });
+  return { success: true };
+}
+
+/** 注销一个插件槽位（返回是否删除了） */
+function unregisterPluginSlot(pluginId: string, slot: string, id: string): boolean {
+  const idx = pluginSlots.findIndex((s) => s.pluginId === pluginId && s.slot === slot && s.id === id);
+  if (idx >= 0) { pluginSlots.splice(idx, 1); return true; }
+  return false;
+}
+
+/** 列出所有插件槽位 */
+function listPluginSlots(): PluginSlot[] { return pluginSlots.slice(); }
+
+export { registerPluginSlot, unregisterPluginSlot, listPluginSlots };
 
 /**
  * 加载插件"网页注入脚本"（CommonJS）。用 .cjs 临时副本，避免项目 type:module 干扰。
@@ -564,28 +595,45 @@ function registerPluginIpc(): void {
   });
 
   // ===== 插件槽位（通用挂载：具名槽位 + order，对标 DSH slots）=====
-  const pluginSlots: Array<{ pluginId: string; slot: string; id: string; order: number; spec: any }> = [];
-  ipcMain.handle('plugin-slot-register', async (_event: any, { pluginId, slot, id, order, spec }: any = {}) => {
-    try {
-      if (!pluginId || !slot || !id) return { success: false, error: '缺 pluginId/slot/id' };
-      const exist = pluginSlots.find(s => s.pluginId === pluginId && s.slot === slot && s.id === id);
-      if (exist) { exist.order = typeof order === 'number' ? order : 100; exist.spec = spec; }
-      else pluginSlots.push({ pluginId, slot, id, order: typeof order === 'number' ? order : 100, spec });
-      const mainWin: any = windowState.getMainWindow ? windowState.getMainWindow() : null;
-      if (mainWin && mainWin.webContents) mainWin.webContents.send('shell-slot-register', { pluginId, slot, id, order, spec });
-      return { success: true };
-    } catch (err: any) { return { success: false, error: err && err.message ? err.message : String(err) }; }
+  // 存储与注册函数已提升到模块级（registerPluginSlot / unregisterPluginSlot / listPluginSlots），
+  // 供 cuckoo-host 注入给插件 ctx（DSH 插件调 ctx.ui.slot.register 时直接落到这里）。
+  ipcMain.handle('plugin-slot-register', async (_event: any, m: any = {}) => {
+    try { return registerPluginSlot(m); }
+    catch (err: any) { return { success: false, error: err && err.message ? err.message : String(err) }; }
   });
   ipcMain.handle('plugin-slot-unregister', async (_event: any, { pluginId, slot, id }: any = {}) => {
     try {
-      const idx = pluginSlots.findIndex(s => s.pluginId === pluginId && s.slot === slot && s.id === id);
-      if (idx >= 0) pluginSlots.splice(idx, 1);
+      const ok = unregisterPluginSlot(pluginId, slot, id);
       const mainWin: any = windowState.getMainWindow ? windowState.getMainWindow() : null;
-      if (mainWin && mainWin.webContents) mainWin.webContents.send('shell-slot-unregister', { pluginId, slot, id });
+      if (ok && mainWin && mainWin.webContents) mainWin.webContents.send('shell-slot-unregister', { pluginId, slot, id });
       return { success: true };
     } catch (err: any) { return { success: false, error: err && err.message ? err.message : String(err) }; }
   });
-  ipcMain.handle('plugin-slot-list', async () => ({ success: true, slots: pluginSlots }));
+  ipcMain.handle('plugin-slot-list', async () => ({ success: true, slots: listPluginSlots() }));
+
+  // ===== DSH 插件 client 入口源码（壳页面加载执行）=====
+  // 返回已启用的 Cuckoo 插件（~/.cuckoo/cuckoo-plugins/）的 ./client 源码。
+  // 壳页面用最小 DSH 运行时（window.__ModuleLoader__ + React require）执行它。
+  ipcMain.handle('cuckoo-plugin-client-sources', async () => {
+    try {
+      const out: Array<{ pluginId: string; pkgName: string; source: string }> = [];
+      for (const dir of listCuckooPluginDirs()) {
+        const id = path.basename(dir);
+        try { if (!isCuckooPluginEnabled(id)) continue; } catch (_) { continue; }
+        try {
+          const c = resolveClientEntry(dir);
+          if (!c) continue;
+          const source = fs.readFileSync(c.file, 'utf-8');
+          out.push({ pluginId: id, pkgName: c.pkgName, source });
+        } catch (err: any) {
+          console.error('[plugin-client] 读取失败:', dir, err && err.message);
+        }
+      }
+      return { success: true, clients: out };
+    } catch (err: any) {
+      return { success: false, clients: [], error: err && err.message ? err.message : String(err) };
+    }
+  });
 
   // ===== 插件界面挂载（Cuckoo 壳页面：侧边栏/状态栏/工具栏）=====
   // 缓存已挂载请求（壳页面可能晚于插件加载；就绪后补发）

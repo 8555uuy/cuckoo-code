@@ -35,6 +35,8 @@ export interface ShellAPI {
   // ===== Cuckoo 插件（DSH 兼容）=====
   cuckooPluginList?: () => Promise<any>;
   cuckooPluginInstall?: (pkgName: string) => Promise<any>;
+  /** DSH 插件 client 入口源码 */
+  cuckooPluginClientSources?: () => Promise<any>;
   cuckooPluginUninstall?: (id: string) => Promise<any>;
   cuckooPluginToggle?: (id: string, enabled: boolean) => Promise<any>;
   cuckooPluginOpenDir?: () => Promise<any>;
@@ -100,6 +102,7 @@ export interface ShellAPI {
   deleteProfileWindow?: (id: string) => Promise<any>;
   setProfileAutoOpen?: (id: string, on: boolean) => Promise<any>;
   // Token / 自动压缩
+  getTokenUsage?: () => Promise<any>;
   getAutoCompact?: () => Promise<any>;
   saveAutoCompact?: (data: any) => Promise<any>;
   triggerCompact?: () => Promise<any>;

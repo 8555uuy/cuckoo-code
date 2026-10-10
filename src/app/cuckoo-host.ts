@@ -11,6 +11,8 @@ import { getPluginScanRoots } from '../plugins/roots.js';
 import { listSnippets } from './snippets.js';
 import { getTotal as getTokenTotal } from './token-stats.js';
 import type { CuckooHost } from '../plugins/cuckoo-plugins/loader.js';
+import { registerPluginSlot, unregisterPluginSlot } from './ipc/plugin.js';
+import { registerDynamicRoute } from './ipc/webserver.js';
 
 /** 取"当前会话"（优先最后一个活跃窗口） */
 function currentSession(): { id: string | null; projectDir: string | null } {
@@ -179,6 +181,17 @@ function buildCuckooHost(): CuckooHost {
       const text = typeof out === 'string' ? out : JSON.stringify(out);
       const exitCode = /\[exit code: (\d+)\]/.exec(text) ? Number(RegExp.$1) : (res && res.success === false ? 1 : 0);
       return { stdout: text, exitCode };
+    },
+    // ===== 宿主服务：webServer =====
+    registerHttpRoute: (s: { pluginId: string; kind?: string; path: string; handler: (req: any, res: any) => any }) => {
+      try { return registerDynamicRoute(s.pluginId, { kind: s.kind, path: s.path, handler: s.handler }); }
+      catch (_) { return () => {}; }
+    },
+    // ===== UI 槽位（对标 DSH slots）=====
+    registerSlot: (s: { pluginId: string; slot: string; id: string; order?: number; spec?: any }) => {
+      const pluginId = (s && s.pluginId) ? String(s.pluginId) : 'plugin';
+      registerPluginSlot({ pluginId, slot: s.slot, id: s.id, order: s.order, spec: s.spec });
+      return () => { try { unregisterPluginSlot(pluginId, s.slot, s.id); } catch (_) { /* ignore */ } };
     },
   };
 }

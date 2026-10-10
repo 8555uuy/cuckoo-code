@@ -20,7 +20,33 @@ interface ServeRoute {
   dir: string;
 }
 
+/** 动态路由（插件注册的 HTTP 处理器，DSH ctx.webServer.register 语义） */
+interface DynamicRoute {
+  pluginId: string;
+  /** 'exact' = 精确匹配 path；'prefix' = 前缀匹配 */
+  kind: 'exact' | 'prefix';
+  path: string;
+  handler: (req: any, res: any) => any;
+}
+
 const routes: ServeRoute[] = [];
+const dynamicRoutes: DynamicRoute[] = [];
+
+/** 注册一个动态路由（返回 disposer）。插件宿主侧在主进程执行，handler 直接挂进 http server。 */
+function registerDynamicRoute(pluginId: string, spec: { kind?: string; path: string; handler: (req: any, res: any) => any }): () => void {
+  const kind = spec && spec.kind === 'prefix' ? 'prefix' : 'exact';
+  const p = spec && typeof spec.path === 'string' ? spec.path : '';
+  const handler = spec && spec.handler;
+  if (!p || typeof handler !== 'function') return () => {};
+  const rec: DynamicRoute = { pluginId, kind, path: p, handler };
+  dynamicRoutes.push(rec);
+  // 懒启动服务器（第一次注册时）
+  ensureServer().catch(() => {});
+  return () => {
+    const i = dynamicRoutes.indexOf(rec);
+    if (i >= 0) dynamicRoutes.splice(i, 1);
+  };
+}
 let server: http.Server | null = null;
 let port = 0;
 
@@ -45,6 +71,18 @@ function ensureServer(): Promise<number> {
     server = http.createServer((req, res) => {
       try {
         const url = new URL(req.url || '/', 'http://127.0.0.1');
+        // 1) 动态路由优先（插件注册的 HTTP 处理器）
+        const dyn = dynamicRoutes.find((r) => r.kind === 'exact' ? url.pathname === r.path : url.pathname.startsWith(r.path));
+        if (dyn) {
+          try {
+            const out = dyn.handler(req, res);
+            if (out && typeof out.then === 'function') out.catch((e: any) => { try { if (!res.headersSent) { res.writeHead(500); } res.end('handler error: ' + String(e && e.message ? e.message : e)); } catch (_) {} });
+          } catch (e: any) {
+            try { if (!res.headersSent) { res.writeHead(500); } res.end('handler error: ' + String(e && e.message ? e.message : e)); } catch (_) {}
+          }
+          return;
+        }
+        // 2) 静态资源（/plugins/<id>/<prefix>/...）
         const m = url.pathname.match(/^\/plugins\/([^/]+)(\/.*)?$/);
         if (!m) { res.writeHead(404); res.end('not found'); return; }
         const pluginId = decodeURIComponent(m[1]);
@@ -110,4 +148,4 @@ function registerWebServerIpc(): void {
   });
 }
 
-export { registerWebServerIpc };
+export { registerWebServerIpc, registerDynamicRoute };

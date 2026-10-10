@@ -699,6 +699,16 @@ function setupAppMenu() {
             try { (focusedWindow as any).__ckToggleHarness?.(); } catch (_) {}
           }
         },
+        {
+          label: '重新加载界面（壳页面）',
+          accelerator: 'CmdOrCtrl+Shift+R',
+          click: (_item: any, focusedWindow: any) => {
+            // 刷新壳页面（左侧栏 + 状态栏），不动 AI 页面
+            if (focusedWindow && focusedWindow.webContents && !focusedWindow.webContents.isDestroyed()) {
+              focusedWindow.webContents.reloadIgnoringCache();
+            }
+          }
+        },
         { type: 'separator' },
         { role: 'resetZoom', label: '重置缩放' },
         { role: 'zoomIn', label: '放大' },

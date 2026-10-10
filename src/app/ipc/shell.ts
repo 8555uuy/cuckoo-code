@@ -81,18 +81,23 @@ function pushProjectDir(view: any, dir: string | null): void {
   ctx.win.webContents.send('shell-project-dir', dir || null);
 }
 
-/** 把 token 数据推送给壳页面的状态条 */
+/** 把 token 数据推送给壳页面的状态条（同时缓存，供页面挂载时拉取） */
 function pushTokenUsage(view: any, context: number, cumulative: number, windowCumulative = 0, todayCumulative = 0, daily: any = null): void {
   const ctx = view ? windowState.getContextByWebContents(view.webContents) : null;
   if (!ctx || !ctx.win || ctx.win.isDestroyed()) return;
-  ctx.win.webContents.send('shell-token-updated', { context, cumulative, windowCumulative, todayCumulative, daily });
+  const payload = { context, cumulative, windowCumulative, todayCumulative, daily };
+  // 缓存最近一次（页面切走再切回时能立即恢复显示）
+  try { ctx.win.__ckLastTokenUsage = payload; } catch (_) {}
+  ctx.win.webContents.send('shell-token-updated', payload);
 }
 
-/** 把输出速度（TPS）展示文本推送给壳页面状态条 */
+/** 把输出速度（TPS）展示文本推送给壳页面状态条（同时缓存） */
 function pushTps(view: any, text: string): void {
   const ctx = view ? windowState.getContextByWebContents(view.webContents) : null;
   if (!ctx || !ctx.win || ctx.win.isDestroyed()) return;
-  ctx.win.webContents.send('shell-tps-updated', { tps: typeof text === 'string' ? text : '' });
+  const t = typeof text === 'string' ? text : '';
+  try { ctx.win.__ckLastTps = t; } catch (_) {}
+  ctx.win.webContents.send('shell-tps-updated', { tps: t });
 }
 
 function registerShellIpc(): void {
@@ -151,6 +156,17 @@ function registerShellIpc(): void {
   // 查询当前系统总累计（壳页面加载时拉取一次）
   ipcMain.handle('get-system-total', async () => {
     return { success: true, systemTotal: getTotal() };
+  });
+
+  // 拉取最近一次 token / tps（页面挂载时用，避免错过之前的推送）
+  ipcMain.handle('get-token-usage', async (event: any) => {
+    const ctx = windowState.getContextByWebContents(event.sender);
+    if (!ctx || !ctx.win || ctx.win.isDestroyed()) return { success: false };
+    return {
+      success: true,
+      data: ctx.win.__ckLastTokenUsage || null,
+      tps: ctx.win.__ckLastTps || '',
+    };
   });
 
 

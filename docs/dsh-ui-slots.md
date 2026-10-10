@@ -42,11 +42,11 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 | 3 | `sidebar` | 侧边栏（整条）| 已占 | ⬜ |
 | 4 | `sidebar.brand.mark` | 品牌图标 | 已占 | ⬜ |
 | 5 | `sidebar.brand.name` | 品牌名 | 已占 | ⬜ |
-| 6 | `sidebar.panellist` | 面板图标栏 | 已占 | ⬜ |
-| 7 | `sidebar.workspaces` | 工作区列表 | 已占 | ⬜ |
-| 8 | `sidebar.workspaces.directoryFlow` | 工作区目录流 | **空** | ⬜ |
-| 9 | `sidebar.footer.action` | 侧栏底部动作 | **空** | ⬜ |
-| 10 | `sidebar.settings` | 侧栏设置座 | 已占 | ⬜ |
+| 6 | `sidebar.panellist` | 面板图标栏 | 已占 | ✅ **已支持**（Cuckoo 主页按钮列表）|
+| 7 | `sidebar.workspaces` | 工作区列表 | 已占 | ⏸️ **挂起**（结构差异大）|
+| 8 | `sidebar.workspaces.directoryFlow` | 工作区目录流 | **空** | ⏸️ **挂起**（随 #7）|
+| 9 | `sidebar.footer.action` | 侧栏底部动作 | **空** | ✅ **已支持**（Cuckoo 主页固定底栏）|
+| 10 | `sidebar.settings` | 侧栏设置座 | 已占 | ❌ **不做**（single 类型，官方占用）|
 | 11 | `settings.launcher` | 设置启动器 | 已占 | ⬜ |
 | 12 | `settings.trigger` | 设置触发钮 | 已占 | ⬜ |
 | 13 | `settings.onboarding` | 设置引导 | **空** | ⬜ |
@@ -72,16 +72,16 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 
 | # | 槽位 | 中文名 | 状态 | Cuckoo 评估 |
 |---|---|---|---|---|
-| 26 | `conversation.input.dock` | 输入停靠区 | **空** | ⬜ |
-| 27 | `conversation.composer.bar` | 输入条 | 已占 | ⬜ |
-| 28 | `conversation.input.overlay` | 输入浮层 | 已占 | ⬜ |
-| 29 | `conversation.input.attachments` | 输入附件 | **空** | ⬜ |
-| 30 | `conversation.input.permission` | 输入权限位 | 已占 | ⬜ |
-| 31 | `conversation.input.plan` | 输入计划位 | **空** | ⬜ |
-| 32 | `conversation.input.left` | 输入左区 | **空** | ⬜ |
-| 33 | `conversation.input.right` | 输入右区 | **空** | ⬜ |
-| 34 | `conversation.input.model` | 输入模型位 | 已占 | ⬜ |
-| 35 | `conversation.input.activity` | 输入活动位 | **空** | ⬜ |
+| 26 | `conversation.input.dock` | 输入停靠区 | **空** | ❌ **不做**（在 AI 网页输入框）|
+| 27 | `conversation.composer.bar` | 输入条 | 已占 | ❌ **不做**（在 AI 网页）|
+| 28 | `conversation.input.overlay` | 输入浮层 | 已占 | ❌ **不做**（在 AI 网页）|
+| 29 | `conversation.input.attachments` | 输入附件 | **空** | ❌ **不做**（在 AI 网页）|
+| 30 | `conversation.input.permission` | 输入权限位 | 已占 | ❌ **不做**（在 AI 网页）|
+| 31 | `conversation.input.plan` | 输入计划位 | **空** | ❌ **不做**（在 AI 网页）|
+| 32 | `conversation.input.left` | 输入左区 | **空** | ❌ **不做**（在 AI 网页）|
+| 33 | `conversation.input.right` | 输入右区 | **空** | ❌ **不做**（在 AI 网页）|
+| 34 | `conversation.input.model` | 输入模型位 | 已占 | ❌ **不做**（在 AI 网页）|
+| 35 | `conversation.input.activity` | 输入活动位 | **空** | ❌ **不做**（在 AI 网页）|
 
 ### 2.5 右栏
 
@@ -127,6 +127,16 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 | 3 | `sidebar` | ⬜ | 侧边栏容器 |
 | 4 | `sidebar.brand.mark` | ❌ **不做** | 品牌图标（DSH 用于换 logo；Cuckoo 无此需求，且无侧栏）|
 | 5 | `sidebar.brand.name` | ❌ **不做** | 品牌名（与 brand.mark 一对；同理由，不做）|
+| 6 | `sidebar.panellist` | ✅ **已支持** | 映射到**主页**（分隔符下方 `#ck-home-panels`）。插件 `ctx.ui.slot.register({slot:'sidebar.panellist', id, label, title, command?})` → 主页渲染成按钮列表，按 order 排序。见 `pages/home-react.tsx` |
+| 7 | `sidebar.workspaces` | ⏸️ **挂起** | Cuckoo 工作区页按"项目目录"分组，DSH 按"工作区"——结构差异大，硬映射易歪。且有 4 个子槽位（`directoryFlow`/`session.row.action`/`session.row.leading`/`session.menu.item`）|
+| 9 | `sidebar.footer.action` | ✅ **已支持** | 映射到**主页固定底栏**（`#ck-home-footer`）。插件注册后渲染成组件（如 remote-web-ui 的电话图标）。见 `pages/home-react.tsx` |
+| 10 | `sidebar.settings` | ❌ **不做** | `single` 类型，官方 `SettingsRoot` 占用；注册会 `shadows-shipped-ui`（替换官方设置行）|
+| 26-35 | `conversation.input.*`（9 个）| ❌ **不做** | **全在 AI 网页的输入框里**——Cuckoo 只能改壳（侧栏/状态栏），改不了 AI 网页。物理上无法支持 |
+| — | `plugins.detail.section` | ⏸️ **挂起** | 需要"Cuckoo 插件详情页"（目前只有列表，没有点进去的详情页）|
+| — | `main`（新版新增）| ⚠️ **待评估** | DSH 主区整页 vs **Cuckoo 主区 = AI 网页**——位置冲突，要开"Cuckoo 插件整页"才能做 |
+| — | `settings.section`（新版新增）| ⬜ **待评估** | 4 个插件用它，收益最大；Cuckoo 设置页可加"区块"机制 |
+
+> **重要区分**：Cuckoo 另有 3 个**自造挂载点**（`activitybar`/`toolbar`/`statusbar`，见 `plugin-shell.ts` 的 `mountSlot`）——那是 Cuckoo 老插件机制，**不是 DSH 插槽名**。DSH 的 40 个插槽名都是点分名（如 `sidebar.panellist`），由对应 React 页面各自订阅渲染，**不走 mountSlot**。
 
 ---
 
@@ -159,6 +169,7 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 | 只用 `slots` 的简单 UI 插件 | ✅ **能**（补②即可）|
 | inject 多服务的复杂插件 | ⚠️ **按需补服务**（无底洞）|
 | 注册到"对话区"槽位的插件 | ❌ **无处可放**（对话在 AI 网页）|
+| **"硬改 DOM"的插件** | ❌ **不兼容**（明确，见 5.5）|
 
 ### 5.4 结论
 
@@ -168,6 +179,20 @@ DSH 每个插槽在 DOM 里是**一个带名字的容器**：
 3. **槽位映射**（根本问题，**你逐个拍板**）
 
 **React 只是"入场券"**；**真正难的是"槽位位置对不上"+"复杂插件要补服务"**。
+
+### 5.5 "硬改 DOM"型插件——**不兼容（明确）**
+
+**现象**：部分插件（如 `@linxin666/dsh-usage` 的卡片）**不走 `ctx.slots`**，而是**直接找 DSH 的 DOM 结构、手动插入**：
+```js
+const foot = document.querySelector('[data-pane="sidebar"]')?.querySelector('[class*="footArea"]');
+foot.insertBefore(container, foot.querySelector('[class*="settingsArea"]'));
+```
+
+**判断**：这**不符合 DSH 官方的 slots 宗旨**（官方推荐 `ctx.slots.register`）——属于"硬改"。
+
+**Cuckoo 立场**：**不兼容**。若为它加"伪 DOM 钩子"，会**越加越多**（每个硬改插件假设的 DOM 都不同），**得不偿失**。
+
+**（2026-10-10 决定）** 曾为 `dsh-usage` 试加 `data-pane="sidebar"` / `footArea` / `settingsArea` 钩子，**后撤回**。
 
 ---
 

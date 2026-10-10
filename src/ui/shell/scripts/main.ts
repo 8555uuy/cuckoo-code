@@ -20,6 +20,7 @@ import { initPluginShell } from './plugin-shell.js';
 import { initThemePresenter } from './theme-presenter.js';
 import { mountShellFrame, registerPage } from './shell-frame.js';
 import { mountStatusBar } from './statusbar.js';
+import { loadDshClients } from './dsh-client-runtime.js';
 import { HomePage } from './pages/home-react.js';
 import { AboutPage } from './pages/about-react.js';
 import { SkillsPage } from './pages/skills-react.js';
@@ -59,6 +60,8 @@ try {
   registerPage('plugins', PluginsPage);
   mountShellFrame();
   mountStatusBar();
+  // 加载 DSH 插件 client 入口（异步，失败不影响壳）
+  loadDshClients().catch((e: any) => console.error('[dsh-client] 加载失败', e));
 } catch (e) { console.error('[react-shell] 挂载失败', e); }
 
 // 上报壳页面真实可视尺寸（主进程据此精确布局，避免菜单栏高度误差盖住状态栏）
