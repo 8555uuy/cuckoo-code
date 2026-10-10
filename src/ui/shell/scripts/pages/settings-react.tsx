@@ -1,33 +1,19 @@
 /**
- * 设置页（React 版）
+ * 设置页（React 版，feat/022-dsh-compat-c7 改造为"左导航 + 右内容"）
  *
- * 迁移自 pages/settings.ts：
- * - 外观（主题）
- * - 失败自动重试（多字段）
- * - 发送延迟 / 附件上传间隔 / 网络安全
- * - 保存 / 恢复默认 / 刷新
+ * - 左导航：内置分类（外观/重试/延迟/安全）+ 插件分类（settings.section）
+ * - 右内容：当前选中分类
+ * - 底部：保存 / 恢复默认 / 刷新
+ *
+ * 插件分类通过 DSH 插槽 settings.section 注册：
+ *   ctx.slots.register({ name:'settings.section', id, order, label }, ({ close, t }) => <组件/>)
  */
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
+import { useSlot, specLabel } from '../use-slot.js';
+import { SlotErrorBoundary } from '../components/slot-error-boundary.js';
 
-/** 数值/文本字段 id → 设置 key（迁移自原 SET_FIELDS） */
-const NUM_FIELDS: [string, string, number][] = [
-  ['retry-delay-min', 'retryDelayMin', 1],
-  ['retry-delay-max', 'retryDelayMax', 1],
-  ['retry-count', 'retryCount', 1],
-  ['retry-429-delay', 'retry429Delay', 1],
-  ['retry-429-count', 'retry429Count', 1],
-  ['xhr-idle-timeout', 'xhrIdleTimeout', 1],
-  ['watchdog-count', 'watchdogCount', 1],
-  ['send-delay-min', 'sendDelayMin', 0.1],
-  ['send-delay-max', 'sendDelayMax', 0.1],
-  ['attach-delay-min', 'attachDelayMin', 0.1],
-  ['attach-delay-max', 'attachDelayMax', 0.1],
-];
-const TEXT_FIELDS: [string, string][] = [
-  ['retry-prompt', 'retryPrompt'],
-  ['watchdog-prompt', 'watchdogPrompt'],
-];
+const SETTINGS_SLOT = 'settings.section';
 
 const THEME_BUILTINS: [string, string][] = [['system', '跟随系统'], ['light', '浅色'], ['dark', '深色']];
 
@@ -53,6 +39,10 @@ export function SettingsPage() {
   const [themes, setThemes] = useState<[string, string][]>(THEME_BUILTINS);
   const [theme, setTheme] = useState('system');
   const [saving, setSaving] = useState(false);
+  const [active, setActive] = useState('appearance');
+
+  // 插件设置分类（settings.section）
+  const pluginSections = useSlot(SETTINGS_SLOT);
 
   const load = useCallback(async () => {
     if (!api.getSettings) return;
@@ -108,71 +98,123 @@ export function SettingsPage() {
     } catch (_) { /* ignore */ }
   }, []);
 
+  const closePluginSection = useCallback(() => { setActive('appearance'); }, []);
+
   if (data === null) return createElement('div', { className: 'ck-tab ck-tab-active' }, createElement('div', { className: 'ck-list-empty' }, '加载中…'));
 
   const numVal = (key: string) => data[key] === null || data[key] === undefined ? '' : data[key];
 
-  return createElement('div', { className: 'ck-tab ck-tab-active' },
-    // 外观
-    createElement('div', { className: 'ck-card' },
-      createElement('div', { className: 'ck-set-group-title' }, '外观'),
-      createElement('div', { className: 'ck-set-field' },
-        createElement('span', { className: 'ck-set-key' }, '主题'),
-        createElement('select', { className: 'ck-set-input', value: theme, onChange: (e: any) => onThemeChange(e.target.value) },
-          ...themes.map(([v, label]) => createElement('option', { key: v, value: v }, label))),
+  // ===== 内置分类内容 =====
+  const appearance = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-group-title' }, '外观'),
+    createElement('div', { className: 'ck-set-field' },
+      createElement('span', { className: 'ck-set-key' }, '主题'),
+      createElement('select', { className: 'ck-set-input', value: theme, onChange: (e: any) => onThemeChange(e.target.value) },
+        ...themes.map(([v, label]) => createElement('option', { key: v, value: v }, label))),
+    ),
+  );
+
+  const retry = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-group-title' }, '失败自动重试'),
+    createElement(ToggleRow, { label: '启用自动重试', checked: data.retryEnabled !== false, onChange: (v) => setField('retryEnabled', v) }),
+    createElement('div', { className: 'ck-set-field' },
+      createElement('span', { className: 'ck-set-key' }, '普通失败间隔（秒）'),
+      createElement('div', { className: 'ck-set-inline' },
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retryDelayMin'), onChange: (e: any) => setField('retryDelayMin', parseFloat(e.target.value) || 0) }),
+        createElement('span', { className: 'ck-set-sep' }, '至'),
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retryDelayMax'), onChange: (e: any) => setField('retryDelayMax', parseFloat(e.target.value) || 0) }),
       ),
     ),
-    // 失败自动重试
-    createElement('div', { className: 'ck-card' },
-      createElement('div', { className: 'ck-set-group-title' }, '失败自动重试'),
-      createElement(ToggleRow, { label: '启用自动重试', checked: data.retryEnabled !== false, onChange: (v) => setField('retryEnabled', v) }),
-      createElement('div', { className: 'ck-set-field' },
-        createElement('span', { className: 'ck-set-key' }, '普通失败间隔（秒）'),
-        createElement('div', { className: 'ck-set-inline' },
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retryDelayMin'), onChange: (e: any) => setField('retryDelayMin', parseFloat(e.target.value) || 0) }),
-          createElement('span', { className: 'ck-set-sep' }, '至'),
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retryDelayMax'), onChange: (e: any) => setField('retryDelayMax', parseFloat(e.target.value) || 0) }),
-        ),
-      ),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '普通失败重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('retryCount'), onChange: (e: any) => setField('retryCount', parseInt(e.target.value, 10) || 0) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '操作频繁重试间隔（秒）'), createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retry429Delay'), onChange: (e: any) => setField('retry429Delay', parseFloat(e.target.value) || 0) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '操作频繁重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('retry429Count'), onChange: (e: any) => setField('retry429Count', parseInt(e.target.value, 10) || 0) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '重试提示词'), createElement('textarea', { className: 'ck-set-textarea', rows: 3, value: data.retryPrompt || '', onChange: (e: any) => setField('retryPrompt', e.target.value) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, 'AI 回复超时后重试（秒）'), createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('xhrIdleTimeout'), onChange: (e: any) => setField('xhrIdleTimeout', parseFloat(e.target.value) || 0) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '超时重试提示词'), createElement('input', { type: 'text', className: 'ck-set-input', value: data.watchdogPrompt || '', onChange: (e: any) => setField('watchdogPrompt', e.target.value) })),
-      createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '超时重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('watchdogCount'), onChange: (e: any) => setField('watchdogCount', parseInt(e.target.value, 10) || 0) })),
-    ),
-    // 发送延迟
-    createElement('div', { className: 'ck-card' },
-      createElement('div', { className: 'ck-set-group-title' }, '发送延迟'),
-      createElement('div', { className: 'ck-set-field' },
-        createElement('span', { className: 'ck-set-key' }, '延迟区间（秒）'),
-        createElement('div', { className: 'ck-set-inline' },
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('sendDelayMin'), onChange: (e: any) => setField('sendDelayMin', parseFloat(e.target.value) || 0) }),
-          createElement('span', { className: 'ck-set-sep' }, '至'),
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('sendDelayMax'), onChange: (e: any) => setField('sendDelayMax', parseFloat(e.target.value) || 0) }),
-        ),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '普通失败重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('retryCount'), onChange: (e: any) => setField('retryCount', parseInt(e.target.value, 10) || 0) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '操作频繁重试间隔（秒）'), createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('retry429Delay'), onChange: (e: any) => setField('retry429Delay', parseFloat(e.target.value) || 0) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '操作频繁重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('retry429Count'), onChange: (e: any) => setField('retry429Count', parseInt(e.target.value, 10) || 0) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '重试提示词'), createElement('textarea', { className: 'ck-set-textarea', rows: 3, value: data.retryPrompt || '', onChange: (e: any) => setField('retryPrompt', e.target.value) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, 'AI 回复超时后重试（秒）'), createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 1, value: numVal('xhrIdleTimeout'), onChange: (e: any) => setField('xhrIdleTimeout', parseFloat(e.target.value) || 0) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '超时重试提示词'), createElement('input', { type: 'text', className: 'ck-set-input', value: data.watchdogPrompt || '', onChange: (e: any) => setField('watchdogPrompt', e.target.value) })),
+    createElement('div', { className: 'ck-set-field' }, createElement('span', { className: 'ck-set-key' }, '超时重试次数（负数=无限）'), createElement('input', { type: 'number', className: 'ck-set-input', step: 1, value: numVal('watchdogCount'), onChange: (e: any) => setField('watchdogCount', parseInt(e.target.value, 10) || 0) })),
+  );
+
+  const sendDelay = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-group-title' }, '发送延迟'),
+    createElement('div', { className: 'ck-set-field' },
+      createElement('span', { className: 'ck-set-key' }, '延迟区间（秒）'),
+      createElement('div', { className: 'ck-set-inline' },
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('sendDelayMin'), onChange: (e: any) => setField('sendDelayMin', parseFloat(e.target.value) || 0) }),
+        createElement('span', { className: 'ck-set-sep' }, '至'),
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('sendDelayMax'), onChange: (e: any) => setField('sendDelayMax', parseFloat(e.target.value) || 0) }),
       ),
     ),
-    // 附件上传间隔
-    createElement('div', { className: 'ck-card' },
-      createElement('div', { className: 'ck-set-group-title' }, '附件上传间隔'),
-      createElement('div', { className: 'ck-set-field' },
-        createElement('span', { className: 'ck-set-key' }, '上传后检测等待（秒）'),
-        createElement('div', { className: 'ck-set-inline' },
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('attachDelayMin'), onChange: (e: any) => setField('attachDelayMin', parseFloat(e.target.value) || 0) }),
-          createElement('span', { className: 'ck-set-sep' }, '至'),
-          createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('attachDelayMax'), onChange: (e: any) => setField('attachDelayMax', parseFloat(e.target.value) || 0) }),
-        ),
+  );
+
+  const attachDelay = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-group-title' }, '附件上传间隔'),
+    createElement('div', { className: 'ck-set-field' },
+      createElement('span', { className: 'ck-set-key' }, '上传后检测等待（秒）'),
+      createElement('div', { className: 'ck-set-inline' },
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('attachDelayMin'), onChange: (e: any) => setField('attachDelayMin', parseFloat(e.target.value) || 0) }),
+        createElement('span', { className: 'ck-set-sep' }, '至'),
+        createElement('input', { type: 'number', className: 'ck-set-input', min: 0, step: 0.1, value: numVal('attachDelayMax'), onChange: (e: any) => setField('attachDelayMax', parseFloat(e.target.value) || 0) }),
       ),
     ),
-    // 网络安全
-    createElement('div', { className: 'ck-card' },
-      createElement('div', { className: 'ck-set-group-title' }, '网络安全'),
-      createElement(ToggleRow, { label: '拒绝 webFetch 访问内网/本地地址', checked: data.ssrfGuard === true, onChange: (v) => setField('ssrfGuard', v) }),
-      createElement('p', { className: 'ck-about-tip' }, '开启后，webFetch 将拒绝访问内网、回环、保留地址（防 SSRF）。默认关闭（可访问本地项目）。'),
+  );
+
+  const security = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-group-title' }, '网络安全'),
+    createElement(ToggleRow, { label: '拒绝 webFetch 访问内网/本地地址', checked: data.ssrfGuard === true, onChange: (v) => setField('ssrfGuard', v) }),
+    createElement('p', { className: 'ck-about-tip' }, '开启后，webFetch 将拒绝访问内网、回环、保留地址（防 SSRF）。默认关闭（可访问本地项目）。'),
+  );
+
+  // ===== 左导航定义 =====
+  const NAV: [string, string][] = [
+    ['appearance', '外观'],
+    ['retry', '失败自动重试'],
+    ['send', '发送延迟'],
+    ['attach', '附件上传间隔'],
+    ['security', '网络安全'],
+  ];
+
+  // ===== 右内容选择 =====
+  let content: any = null;
+  if (active === 'appearance') content = appearance;
+  else if (active === 'retry') content = retry;
+  else if (active === 'send') content = sendDelay;
+  else if (active === 'attach') content = attachDelay;
+  else if (active === 'security') content = security;
+  else if (active.startsWith('plugin:')) {
+    const key = active.slice('plugin:'.length);
+    const item = pluginSections.find((s: any) => (s.pluginId + ':' + s.id) === key);
+    if (item && item.Component) {
+      const C = item.Component;
+      const props: any = { close: closePluginSection, t: item.t || ((k: string) => k), wide: true };
+      content = createElement('div', { className: 'ck-set-plugin-content' },
+        createElement(SlotErrorBoundary, { label: '插件设置' }, createElement(C, props)));
+    } else {
+      content = createElement('div', { className: 'ck-list-empty' }, '插件设置不可用');
+    }
+  }
+
+  return createElement('div', { className: 'ck-tab ck-tab-active ck-set-tab' },
+    createElement('div', { className: 'ck-set-layout' },
+      // 左导航
+      createElement('div', { className: 'ck-set-nav' },
+        ...NAV.map(([id, label]) => createElement('button', {
+          key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), onClick: () => setActive(id),
+        }, label)),
+        pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-sep' }) : null,
+        pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-title' }, '插件') : null,
+        ...pluginSections.map((s: any) => {
+          const id = 'plugin:' + s.pluginId + ':' + s.id;
+          const label = specLabel(s.spec, s.id);
+          return createElement('button', {
+            key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), title: label,
+            onClick: () => setActive(id),
+          }, label);
+        }),
+      ),
+      // 右内容
+      createElement('div', { className: 'ck-set-content' }, content),
     ),
-    // 操作
+    // 底部操作
     createElement('div', { className: 'ck-actions' },
       createElement('button', { className: 'ck-btn ck-btn-primary', disabled: saving, onClick: save }, saving ? '保存中…' : '保存设置'),
       createElement('button', { className: 'ck-btn ck-btn-secondary', onClick: reset }, '恢复默认'),
