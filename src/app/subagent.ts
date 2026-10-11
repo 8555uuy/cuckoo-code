@@ -208,9 +208,13 @@ export async function runAgent(opts: {
     decRunning(opts.parentProfileId);
     removeRunning(windowId);
     // 关闭子代理窗口
+    // 用 destroy()：close() 在隐藏窗口上可能不生效（实测窗口会堆积、最终资源耗尽）
     try {
       const ctx = windowState.getWindowContext(windowId);
-      if (ctx && ctx.win && !ctx.win.isDestroyed()) ctx.win.close();
+      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+        try { ctx.win.destroy(); }
+        catch (e1) { try { ctx.win.close(); } catch (e2) { /* ignore */ } }
+      }
     } catch (_) { /* ignore */ }
     // 通知父窗口刷新工作区列表（子代理的会话/血缘已写入账本）
     try {
