@@ -359,6 +359,22 @@ function registerPluginIpc(): void {
     }
   });
 
+  // ===== 插件主进程函数调用（壳页面 → 主进程插件）=====
+  // 插件在 providers/*.js 里注册：globalThis.__cuckooPluginHostFns['<id>:<fn>'] = fn
+  // 壳页面通过 shellAPI.pluginHostCall(id, fn, args) 调用（避开 file:// fetch 127.0.0.1 被拦）
+  ipcMain.handle('plugin-host-call', async (_event: any, { pluginId, fn, args }: any = {}) => {
+    try {
+      if (!pluginId || !fn) return { success: false, error: '缺少 pluginId / fn' };
+      const table = (globalThis as any).__cuckooPluginHostFns || {};
+      const target = table[pluginId + ':' + fn];
+      if (typeof target !== 'function') return { success: false, error: '函数未注册: ' + pluginId + ':' + fn };
+      const data = await target(args);
+      return { success: true, data };
+    } catch (err: any) {
+      return { success: false, error: err && err.message ? err.message : String(err) };
+    }
+  });
+
   // ===== 插件工具注册（渲染进程 → 主进程）=====
   // 插件注册的工具，执行时会反向 IPC 回渲染进程执行。
   ipcMain.handle('plugin-tool-register', async (event: any, info: any = {}) => {

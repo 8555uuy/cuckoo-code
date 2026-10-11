@@ -221,3 +221,64 @@ export async function runAgent(opts: {
     } catch (_) { /* ignore */ }
   }
 }
+
+// ========== 网关：隐藏窗口问答（供 ai-gateway 插件调用）==========
+//
+// 为什么不让网关直接借用用户的活动窗口：
+//   1) 会污染用户正在进行的对话；
+//   2) 工具调用轮会与用户对话的事件流搅在一起，捕获不到"最终回复"；
+//   3) 用户手动停止/切换会话会打断外部请求。
+// 因此网关走"独立隐藏窗口"——与子代理同款：复用父 partition 免登录，
+// 有完整 Cuckoo 系统提示词（含全部工具），工具循环天然正常。
+
+/** 网关流式回调表：windowId → 回调（收到该窗口流式进度时调用） */
+const gatewayStreams = new Map<number, (chunk: any) => void>();
+
+/** 取某窗口的网关流式回调（IPC 层用） */
+export function getGatewayStream(windowId: number): ((chunk: any) => void) | undefined {
+  return gatewayStreams.get(windowId);
+}
+
+/**
+ * 在独立隐藏窗口里跑一次问答（不污染用户窗口；工具循环天然正常）。
+ * 与 runAgent 的区别：不写血缘、不注入子代理提示词、支持流式回调。
+ */
+export async function runGatewayQuery(opts: {
+  text: string;
+  parentWindowId: number;
+  onChunk?: (chunk: { think?: string; text?: string; done?: boolean }) => void;
+  timeoutMs?: number;
+}): Promise<{ ok: boolean; text?: string; error?: string }> {
+  if (!_createWindow || !_profileManager) return { ok: false, error: '子代理依赖未注入' };
+  const parentCtx = windowState.getWindowContext(opts.parentWindowId);
+  if (!parentCtx) return { ok: false, error: '父窗口不存在' };
+  const parent = _profileManager.getProfileById(parentCtx.profileId);
+  if (!parent) return { ok: false, error: '父 profile 不存在' };
+  const projectDir = parentCtx.sessionStore ? parentCtx.sessionStore.state.selectedProjectDir : null;
+
+  const subProfile = _profileManager.createSubagentProfile(parent, 'gateway');
+  subProfile.subagentConfig = {
+    agentName: 'gateway',
+    task: opts.text,
+    systemPrompt: '',
+    tools: null,
+    maxTurns: null,
+    projectDir: projectDir || null,
+    isGateway: true, // 纯用户消息（不加"任务"框架），让 AI 自由用工具
+  };
+  const windowId = _createWindow(subProfile);
+  if (opts.onChunk) gatewayStreams.set(windowId, opts.onChunk);
+  try {
+    const text = await waitForDone(windowId, opts.timeoutMs || 600000);
+    if (text === '__SUBAGENT_TIMEOUT__') return { ok: false, error: '等待回复超时' };
+    return { ok: true, text };
+  } catch (err: any) {
+    return { ok: false, error: (err && err.message) ? err.message : String(err) };
+  } finally {
+    gatewayStreams.delete(windowId);
+    try {
+      const ctx = windowState.getWindowContext(windowId);
+      if (ctx && ctx.win && !ctx.win.isDestroyed()) ctx.win.close();
+    } catch (_) { /* ignore */ }
+  }
+}

@@ -84,6 +84,9 @@ const shellAPI = {
   // 插件配置
   pluginConfigGet: (pluginId: string) => ipcRenderer.invoke('plugin-config-get', { pluginId }),
   pluginConfigSet: (pluginId: string, values: any) => ipcRenderer.invoke('plugin-config-set', { pluginId, values }),
+  // 插件主进程函数调用（插件注册 globalThis.__cuckooPluginHostFns[pluginId + ':' + fn]）
+  // 用途：壳页面是 file://，fetch http://127.0.0.1 会被代理/CORS 拦；走 IPC 拿插件运行时数据。
+  pluginHostCall: (pluginId: string, fn: string, args?: any) => ipcRenderer.invoke('plugin-host-call', { pluginId, fn, args }),
   // 壳页面上报真实可视尺寸（供主进程精确布局 WebContentsView，避免菜单栏高度误差）
   reportShellSize: (w: number, h: number) => ipcRenderer.send('shell-report-size', { w, h }),
   // ========== 窗口组 ==========

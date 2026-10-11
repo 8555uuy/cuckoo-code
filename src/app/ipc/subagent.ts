@@ -3,7 +3,7 @@
  */
 import { createRequire } from 'node:module';
 import * as windowState from '../window.js';
-import { onSubagentResponse, listRunning, updateRunning } from '../subagent.js';
+import { onSubagentResponse, listRunning, updateRunning, getGatewayStream } from '../subagent.js';
 
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
@@ -22,6 +22,11 @@ function registerSubagentIpc(): void {
   ipcMain.on('subagent-progress', (event: any, payload: any = {}) => {
     const ctx = windowState.getContextByWebContents(event.sender);
     if (!ctx || !ctx.win || ctx.win.isDestroyed()) return;
+    // 网关查询窗口：把流式进度（思考/正文）转发给主进程的等待方
+    const gwCb = getGatewayStream(ctx.win.id);
+    if (gwCb) {
+      try { gwCb({ think: payload.think, text: payload.text, preview: payload.preview, done: !!payload.done }); } catch (_) { /* ignore */ }
+    }
     const patch: any = {};
     if (typeof payload.turn === 'number') patch.turn = payload.turn;
     if (typeof payload.preview === 'string') patch.preview = payload.preview;
