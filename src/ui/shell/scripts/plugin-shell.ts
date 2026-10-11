@@ -62,17 +62,48 @@ function mountToolbar(m: MountSpec): void {
 }
 
 function mountSidebar(m: MountSpec): void {
-  // 侧边栏页（最小可用：往侧边栏尾部加一个面板）
+  // 插件侧边栏页：创建「活动栏图标」+「面板」，图标点击由 sidebar.ts 事件委托处理
   const key = m.pluginId + ':' + m.id;
-  const bar = document.getElementById('ck-sidebar');
-  if (!bar) return;
-  if (bar.querySelector('[data-plugin-panel="' + key + '"]')) return;
+  const tabName = 'plugin-' + m.pluginId + '-' + m.id;
+  const ab = document.querySelector('.ck-activitybar');
+  const panelBody = document.querySelector('.ck-panel-body');
+  if (!ab || !panelBody) return;
+  const title = (m.spec && m.spec.title) || m.id;
+
+  // 已存在 → 仅更新内容
+  const existPanel = panelBody.querySelector('[data-plugin-panel="' + key + '"]') as any;
+  if (existPanel) {
+    if (m.spec && m.spec.html) existPanel.innerHTML = m.spec.html;
+    return;
+  }
+
+  // 活动栏图标
+  const icon = document.createElement('button');
+  icon.className = 'ck-ab-item';
+  icon.setAttribute('data-tab', tabName);
+  icon.setAttribute('data-plugin-tab', key);
+  icon.title = String(title);
+  icon.innerHTML = (m.spec && m.spec.icon)
+    ? String(m.spec.icon)
+    : '<svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg>';
+  const spacer = ab.querySelector('.ck-ab-spacer');
+  if (spacer) ab.insertBefore(icon, spacer); else ab.appendChild(icon);
+
+  // 面板（.ck-tab + data-panel，由 activateTab 切换 ck-tab-active）
   const panel = document.createElement('div');
-  panel.className = 'ck-panel';
+  panel.className = 'ck-tab';
+  panel.setAttribute('data-panel', tabName);
   panel.setAttribute('data-plugin-panel', key);
-  panel.style.display = 'none';
-  panel.innerHTML = (m.spec && m.spec.html) || '<div style="padding:12px;color:var(--ck-text-dim);font-size:12px">' + escapeHtml((m.spec && m.spec.title) || m.id) + '</div>';
-  bar.appendChild(panel);
+  panel.innerHTML = (m.spec && m.spec.html) || '<div style="padding:12px;color:var(--ck-text-dim);font-size:12px">' + escapeHtml(String(title)) + '</div>';
+  panelBody.appendChild(panel);
+
+  // 兜底样式：插件面板默认隐藏，激活时显示
+  if (!document.getElementById('ck-plugin-panel-style')) {
+    const st = document.createElement('style');
+    st.id = 'ck-plugin-panel-style';
+    st.textContent = '[data-plugin-panel]{display:none}[data-plugin-panel].ck-tab-active{display:block}';
+    document.head.appendChild(st);
+  }
 }
 
 /** 通用槽位渲染（对标 DSH slots）：按 slot 找容器，按 order 排序插入 */

@@ -5,8 +5,6 @@
 import { api } from './shared.js';
 import { hidePreview, restorePreview } from './preview.js';
 
-const abItems = document.querySelectorAll('.ck-ab-item');
-const tabs = document.querySelectorAll('.ck-tab');
 const sidebar = document.getElementById('ck-sidebar') as any;
 const SIDEBAR_EXPANDED = 320;
 const SIDEBAR_COLLAPSED = 46;
@@ -60,9 +58,9 @@ export function setCollapsed(collapsed: boolean): void {
 }
 
 function activateTab(item: any, tab: string): void {
-  abItems.forEach((i: any) => i.classList.remove('ck-ab-active'));
+  document.querySelectorAll('.ck-ab-item').forEach((i: any) => i.classList.remove('ck-ab-active'));
   item.classList.add('ck-ab-active');
-  tabs.forEach((p: any) => {
+  document.querySelectorAll('.ck-tab').forEach((p: any) => {
     if (p.dataset.panel === tab) p.classList.add('ck-tab-active');
     else p.classList.remove('ck-tab-active');
   });
@@ -71,26 +69,23 @@ function activateTab(item: any, tab: string): void {
   else hidePreview();
 }
 
-abItems.forEach((item: any) => {
-  item.addEventListener('click', () => {
+// 事件委托：动态添加的插件图标也能响应（不再只绑定初始的 abItems）
+const abContainer = document.querySelector('.ck-activitybar');
+if (abContainer) {
+  abContainer.addEventListener('click', (e: any) => {
+    const item = e.target && e.target.closest ? e.target.closest('.ck-ab-item') : null;
+    if (!item) return;
     const tab = item.dataset.tab;
+    if (!tab) return;
     const isCollapsed = sidebar && sidebar.classList.contains('ck-collapsed');
     const isActive = item.classList.contains('ck-ab-active');
     const run = () => { const f = tabLoaders[tab]; if (f) { try { f(); } catch (_) { /* ignore */ } } };
-    // 收起状态下点图标 → 展开并切到该标签
-    if (isCollapsed) {
-      setCollapsed(false);
-      activateTab(item, tab);
-      run();
-      return;
-    }
-    // 点"已激活"的图标 → 收起（VS Code 行为）
+    if (isCollapsed) { setCollapsed(false); activateTab(item, tab); run(); return; }
     if (isActive) { setCollapsed(true); return; }
-    // 否则：切到该标签
     activateTab(item, tab);
     run();
   });
-});
+}
 
 // ===== 拖拽调宽 =====
 if (sidebar) {

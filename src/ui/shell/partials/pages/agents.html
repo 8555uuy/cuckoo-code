@@ -9,8 +9,27 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                 </button>
               </div>
+              <div class="ck-field ck-agent-search">
+                <input class="ck-input" id="agent-search" placeholder="搜索子代理名称 / 描述…" />
+              </div>
+              <div class="ck-agent-filter" id="agent-filter">
+                <button class="ck-chip ck-chip-active" data-scope="all">全部</button>
+                <button class="ck-chip" data-scope="project">项目级</button>
+                <button class="ck-chip" data-scope="user">用户级</button>
+              </div>
               <div class="ck-list" id="agent-running-list"></div>
               <div class="ck-list" id="agent-list">
                 <div class="ck-list-empty">加载中…</div>
+              </div>
+              <div class="ck-modal-mask cuckoo-hidden" id="agent-detail-mask">
+                <div class="ck-modal">
+                  <span class="ck-modal-title" id="agent-detail-title">子代理详情</span>
+                  <div class="ck-agent-detail-body" id="agent-detail-body"></div>
+                  <div class="ck-modal-foot">
+                    <button class="ck-btn ck-btn-secondary" id="agent-detail-open">打开正文</button>
+                    <button class="ck-btn ck-btn-secondary" id="agent-detail-copy">复制路径</button>
+                    <button class="ck-btn ck-btn-primary" id="agent-detail-close">关闭</button>
+                  </div>
+                </div>
               </div>
             </div>

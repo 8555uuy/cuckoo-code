@@ -1,8 +1,17 @@
 /**
- * 子代理页：列表、新建、编辑改名、删除。
+ * 子代理页：列表、搜索/筛选、详情、新建、编辑改名、删除。
  */
 import { api, ckAlert, ckConfirm, escapeHtml, escapeAttr } from '../shared.js';
 import { addRecent } from '../recent.js';
+
+/** 全部子代理缓存（供搜索/筛选/详情） */
+let allAgents: any[] = [];
+/** 当前筛选：all | project | user */
+let scopeFilter = 'all';
+/** 当前搜索词 */
+let searchTerm = '';
+/** 详情弹窗当前展示的代理 */
+let detailAgent: any = null;
 
 /** 加载"运行中子代理"区块（实时进度） */
 export async function loadRunningSubagents(): Promise<void> {
@@ -17,7 +26,7 @@ export async function loadRunningSubagents(): Promise<void> {
     el.innerHTML = '<div class="ck-mcp-group-title">运行中</div>' + list.map((s: any) => {
       const elapsed = Math.max(0, Math.round((Date.now() - (s.startedAt || Date.now())) / 1000));
       const statusText = s.status === 'done' ? '完成' : (s.status === 'error' ? '出错' : '运行中');
-      const preview = (s.preview || '').slice(-120).replace(/</g, '&lt;');
+      const preview = (s.preview || '').slice(-160).replace(/</g, '&lt;');
       return '<div class="ck-skill-item ck-agent-running">' +
         '<div class="ck-skill-top">' +
           '<span class="ck-skill-name">' + escapeHtml(s.agentName) + '</span>' +
@@ -30,69 +39,137 @@ export async function loadRunningSubagents(): Promise<void> {
   } catch (_) { /* ignore */ }
 }
 
+/** 按搜索词 + 筛选过滤 */
+function filtered(): any[] {
+  const kw = searchTerm.trim().toLowerCase();
+  return allAgents.filter((a: any) => {
+    if (scopeFilter !== 'all' && a.source !== scopeFilter) return false;
+    if (!kw) return true;
+    return (String(a.name || '') + ' ' + String(a.description || '')).toLowerCase().includes(kw);
+  });
+}
+
+function agentCard(a: any): string {
+  const srcLabel = a.source === 'project' ? '项目' : '用户';
+  return '<div class="ck-skill-item ck-agent-item" data-name="' + escapeAttr(a.name) + '" data-path="' + escapeAttr(a.agentPath) + '">' +
+    '<div class="ck-skill-top">' +
+      '<span class="ck-skill-name">' + escapeHtml(a.name) + '</span>' +
+      '<span class="ck-agent-src-badge">' + srcLabel + '</span>' +
+      '<div class="ck-agent-actions">' +
+        '<button class="ck-snip-icon-btn" data-detail-agent="' + escapeAttr(a.name) + '" title="详情">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' +
+        '</button>' +
+        '<button class="ck-snip-icon-btn" data-edit-agent="' + escapeAttr(a.agentPath) + '" title="编辑">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>' +
+        '</button>' +
+        '<button class="ck-snip-icon-btn danger" data-del-agent="' + escapeAttr(a.agentPath) + '" title="删除">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ck-skill-desc">' + escapeHtml(a.description || '（无描述）') + '</div>' +
+  '</div>';
+}
+
+/** 渲染列表（应用搜索/筛选） */
+function renderList(): void {
+  const listEl = document.getElementById('agent-list');
+  if (!listEl) return;
+  const agents = filtered();
+  if (!agents.length) {
+    listEl.innerHTML = '<div class="ck-list-empty">' +
+      (allAgents.length ? '没有匹配的子代理' : '未发现子代理<br>（.cuckoo/agents/ 或 ~/.cuckoo/agents/）') +
+    '</div>';
+    return;
+  }
+  const userAgents = agents.filter((a: any) => a.source !== 'project');
+  const projAgents = agents.filter((a: any) => a.source === 'project');
+  let html = '';
+  if (userAgents.length) html += '<div class="ck-mcp-group-title">用户级</div>' + userAgents.map(agentCard).join('');
+  if (projAgents.length) html += '<div class="ck-mcp-group-title">项目级</div>' + projAgents.map(agentCard).join('');
+  listEl.innerHTML = html;
+  bindListEvents();
+}
+
+function bindListEvents(): void {
+  const listEl = document.getElementById('agent-list');
+  if (!listEl) return;
+  listEl.querySelectorAll('.ck-skill-item').forEach((el: any) => {
+    el.addEventListener('click', async (e: any) => {
+      if (e.target.closest('[data-edit-agent]') || e.target.closest('[data-del-agent]') || e.target.closest('[data-detail-agent]')) return;
+      if (api.appendSnippet) {
+        try { await api.appendSnippet('请使用 ' + el.dataset.name + ' 子代理'); } catch (_) { /* ignore */ }
+      }
+      addRecent('agent', el.dataset.name);
+    });
+  });
+  listEl.querySelectorAll('[data-detail-agent]').forEach((btn: any) => {
+    btn.addEventListener('click', (e: any) => {
+      e.stopPropagation();
+      const a = allAgents.find((x: any) => x.name === btn.dataset.detailAgent);
+      if (a) openAgentDetail(a);
+    });
+  });
+  listEl.querySelectorAll('[data-edit-agent]').forEach((btn: any) => {
+    btn.addEventListener('click', (e: any) => {
+      e.stopPropagation();
+      const cardEl = btn.closest('.ck-agent-item');
+      openAgentEditModal(btn.dataset.editAgent, cardEl ? cardEl.dataset.name : '');
+    });
+  });
+  listEl.querySelectorAll('[data-del-agent]').forEach((btn: any) => {
+    btn.addEventListener('click', async (e: any) => {
+      e.stopPropagation();
+      if (!(await ckConfirm('确定删除该子代理文件？此操作不可恢复。'))) return;
+      if (!api.deleteAgentFile) return;
+      try {
+        const r = await api.deleteAgentFile(btn.dataset.delAgent);
+        if (r && r.success) loadAgents();
+        else await ckAlert((r && r.error) || '删除失败');
+      } catch (err: any) { await ckAlert('删除失败: ' + (err.message || err)); }
+    });
+  });
+}
+
 export async function loadAgents(): Promise<void> {
   loadRunningSubagents();
   const listEl = document.getElementById('agent-list');
   if (!listEl || !api.listAgents) return;
   try {
     const r = await api.listAgents();
-    const agents = (r && r.success) ? r.agents : [];
-    if (!agents || agents.length === 0) {
-      listEl.innerHTML = '<div class="ck-list-empty">未发现子代理<br>（.cuckoo/agents/ 或 ~/.cuckoo/agents/）</div>';
-      return;
-    }
-    const agentCard = (a: any) =>
-      '<div class="ck-skill-item ck-agent-item" data-name="' + escapeHtml(a.name) + '" data-path="' + escapeAttr(a.agentPath) + '">' +
-        '<div class="ck-skill-top">' +
-          '<span class="ck-skill-name">' + escapeHtml(a.name) + '</span>' +
-          '<div class="ck-agent-actions">' +
-            '<button class="ck-snip-icon-btn" data-edit-agent="' + escapeAttr(a.agentPath) + '" title="编辑">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>' +
-            '</button>' +
-            '<button class="ck-snip-icon-btn danger" data-del-agent="' + escapeAttr(a.agentPath) + '" title="删除">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
-            '</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="ck-skill-desc">' + escapeHtml(a.description || '（无描述）') + '</div>' +
-      '</div>';
-    const userAgents = agents.filter((a: any) => a.source !== 'project');
-    const projAgents = agents.filter((a: any) => a.source === 'project');
-    let html = '';
-    if (userAgents.length) html += '<div class="ck-mcp-group-title">用户级</div>' + userAgents.map(agentCard).join('');
-    if (projAgents.length) html += '<div class="ck-mcp-group-title">项目级</div>' + projAgents.map(agentCard).join('');
-    listEl.innerHTML = html;
-    listEl.querySelectorAll('.ck-skill-item').forEach((el: any) => {
-      el.addEventListener('click', async (e: any) => {
-        if (e.target.closest('[data-edit-agent]') || e.target.closest('[data-del-agent]')) return;
-        if (api.appendSnippet) {
-          try { await api.appendSnippet('请使用 ' + el.dataset.name + ' 子代理'); } catch (_) { /* ignore */ }
-        }
-        addRecent('agent', el.dataset.name);
-      });
-    });
-    listEl.querySelectorAll('[data-edit-agent]').forEach((btn: any) => {
-      btn.addEventListener('click', (e: any) => {
-        e.stopPropagation();
-        const cardEl = btn.closest('.ck-agent-item');
-        openAgentEditModal(btn.dataset.editAgent, cardEl ? cardEl.dataset.name : '');
-      });
-    });
-    listEl.querySelectorAll('[data-del-agent]').forEach((btn: any) => {
-      btn.addEventListener('click', async (e: any) => {
-        e.stopPropagation();
-        if (!(await ckConfirm('确定删除该子代理文件？此操作不可恢复。'))) return;
-        if (!api.deleteAgentFile) return;
-        try {
-          const r = await api.deleteAgentFile(btn.dataset.delAgent);
-          if (r && r.success) loadAgents();
-          else await ckAlert((r && r.error) || '删除失败');
-        } catch (err: any) { await ckAlert('删除失败: ' + (err.message || err)); }
-      });
-    });
+    allAgents = (r && r.success) ? (r.agents || []) : [];
+    renderList();
   } catch (_) {
     listEl.innerHTML = '<div class="ck-list-empty">加载失败</div>';
   }
+}
+
+// ===== 详情弹窗 =====
+function openAgentDetail(a: any): void {
+  detailAgent = a;
+  const mask = document.getElementById('agent-detail-mask');
+  const title = document.getElementById('agent-detail-title');
+  const body = document.getElementById('agent-detail-body');
+  if (!mask || !title || !body) return;
+  title.textContent = a.name || '子代理详情';
+  body.innerHTML =
+    '<div class="ck-agent-detail-row"><span class="ck-agent-detail-k">名称</span><span class="ck-agent-detail-v">' + escapeHtml(a.name) + '</span></div>' +
+    '<div class="ck-agent-detail-row"><span class="ck-agent-detail-k">来源</span><span class="ck-agent-detail-v">' + (a.source === 'project' ? '项目级' : '用户级') + '</span></div>' +
+    '<div class="ck-agent-detail-row"><span class="ck-agent-detail-k">描述</span><span class="ck-agent-detail-v">' + escapeHtml(a.description || '（无描述）') + '</span></div>' +
+    '<div class="ck-agent-detail-row"><span class="ck-agent-detail-k">路径</span><span class="ck-agent-detail-v ck-agent-detail-path">' + escapeHtml(a.agentPath || '') + '</span></div>' +
+    '<div class="ck-agent-detail-actions"><button class="ck-btn ck-btn-secondary" data-agent-use="' + escapeAttr(a.name) + '">在对话中使用</button></div>';
+  mask.classList.remove('cuckoo-hidden');
+  body.querySelectorAll('[data-agent-use]').forEach((btn: any) => {
+    btn.addEventListener('click', async () => {
+      if (api.appendSnippet) { try { await api.appendSnippet('请使用 ' + btn.dataset.agentUse + ' 子代理'); } catch (_) { /* ignore */ } }
+      addRecent('agent', btn.dataset.agentUse);
+      closeAgentDetail();
+    });
+  });
+}
+function closeAgentDetail(): void {
+  document.getElementById('agent-detail-mask')?.classList.add('cuckoo-hidden');
+  detailAgent = null;
 }
 
 // ===== 新建 / 编辑 弹窗 =====
@@ -140,19 +217,33 @@ function closeAgentModal(): void {
   document.getElementById('agent-modal')?.classList.add('cuckoo-hidden');
 }
 
-// 运行中子代理：变化即刷新 + 定时刷新（更新耗时）
-try {
-  const apiAny: any = api as any;
-  if (typeof apiAny.onSubagentsChanged === 'function') apiAny.onSubagentsChanged(() => loadRunningSubagents());
-} catch (_) { /* ignore */ }
-setInterval(() => {
-  const el = document.getElementById('agent-running-list');
-  if (el) loadRunningSubagents();
-}, 1500);
-
+// ===== 事件绑定 =====
 document.getElementById('agent-new')?.addEventListener('click', openAgentModal);
 document.getElementById('agent-cancel')?.addEventListener('click', closeAgentModal);
 document.getElementById('agent-refresh')?.addEventListener('click', loadAgents);
+
+document.getElementById('agent-detail-close')?.addEventListener('click', closeAgentDetail);
+document.getElementById('agent-detail-open')?.addEventListener('click', async () => {
+  if (!detailAgent || !api.openAgentFile) return;
+  try { await api.openAgentFile(detailAgent.agentPath); } catch (err: any) { await ckAlert('打开失败: ' + (err.message || err)); }
+});
+document.getElementById('agent-detail-copy')?.addEventListener('click', async () => {
+  if (!detailAgent) return;
+  const p = detailAgent.agentPath || '';
+  try { await navigator.clipboard.writeText(p); await ckAlert('已复制路径'); } catch (_) { await ckAlert('复制失败：' + p); }
+});
+
+const searchEl = document.getElementById('agent-search') as any;
+if (searchEl) {
+  searchEl.addEventListener('input', () => { searchTerm = searchEl.value || ''; renderList(); });
+}
+document.querySelectorAll('#agent-filter .ck-chip').forEach((chip: any) => {
+  chip.addEventListener('click', () => {
+    scopeFilter = chip.dataset.scope || 'all';
+    document.querySelectorAll('#agent-filter .ck-chip').forEach((c: any) => c.classList.toggle('ck-chip-active', c === chip));
+    renderList();
+  });
+});
 
 document.getElementById('agent-open-file')?.addEventListener('click', async () => {
   if (!agentEditPath || !api.openAgentFile) return;
@@ -190,3 +281,13 @@ document.getElementById('agent-create')?.addEventListener('click', async (e: any
   }
   btn.disabled = false;
 });
+
+// ===== 运行中子代理：变化即刷新 + 定时刷新（更新耗时）=====
+try {
+  const apiAny: any = api as any;
+  if (typeof apiAny.onSubagentsChanged === 'function') apiAny.onSubagentsChanged(() => loadRunningSubagents());
+} catch (_) { /* ignore */ }
+setInterval(() => {
+  const el = document.getElementById('agent-running-list');
+  if (el) loadRunningSubagents();
+}, 1500);

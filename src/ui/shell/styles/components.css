@@ -686,3 +686,29 @@
   .ck-ws-tip .ck-tip-name { font-weight: 600; font-size: 13px; margin-bottom: 5px; }
   .ck-ws-tip .ck-tip-path { word-break: break-all; opacity: .75; font-size: 11.5px; }
   .ck-ws-tip .ck-tip-time { margin-top: 5px; opacity: .6; font-size: 11px; }
+  /* ===== 子代理页：搜索 / 筛选 / 详情 ===== */
+  .ck-agent-search { margin: 6px 0 8px; }
+  .ck-agent-search .ck-input { font-size: 12px; }
+  .ck-agent-filter { display: flex; gap: 6px; margin-bottom: 10px; }
+  .ck-chip {
+    font-family: inherit; font-size: 11.5px; font-weight: 500;
+    padding: 4px 12px; border-radius: 20px; cursor: pointer;
+    background: transparent; border: 1px solid var(--ck-border); color: var(--ck-text-dim);
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .ck-chip:hover { background: var(--ck-surface-hover); color: var(--ck-text); }
+  .ck-chip-active { background: var(--ck-accent, #4c8dff); border-color: var(--ck-accent, #4c8dff); color: #fff; }
+  .ck-chip-active:hover { background: var(--ck-accent, #4c8dff); color: #fff; }
+  .ck-agent-src-badge {
+    font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 20px;
+    background: rgba(107,116,130,.15); color: var(--ck-text-dim);
+    flex-shrink: 0; margin-left: 6px;
+  }
+  .ck-agent-actions { display: flex; gap: 2px; margin-left: auto; }
+  .ck-agent-detail-body { padding: 4px 0 10px; }
+  .ck-agent-detail-row { display: flex; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--ck-border); font-size: 12px; }
+  .ck-agent-detail-row:last-child { border-bottom: none; }
+  .ck-agent-detail-k { color: var(--ck-text-dim); flex-shrink: 0; width: 52px; }
+  .ck-agent-detail-v { color: var(--ck-text); word-break: break-word; flex: 1; }
+  .ck-agent-detail-path { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: #7dd3fc; word-break: break-all; }
+  .ck-agent-detail-actions { margin-top: 12px; }
