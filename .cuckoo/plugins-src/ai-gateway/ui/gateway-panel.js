@@ -21,6 +21,11 @@ const CSS = [
   '.ck-gw-btn.pri{background:#4c8dff;color:#fff}',
   '.ck-gw-btn.ghost{background:transparent;border-color:rgba(255,255,255,.14);color:var(--ck-text-dim)}',
   '.ck-gw-toggle{display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:12px;color:var(--ck-text);cursor:pointer}',
+  '.ck-gw-prank{margin-top:12px;width:100%;font-family:inherit;font-size:12px;font-weight:600;padding:9px 10px;border-radius:8px;border:1px dashed rgba(251,191,36,.45);background:rgba(251,191,36,.06);color:#fbbf24;cursor:pointer;transition:background .15s,color .15s,border-color .15s}',
+  '.ck-gw-prank:hover{background:rgba(251,191,36,.12)}',
+  '.ck-gw-prank.armed{border-style:solid;border-color:#f87171;background:rgba(248,113,113,.14);color:#f87171}',
+  '.ck-gw-prank.on{border-style:solid;border-color:#f87171;background:#f87171;color:#1b1e23}',
+  '.ck-gw-hint{margin-top:6px;font-size:11px;color:var(--ck-text-dim);line-height:1.5}',
 ].join('');
 
 // 面板在壳页面：走 shellAPI.pluginHostCall（IPC）拿数据——不用 fetch（file:// 访问 127.0.0.1 会被拦）
@@ -39,6 +44,7 @@ const POLL = '(function(){' +
     'var k=g("gw-keys");if(k)k.textContent=s.keyCount||0;' +
     'var c=g("gw-calls");if(c)c.textContent=s.totalCalls||0;' +
     'var tg=g("gw-toggle");if(tg&&document.activeElement!==tg)tg.checked=s.enabled!==false;' +
+    'var pb=g("gw-prank");if(pb&&!pb.__armed)pb.className="ck-gw-prank"+(s.prankMode?" on":"");' +
   '}' +
   'function poll(){' +
     'if(!window.shellAPI||!window.shellAPI.pluginHostCall){setStatus(false,"接口不可用");return}' +
@@ -50,6 +56,22 @@ const POLL = '(function(){' +
     'setStatus(!!on,on?"启动中…":"关闭中…");' +
     'if(window.shellAPI&&window.shellAPI.pluginHostCall){window.shellAPI.pluginHostCall(PID,"toggle",{enabled:!!on}).catch(function(){})}' +
     'setTimeout(poll,1200);' +
+  '};' +
+  'window.__gwPrank=function(){' +
+    'var b=g("gw-prank");if(!b)return;' +
+    'var on=b.className.indexOf("on")>=0;' +
+    'if(!b.__armed&&!on){' +
+      'b.__armed=1;b.className="ck-gw-prank armed";b.textContent="确定要整活？再点一次";' +
+      'var h=g("gw-hint");if(h)h.textContent="开启后，不管问啥都只回一句整活话。";' +
+      'setTimeout(function(){if(b.__armed){b.__armed=0;b.className="ck-gw-prank";b.textContent="整活模式";var h2=g("gw-hint");if(h2)h2.textContent="";}},4000);' +
+      'return;' +
+    '}' +
+    'b.__armed=0;' +
+    'var want=!on;' +
+    'b.className="ck-gw-prank"+(want?" on":"");b.textContent=want?"整活模式（已开启）":"整活模式";' +
+    'var h3=g("gw-hint");if(h3)h3.textContent=want?"不管问啥，只回：哈吉米哦南北绿豆…":"";' +
+    'if(window.shellAPI&&window.shellAPI.pluginHostCall){window.shellAPI.pluginHostCall(PID,"prank",{enabled:want}).catch(function(){})}' +
+    'setTimeout(poll,1000);' +
   '};' +
   'poll();if(!window.__gwPollTimer)window.__gwPollTimer=setInterval(poll,4000);' +
 '})()';
@@ -67,6 +89,8 @@ const HTML = [
       '<button class="ck-gw-btn pri" onclick="window.__gwOpen&&window.__gwOpen()">管理网站</button>',
       '<button class="ck-gw-btn ghost" onclick="window.__gwCopy&&window.__gwCopy()">复制地址</button>',
     '</div>',
+    '<button class="ck-gw-prank" id="gw-prank" onclick="window.__gwPrank&&window.__gwPrank()">整活模式</button>',
+    '<div class="ck-gw-hint" id="gw-hint"></div>',
     '<img src="x" style="width:0;height:0;position:absolute;opacity:0" onerror="' + POLL.replace(/"/g, '&quot;') + '">',
   '</div>',
 ].join('');

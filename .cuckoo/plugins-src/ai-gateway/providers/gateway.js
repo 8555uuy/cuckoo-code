@@ -67,6 +67,7 @@ function readConfig() {
       if (c.requireKey === false) out.requireKey = false;
       if (c.autoStart === false) out.autoStart = false;
       if (c.enabled === false) out.enabled = false;
+      if (c.prankMode === true) out.prankMode = true;
     }
   } catch (e) {}
   return out;
@@ -94,6 +95,9 @@ let listenBasePort = cfg.port;
 // 网关开关：false = 真正停掉 HTTP 服务（释放端口），不是软关闭
 let gatewayEnabled = cfg.enabled !== false;
 let toggling = false;
+// 整活模式：开启后所有请求只回一句整活话（不再真跑 AI）
+let prankMode = cfg.prankMode === true;
+const PRANK_REPLY = '哈吉米哦南北绿豆，恭喜你被骗了，请自己去看瑞克摇';
 const startedAt = Date.now();
 let totalCalls = 0;
 let logs = [];
@@ -161,6 +165,29 @@ async function handleChat(req, res, bodyText) {
   const stream = body.stream === true;
   const text = messagesToText(messages);
   if (!text) return json(res, 400, { error: { message: 'messages 为空' } });
+
+  // ===== 整活模式：不管问啥，只回一句整活话 =====
+  if (prankMode) {
+    totalCalls++;
+    if (a.key) keystore.recordUse(a.key);
+    const pid = 'chatcmpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    addLog({ type: 'chat', model, stream, ok: true, prank: true, replyLen: PRANK_REPLY.length });
+    if (stream) {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.write(sseLine(streamChunk(pid, model, { role: 'assistant', content: '' }, null)));
+      res.write(sseLine(streamChunk(pid, model, { content: PRANK_REPLY }, null)));
+      res.write(sseLine(streamChunk(pid, model, {}, 'stop')));
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
+    return json(res, 200, chatCompletion(pid, model, PRANK_REPLY));
+  }
 
   const run = getGatewayRun();
   if (!run) return json(res, 503, { error: { message: '网关查询入口不可用（请重启 Cuckoo 开发版以加载）' } });
@@ -408,6 +435,10 @@ if (process.type === 'renderer') {
             console.log('[ai-gateway] 配置轮询：网关 -> ' + (c.enabled ? '开' : '关'));
             applyEnabled(c.enabled);
           }
+          if ((c.prankMode === true) !== prankMode) {
+            prankMode = c.prankMode === true;
+            console.log('[ai-gateway] 配置轮询：整活模式 -> ' + (prankMode ? '开' : '关'));
+          }
         } catch (e) { /* ignore */ }
       }, 2500);
     } catch (err) {
@@ -432,7 +463,15 @@ try {
       projectDir: getProjectDir(),
       lanIPs: getLanIPs(),
       keyCount: keystore.loadKeys().length,
+      prankMode: prankMode,
     };
+  };
+  table['ai-gateway:prank'] = function (args) {
+    const want = !args || args.enabled !== false;
+    prankMode = want;
+    writeConfig({ prankMode: want });
+    console.log('[ai-gateway] 整活模式 -> ' + (want ? '开' : '关'));
+    return { prankMode: prankMode };
   };
   table['ai-gateway:toggle'] = async function (args) {
     const want = !args || args.enabled !== false;
