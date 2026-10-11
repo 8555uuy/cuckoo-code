@@ -66,6 +66,28 @@ function looksLikeIncompleteCodeError(error: any): boolean {
   return /SyntaxError|Missing initializer|Unexpected end of input|Unexpected token|Unexpected identifier|Unexpected reserved word|Invalid or unexpected token/i.test(error);
 }
 
+/**
+ * 识别 XML / DSML / antml 格式的工具调用（DeepSeek 原生格式等）。
+ * 返回 { kind, intent } 或 null。intent 为提取到的原始调用意图（供自动纠正重试）。
+ * 覆盖：<|DSML|calls>、<|DSML|invoke ...>、<antml:invoke ...>、<invoke name="...">、<parameter name=...>
+ */
+function detectXmlToolCall(raw: string): { kind: string; intent: string } | null {
+  const t = raw || '';
+  // DSML（半角 | 与全角 ｜ 都认）
+  const dsml = /<[|｜]+\s*DSML\s*[|｜]+([a-zA-Z]+)\b([^>]*)>/i.exec(t);
+  if (dsml) {
+    const tag = dsml[1];
+    const attrs = (dsml[2] || '').trim();
+    return { kind: 'DSML（<|DSML|' + tag + '>）', intent: tag.toLowerCase() === 'invoke' ? attrs : '' };
+  }
+  // antml:invoke / invoke name="..."
+  const invoke = /<\s*(?:[\w-]+:)?invoke\s+([^>]*)>/i.exec(t);
+  if (invoke) return { kind: 'XML invoke', intent: (invoke[1] || '').trim() };
+  // parameter 单独出现（无 invoke）也算
+  if (/<\s*(?:[\w-]+:)?parameter\s+name=/i.test(t)) return { kind: 'XML parameter', intent: '' };
+  return null;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -169,21 +191,18 @@ async function processInterceptedResponse(text: string, force?: boolean): Promis
   }
 
   // 3. XML 格式工具调用提示
-  const hasAntmlXml = /^<\s*｜｜DSML｜｜/i.test(raw);
-  const hasXmlInvoke = /<\s*(?:[\w-]+:)?invoke\s+name=/i.test(raw);
-  const hasXmlClose = /<\s*\/\s*(?:[\w-]+:)?invoke\s*>/i.test(raw);
-  const hasXmlParam = /<\s*(?:[\w-]+:)?parameter\s+name=/i.test(raw);
-  if (hasAntmlXml || (hasXmlInvoke && (hasXmlClose || hasXmlParam))) {
+  const xmlTool = detectXmlToolCall(raw);
+  if (xmlTool) {
     if (formatHintCount >= FORMAT_HINT_MAX) {
       console.log('[Cuckoo Code][拦截] 已连续提示 ' + formatHintCount + ' 次格式问题，停止发送');
       return;
     }
     formatHintCount++;
-    console.log('[Cuckoo Code][拦截] 检测到 XML 格式工具调用（第 ' + formatHintCount + ' 次提示）');
-    sendMessageToChat(
-      '请使用' + BT + BT + BT + 'cuckoo' + BT + BT + BT + ' 代码块进行工具调用，不要使用 XML invoke 格式。',
-      'XML工具调用提示'
-    );
+    console.log('[Cuckoo Code][拦截] 检测到 XML/DSML 格式工具调用（第 ' + formatHintCount + ' 次提示）');
+    const hint = '你刚才使用了错误的工具调用格式（' + xmlTool.kind + '）。' +
+      (xmlTool.intent ? '你原本想执行：' + xmlTool.intent + '。' : '') +
+      '请改用 ' + BT + BT + BT + 'cuckoo' + BT + BT + BT + ' 代码块重新执行该操作，禁止使用 XML / DSML / antml 格式。';
+    sendMessageToChat(hint, 'XML工具调用纠正');
     return;
   }
 
