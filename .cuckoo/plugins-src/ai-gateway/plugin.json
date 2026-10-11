@@ -1,0 +1,42 @@
+{
+  "id": "ai-gateway",
+  "name": "AI 网关",
+  "version": "1.0.0",
+  "description": "把 Cuckoo 的 AI 网页版暴露成 OpenAI 兼容 API（局域网可访问），附管理网站。",
+  "author": "8555uuy",
+  "minAppVersion": "0.8.8",
+  "config": {
+    "port": {
+      "type": "number",
+      "label": "网关端口",
+      "description": "HTTP 服务端口",
+      "default": 18900,
+      "min": 1024,
+      "max": 65535
+    },
+    "host": {
+      "type": "string",
+      "label": "绑定地址",
+      "description": "0.0.0.0 = 局域网可访问；127.0.0.1 = 仅本机",
+      "default": "0.0.0.0"
+    },
+    "adminPassword": {
+      "type": "string",
+      "label": "管理密码",
+      "description": "登录管理网站的密码",
+      "default": "admin"
+    },
+    "requireKey": {
+      "type": "boolean",
+      "label": "要求 API Key",
+      "description": "开启后，客户端必须带有效 key",
+      "default": true
+    },
+    "autoStart": {
+      "type": "boolean",
+      "label": "自动启动",
+      "description": "插件加载时自动启动网关",
+      "default": true
+    }
+  }
+}
