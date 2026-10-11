@@ -234,6 +234,10 @@ export async function runAgent(opts: {
 /** 网关流式回调表：windowId → 回调（收到该窗口流式进度时调用） */
 const gatewayStreams = new Map<number, (chunk: any) => void>();
 
+/** 当前并发中的网关窗口数（防请求洪水把内存吃光） */
+let gatewayActive = 0;
+const GATEWAY_MAX_CONCURRENT = 3;
+
 /** 取某窗口的网关流式回调（IPC 层用） */
 export function getGatewayStream(windowId: number): ((chunk: any) => void) | undefined {
   return gatewayStreams.get(windowId);
@@ -250,6 +254,9 @@ export async function runGatewayQuery(opts: {
   timeoutMs?: number;
 }): Promise<{ ok: boolean; text?: string; error?: string }> {
   if (!_createWindow || !_profileManager) return { ok: false, error: '子代理依赖未注入' };
+  if (gatewayActive >= GATEWAY_MAX_CONCURRENT) {
+    return { ok: false, error: '网关繁忙（并发已达上限 ' + GATEWAY_MAX_CONCURRENT + '），请稍后重试' };
+  }
   const parentCtx = windowState.getWindowContext(opts.parentWindowId);
   if (!parentCtx) return { ok: false, error: '父窗口不存在' };
   const parent = _profileManager.getProfileById(parentCtx.profileId);
@@ -266,19 +273,34 @@ export async function runGatewayQuery(opts: {
     projectDir: projectDir || null,
     isGateway: true, // 纯用户消息（不加"任务"框架），让 AI 自由用工具
   };
+  gatewayActive++;
   const windowId = _createWindow(subProfile);
   if (opts.onChunk) gatewayStreams.set(windowId, opts.onChunk);
+  const timeoutMs = opts.timeoutMs || 300000;
+  let hardTimer: any = null;
   try {
-    const text = await waitForDone(windowId, opts.timeoutMs || 600000);
-    if (text === '__SUBAGENT_TIMEOUT__') return { ok: false, error: '等待回复超时' };
+    const text = await Promise.race([
+      waitForDone(windowId, timeoutMs),
+      // 硬超时：waitForDone 之外再加一层，保证无论怎样都会往下走（finally 里强制销毁窗口）
+      new Promise((resolve) => { hardTimer = setTimeout(() => resolve('__GATEWAY_HARD_TIMEOUT__'), timeoutMs + 8000); }),
+    ]);
+    if (text === '__SUBAGENT_TIMEOUT__' || text === '__GATEWAY_HARD_TIMEOUT__') {
+      return { ok: false, error: '等待回复超时' };
+    }
     return { ok: true, text };
   } catch (err: any) {
     return { ok: false, error: (err && err.message) ? err.message : String(err) };
   } finally {
+    if (hardTimer) { try { clearTimeout(hardTimer); } catch (_) {} }
+    gatewayActive = Math.max(0, gatewayActive - 1);
     gatewayStreams.delete(windowId);
+    // 强制销毁：close() 在隐藏窗口上可能不生效（实测窗口堆积、最终资源耗尽）
     try {
       const ctx = windowState.getWindowContext(windowId);
-      if (ctx && ctx.win && !ctx.win.isDestroyed()) ctx.win.close();
+      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+        try { ctx.win.destroy(); }
+        catch (e1) { try { ctx.win.close(); } catch (e2) { /* ignore */ } }
+      }
     } catch (_) { /* ignore */ }
   }
 }
