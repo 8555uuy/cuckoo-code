@@ -1,11 +1,11 @@
 /**
- * 设置（全屏模态，feat/022-dsh-compat-c7）
+ * 设置（居中模态，feat/022-dsh-compat-c7）
  *
- * 点击活动栏"设置"→ 全屏打开（不再塞进 320px 侧栏）。
+ * 点击活动栏"设置"→ 居中模态打开（遮罩 + 880x640 对话框）。
  * - 左导航：内置分类 + 插件分类（settings.section）
  * - 右内容：当前选中分类
- * - 底部：保存 / 恢复默认 / 刷新
- * - 关闭：右上 ✕ / ESC
+ * - 底部：恢复默认（保存改为自动：改动后 500ms 防抖保存）
+ * - 关闭：右上 ✕ / ESC / 点遮罩
  */
 import { createElement, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
