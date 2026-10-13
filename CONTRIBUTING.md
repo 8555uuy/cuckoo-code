@@ -55,6 +55,10 @@
 4. 在 `main.js` 中注册到 `ToolRegistry`
 5. 更新 `tools/rules.md` 和 `README.md`
 
+## 维护者
+
+合并外部贡献的流程、鸣谢要求与检查清单见 [`docs/maintainer.md`](docs/maintainer.md)。
+
 ## 许可证
 
 本项目使用 GPL-3.0 许可证，所有贡献都将遵循该许可证。

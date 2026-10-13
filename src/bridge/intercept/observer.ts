@@ -6,7 +6,7 @@
 import { extractJsToolBlocks, BT } from '../parser/js-detector.js';
 import { looksLikeJsonToolCall } from '../parser/json-detector.js';
 import { handleJsToolScript } from '../loop/executor.js';
-import { sendCombinedJsResultsToChat, sendMessageToChat, cancelPendingSend } from '../../overlay/chat-input.js';
+import { sendCombinedJsResultsToChat, sendMessageToChat, cancelPendingSend, takePendingSendText, getLastToolResultText } from '../../overlay/chat-input.js';
 import { showToolMask, hideToolMask } from '../../overlay/panel.js';
 import * as watchdog from '../loop/watchdog.js';
 
@@ -18,6 +18,8 @@ const FORMAT_HINT_MAX = 10;
 let lastProcessedText = '';
 // 最近一次拦截到的完整回复文本（供手动解析复用，不依赖 DOM）
 let lastInterceptedText = '';
+// [临时诊断] 最近一次回复的 dbg（含 hook 的 opLog）
+let lastRespDbg: any = null;
 // 用户请求中止：停止工具循环的回传（停止按钮触发）
 let abortRequested = false;
 function requestAbort(): void { abortRequested = true; }
@@ -35,17 +37,22 @@ function sleep(ms: number): Promise<void> {
 /**
  * 执行 JS 代码块，遇到"代码不完整"错误时自动重试。
  * 拦截模式下文本已完整（finished），无需重新提取，简单重试执行即可。
+ * @param shouldCancel 取消判定；返回 true 时停止执行后续代码块（已进入执行的块不中断）
+ * @returns 已执行块的结果（取消时为已完成的那些块）
  */
-async function executeJsBlocksWithRetry(blocks: string[]): Promise<any[]> {
+async function executeJsBlocksWithRetry(blocks: string[], shouldCancel?: () => boolean): Promise<any[]> {
   // 工具开始（每个代码块一次）
   for (const code of blocks) emitToolCall({ phase: 'start', code });
   let results: any[] = [];
   for (let attempt = 0; attempt <= MAX_JS_RETRY; attempt++) {
     results = [];
     for (const code of blocks) {
+      // 用户已取消：不再执行后续代码块，仅保留已执行块的结果
+      if (shouldCancel && shouldCancel()) break;
       const r = await handleJsToolScript(code);
       if (r) results.push(r);
     }
+    if (shouldCancel && shouldCancel()) break;
     const hasIncompleteFailure = results.some(
       (item) => item && item.result && !item.result.success && looksLikeIncompleteCodeError(item.result.error)
     );
@@ -81,29 +88,49 @@ async function processInterceptedResponse(text: string, force?: boolean): Promis
 
   // 1. 优先检测 JS 工具代码块（cuckoo / js 代码块）
   const jsBlocks = extractJsToolBlocks(raw);
+  // [临时诊断] 定位「有块却识别不到」——失败时落盘全文
+  try {
+    const BT3 = BT + BT + BT;
+    const fenceCount = raw.split(BT3).length - 1;
+    const hasCuckooWord = raw.indexOf('cuckoo') >= 0;
+    const fenceLangs = raw.split(String.fromCharCode(10)).map(function (l) { return l.trim(); }).filter(function (l) { return l.indexOf(BT3) === 0; }).map(function (l) { return l.slice(3).trim().split(' ')[0]; }).slice(0, 10);
+    console.log('[Cuckoo Code][诊断] 原文特征: 长度=' + raw.length + ' 围栏符号数=' + fenceCount + ' 含cuckoo字=' + hasCuckooWord + ' 围栏语言=' + JSON.stringify(fenceLangs) + ' 提取块数=' + jsBlocks.length);
+    // 有 cuckoo 字但提取 0 块 → 打全文供分析（用分隔标记包裹，便于日志提取）
+    if (hasCuckooWord && jsBlocks.length === 0) {
+      console.log('[Cuckoo Code][诊断] 提取失败全文 >>>' + raw + '<<< 全文结束');
+      try { console.log('[Cuckoo Code][诊断] opLog=' + JSON.stringify(lastRespDbg && lastRespDbg.opLog)); } catch (_) {}
+    }
+  } catch (e) { /* ignore */ }
   if (jsBlocks.length > 0) {
     console.log('[Cuckoo Code][拦截] 检测到 JS 工具代码块（' + jsBlocks.length + ' 个），开始执行');
     formatHintCount = 0;
-    // 从检测到工具调用到结果发送完成，全程遮盖页面，禁止用户额外操作
-    showToolMask();
+    // 从检测到工具调用到结果发送完成，全程遮盖页面，禁止用户额外操作；
+    // 工具执行期间同样显示「停止」按钮，点击可取消（长任务可中止）
+    let cancelled = false;
+    const onCancel = () => {
+      cancelled = true;
+      cancelPendingSend();
+      hideToolMask();
+    };
+    showToolMask(onCancel);
     let results: any[] = [];
     try {
-      results = await executeJsBlocksWithRetry(jsBlocks);
+      results = await executeJsBlocksWithRetry(jsBlocks, () => cancelled);
     } catch (err) {
       hideToolMask();
       throw err;
+    }
+    // 用户已取消：丢弃执行结果，不再回传
+    if (cancelled) {
+      hideToolMask();
+      return;
     }
     if (results.length === 0) {
       hideToolMask();
       return;
     }
-    // 等待发送阶段：遮罩上显示「停止」按钮，点击可取消回传
-    let cancelled = false;
-    showToolMask(() => {
-      cancelled = true;
-      cancelPendingSend();
-      hideToolMask();
-    });
+    // 等待发送阶段：遮罩保持「停止」按钮（onCancel 复用），点击可取消回传
+    showToolMask(onCancel);
     if (abortRequested) { abortRequested = false; hideToolMask(); console.log('[Cuckoo Code][拦截] 已请求中止，不回传工具结果'); return; }
     // afterSent 在"结果已发出"时触发隐藏；发送失败（找不到输入框等）则立即隐藏兜底
     const sent = await sendCombinedJsResultsToChat(results, hideToolMask);
@@ -256,6 +283,7 @@ function startInterceptObserver(): void {
       try { watchdog.onResponseReceived('finished'); } catch (_) { /* ignore */ }
       // 缓存最近一次完整回复文本，供手动解析复用（不依赖 DOM）
       lastInterceptedText = detail.text || '';
+      lastRespDbg = detail.dbg || null;
       // 通知监听器（每次成功回复都触发），携带服务端权威数据
       const meta = { tokenUsage: detail.tokenUsage || null, msgIds: detail.msgIds || null };
       for (const cb of responseListeners) {
@@ -278,6 +306,36 @@ function startInterceptObserver(): void {
         accumulatedTokens: typeof detail.accumulatedTokens === 'number' ? detail.accumulatedTokens : null,
       });
     } catch (_) { /* ignore */ }
+  });
+  // 上下文耗尽：hook 检测到 banner_info.call_to_action 含 continue_in_new_chat → 请求主进程自动续接
+  window.addEventListener('cuckoo-context-exhausted', (ev: any) => {
+    try {
+      const detail = ev && ev.detail;
+      console.log('[Cuckoo Code][拦截] 上下文已用完，请求自动在新会话续接:', JSON.stringify(detail || {}));
+      // 捞回工具结果带到新会话：
+      //  1) 优先「刚填入、未及发送」的（耗尽瞬间卡在发送延迟里）
+      //  2) 否则用「最近一条已发出的工具结果」（耗尽通常发生在 AI 回复流末尾，此时结果已发出，
+      //     但新会话上下文里没有它，需要补发让 AI 知道执行结果）
+      let pendingText: string | null = null;
+      try {
+        cancelPendingSend();
+        pendingText = takePendingSendText();
+        if (pendingText) {
+          console.log('[Cuckoo Code][拦截] 捞回未发出的工具结果，长度=' + pendingText.length);
+        } else {
+          pendingText = getLastToolResultText() || null;
+          if (pendingText) console.log('[Cuckoo Code][拦截] 用最近已发出的工具结果续接，长度=' + pendingText.length);
+        }
+      } catch (_) { /* ignore */ }
+      const api = (window as any).electronAPI;
+      if (api && typeof api.contextExhaustedContinue === 'function') {
+        api.contextExhaustedContinue({ pendingText }).catch((err: any) => {
+          console.error('[Cuckoo Code][拦截] 上下文续接请求失败:', err && err.message);
+        });
+      }
+    } catch (err) {
+      console.error('[Cuckoo Code][拦截] 处理上下文耗尽事件出错:', err);
+    }
   });
   window.addEventListener('cuckoo-ai-error', (ev: any) => {
     try {

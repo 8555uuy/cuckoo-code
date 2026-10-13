@@ -85,7 +85,11 @@ function extractJsToolBlocks(text: any): string[] {
     const trimmed = line.trim();
     if (!inBlock) {
       if (trimmed.startsWith(FENCE)) {
-        lang = (trimmed.slice(3) || '').split(' ')[0];
+        // 围栏可能不止 3 个反引号（Markdown 允许；实测 ChatGPT 流因 snapshot+append
+        // 叠加会产生 6 个反引号 ``````cuckoo）——按实际反引号数剥离，避免语言标记变成 "```cuckoo"。
+        let bt = 0;
+        while (bt < trimmed.length && trimmed[bt] === '`') bt++;
+        lang = (trimmed.slice(bt) || '').split(' ')[0];
         inBlock = true;
         buf = [];
       }

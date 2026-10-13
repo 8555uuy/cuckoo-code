@@ -49,6 +49,9 @@ function registerRendererIpc(): void {
     const sender = event.sender;
     if (!sender || sender.isDestroyed()) return false;
     try {
+      // 先让目标 view 获得键盘焦点——否则 sendInputEvent 的键盘事件送不到页面
+      // （页面 document.hasFocus() === false 时 Enter 会落空，表现为「消息发不出去」）
+      try { sender.focus(); } catch (_) { /* 部分环境不支持 */ }
       sender.sendInputEvent({ type: 'keyDown', keyCode: 'Return', key: 'Enter' });
       sender.sendInputEvent({ type: 'char', keyCode: 'Return', key: '\r' });
       sender.sendInputEvent({ type: 'keyUp', keyCode: 'Return', key: 'Enter' });
