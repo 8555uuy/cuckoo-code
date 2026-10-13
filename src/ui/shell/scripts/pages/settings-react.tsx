@@ -7,7 +7,7 @@
  * - 底部：保存 / 恢复默认 / 刷新
  * - 关闭：右上 ✕ / ESC
  */
-import { createElement, useState, useEffect, useCallback } from 'react';
+import { createElement, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
 import { useSlot, specLabel } from '../use-slot.js';
 import { SlotErrorBoundary } from '../components/slot-error-boundary.js';
@@ -40,20 +40,39 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const [data, setData] = useState<any>(null);
   const [themes, setThemes] = useState<[string, string][]>(THEME_BUILTINS);
   const [theme, setTheme] = useState('system');
-  const [saving, setSaving] = useState(false);
   const [active, setActive] = useState('appearance');
 
   const pluginSections = useSlot(SETTINGS_SLOT);
+
+  // 自动保存：数据变化后防抖保存（500ms）
+  const saveTimer = useRef<any>(null);
+  const dirtyRef = useRef(false);   // 是否"用户改动过"（初始加载不触发保存）
+  const [savedTip, setSavedTip] = useState('');
 
   const load = useCallback(async () => {
     if (!api.getSettings) return;
     try {
       const r = await api.getSettings();
-      if (r && r.success && r.data) setData(r.data);
+      if (r && r.success && r.data) { dirtyRef.current = false; setData(r.data); }
     } catch (_) { /* ignore */ }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // 自动保存：data 变化 + 用户改过 → 防抖保存
+  useEffect(() => {
+    const saveFn = api.saveSettings;
+    if (!data || !dirtyRef.current || !saveFn) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const r = await saveFn(data);
+        if (r && r.success) { setSavedTip('已保存'); setTimeout(() => setSavedTip(''), 1500); }
+        else { setSavedTip('保存失败'); }
+      } catch (_) { setSavedTip('保存失败'); }
+    }, 500);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [data]);
 
   // 主题
   useEffect(() => {
@@ -83,18 +102,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     if (typeof anyApi.themeSet === 'function') anyApi.themeSet(v).catch(() => {});
   }, []);
 
-  const setField = useCallback((key: string, v: any) => setData((d: any) => ({ ...d, [key]: v })), []);
-
-  const save = useCallback(async () => {
-    if (!api.saveSettings) return;
-    setSaving(true);
-    try {
-      const r = await api.saveSettings(data);
-      if (r && r.success) { if (r.data) setData(r.data); await ckAlert('已保存'); }
-      else { await ckAlert((r && r.error) || '保存失败'); }
-    } catch (e: any) { await ckAlert('保存失败: ' + (e.message || e)); }
-    setSaving(false);
-  }, [data]);
+  const setField = useCallback((key: string, v: any) => {
+    dirtyRef.current = true;
+    setData((d: any) => ({ ...d, [key]: v }));
+  }, []);
 
   const reset = useCallback(async () => {
     const anyApi = api as any;
@@ -102,7 +113,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     if (!(await ckConfirm('确定恢复默认设置？'))) return;
     try {
       const r = await anyApi.resetSettings();
-      if (r && r.success && r.data) setData(r.data);
+      if (r && r.success && r.data) { dirtyRef.current = false; setData(r.data); }
     } catch (_) { /* ignore */ }
   }, []);
 
@@ -244,11 +255,11 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         ),
         createElement('div', { className: 'ck-set-content' }, content),
       ),
-      // 底栏
+      // 底栏（自动保存，无"保存"按钮；显示保存状态）
       createElement('div', { className: 'ck-settings-foot' },
-        createElement('button', { className: 'ck-btn ck-btn-primary', disabled: saving || loading, onClick: save }, saving ? '保存中…' : '保存设置'),
+        createElement('span', { className: 'ck-settings-saved' }, savedTip),
+        createElement('div', { style: { flex: 1 } }),
         createElement('button', { className: 'ck-btn ck-btn-secondary', disabled: loading, onClick: reset }, '恢复默认'),
-        createElement('button', { className: 'ck-icon-btn', title: '刷新', onClick: load }, createElement(RefreshIcon)),
       ),
     ),
   );

@@ -3136,7 +3136,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef4(initialValue) {
+          function useRef5(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
@@ -3930,7 +3930,7 @@
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
-          exports.useRef = useRef4;
+          exports.useRef = useRef5;
           exports.useState = useState18;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
@@ -27877,14 +27877,6 @@
   // src/ui/shell/scripts/pages/settings-react.tsx
   var SETTINGS_SLOT = "settings.section";
   var THEME_BUILTINS = [["system", "\u8DDF\u968F\u7CFB\u7EDF"], ["light", "\u6D45\u8272"], ["dark", "\u6DF1\u8272"]];
-  function RefreshIcon() {
-    return (0, import_react4.createElement)(
-      "svg",
-      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react4.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
-      (0, import_react4.createElement)("path", { d: "M21 3v6h-6" })
-    );
-  }
   function ToggleRow({ label, checked, onChange }) {
     return (0, import_react4.createElement)(
       "div",
@@ -27903,20 +27895,46 @@
     const [data, setData] = (0, import_react4.useState)(null);
     const [themes, setThemes] = (0, import_react4.useState)(THEME_BUILTINS);
     const [theme, setTheme] = (0, import_react4.useState)("system");
-    const [saving, setSaving] = (0, import_react4.useState)(false);
     const [active, setActive] = (0, import_react4.useState)("appearance");
     const pluginSections = useSlot(SETTINGS_SLOT);
+    const saveTimer = (0, import_react4.useRef)(null);
+    const dirtyRef = (0, import_react4.useRef)(false);
+    const [savedTip, setSavedTip] = (0, import_react4.useState)("");
     const load = (0, import_react4.useCallback)(async () => {
       if (!api.getSettings) return;
       try {
         const r = await api.getSettings();
-        if (r && r.success && r.data) setData(r.data);
+        if (r && r.success && r.data) {
+          dirtyRef.current = false;
+          setData(r.data);
+        }
       } catch (_) {
       }
     }, []);
     (0, import_react4.useEffect)(() => {
       load();
     }, [load]);
+    (0, import_react4.useEffect)(() => {
+      const saveFn = api.saveSettings;
+      if (!data || !dirtyRef.current || !saveFn) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(async () => {
+        try {
+          const r = await saveFn(data);
+          if (r && r.success) {
+            setSavedTip("\u5DF2\u4FDD\u5B58");
+            setTimeout(() => setSavedTip(""), 1500);
+          } else {
+            setSavedTip("\u4FDD\u5B58\u5931\u8D25");
+          }
+        } catch (_) {
+          setSavedTip("\u4FDD\u5B58\u5931\u8D25");
+        }
+      }, 500);
+      return () => {
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+      };
+    }, [data]);
     (0, import_react4.useEffect)(() => {
       const anyApi = api;
       if (typeof anyApi.themeGet === "function") {
@@ -27946,30 +27964,20 @@
       if (typeof anyApi.themeSet === "function") anyApi.themeSet(v).catch(() => {
       });
     }, []);
-    const setField = (0, import_react4.useCallback)((key, v) => setData((d) => ({ ...d, [key]: v })), []);
-    const save = (0, import_react4.useCallback)(async () => {
-      if (!api.saveSettings) return;
-      setSaving(true);
-      try {
-        const r = await api.saveSettings(data);
-        if (r && r.success) {
-          if (r.data) setData(r.data);
-          await ckAlert("\u5DF2\u4FDD\u5B58");
-        } else {
-          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-        }
-      } catch (e) {
-        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
-      }
-      setSaving(false);
-    }, [data]);
+    const setField = (0, import_react4.useCallback)((key, v) => {
+      dirtyRef.current = true;
+      setData((d) => ({ ...d, [key]: v }));
+    }, []);
     const reset = (0, import_react4.useCallback)(async () => {
       const anyApi = api;
       if (!anyApi.resetSettings) return;
       if (!await ckConfirm("\u786E\u5B9A\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E\uFF1F")) return;
       try {
         const r = await anyApi.resetSettings();
-        if (r && r.success && r.data) setData(r.data);
+        if (r && r.success && r.data) {
+          dirtyRef.current = false;
+          setData(r.data);
+        }
       } catch (_) {
       }
     }, []);
@@ -28154,13 +28162,13 @@
           ),
           (0, import_react4.createElement)("div", { className: "ck-set-content" }, content)
         ),
-        // 底栏
+        // 底栏（自动保存，无"保存"按钮；显示保存状态）
         (0, import_react4.createElement)(
           "div",
           { className: "ck-settings-foot" },
-          (0, import_react4.createElement)("button", { className: "ck-btn ck-btn-primary", disabled: saving || loading, onClick: save }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"),
-          (0, import_react4.createElement)("button", { className: "ck-btn ck-btn-secondary", disabled: loading, onClick: reset }, "\u6062\u590D\u9ED8\u8BA4"),
-          (0, import_react4.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react4.createElement)(RefreshIcon))
+          (0, import_react4.createElement)("span", { className: "ck-settings-saved" }, savedTip),
+          (0, import_react4.createElement)("div", { style: { flex: 1 } }),
+          (0, import_react4.createElement)("button", { className: "ck-btn ck-btn-secondary", disabled: loading, onClick: reset }, "\u6062\u590D\u9ED8\u8BA4")
         )
       )
     );
@@ -28895,7 +28903,7 @@
 
   // src/ui/shell/scripts/pages/mcp-react.tsx
   var import_react11 = __toESM(require_react(), 1);
-  function RefreshIcon2() {
+  function RefreshIcon() {
     return (0, import_react11.createElement)(
       "svg",
       { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
@@ -28961,7 +28969,7 @@
         "div",
         { className: "ck-actions" },
         (0, import_react11.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "MCP\uFF08\u8FDE\u63A5\u5668\uFF09"),
-        (0, import_react11.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react11.createElement)(RefreshIcon2))
+        (0, import_react11.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react11.createElement)(RefreshIcon))
       ),
       (0, import_react11.createElement)(
         "div",
@@ -29156,7 +29164,7 @@
 
   // src/ui/shell/scripts/pages/conversations-react.tsx
   var import_react13 = __toESM(require_react(), 1);
-  function RefreshIcon3() {
+  function RefreshIcon2() {
     return (0, import_react13.createElement)(
       "svg",
       { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
@@ -29237,7 +29245,7 @@
         { className: "ck-actions" },
         (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5BF9\u8BDD", onClick: onNew }, (0, import_react13.createElement)(PlusIcon)),
         (0, import_react13.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5BF9\u8BDD"),
-        (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: () => load() }, (0, import_react13.createElement)(RefreshIcon3))
+        (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: () => load() }, (0, import_react13.createElement)(RefreshIcon2))
       ),
       (0, import_react13.createElement)(
         "div",
@@ -30074,7 +30082,7 @@
       )
     );
   }
-  function RefreshIcon4() {
+  function RefreshIcon3() {
     return (0, import_react17.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react17.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }), (0, import_react17.createElement)("path", { d: "M21 3v6h-6" }));
   }
   function FilesPage() {
@@ -30159,7 +30167,7 @@
         "div",
         { className: "ck-actions" },
         (0, import_react17.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, root),
-        (0, import_react17.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react17.createElement)(RefreshIcon4))
+        (0, import_react17.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react17.createElement)(RefreshIcon3))
       ),
       (0, import_react17.createElement)(
         "div",
