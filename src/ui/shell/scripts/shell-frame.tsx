@@ -8,7 +8,9 @@
  */
 import { createElement, useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { api } from './shared.js';
+import { SettingsModal } from './pages/settings-react.js';
 
 const SIDEBAR_COLLAPSED = 46;
 const MIN_WIDTH = 320;
@@ -59,8 +61,10 @@ const TABS: TabDef[] = [
 const BOTTOM_TABS: TabDef[] = [
   { id: 'about', title: '关于', icon: 'M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 16v-4M12 8h.01' },
   { id: 'feishu', title: '飞书同步（手机）', icon: 'M5 2h14v20H5zM11 18h2' },
-  { id: 'settings', title: '设置', icon: 'M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0' },
 ];
+
+/** 设置图标（打开全屏模态，不是 tab） */
+const SETTINGS_ICON = 'M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0';
 
 /** 页面组件表 */
 const PAGES: Record<string, () => any> = {};
@@ -82,6 +86,7 @@ function AbButton({ tab, active, onClick }: { tab: TabDef; active: boolean; onCl
 /** 主框架 */
 function ShellFrame() {
   const [activeTab, setActiveTab] = useState('home');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const Page = useMemo(() => PAGES[activeTab], [activeTab]);
   const onTabClick = (id: string) => {
     const sidebar = document.getElementById('ck-sidebar');
@@ -92,17 +97,33 @@ function ShellFrame() {
     if (id === activeTab) { collapseSidebar(); return; }
     setActiveTab(id);
   };
+  // 点"设置"→ 打开全屏模态（若侧栏收起则先展开）
+  const onSettingsClick = () => {
+    const sidebar = document.getElementById('ck-sidebar');
+    if (sidebar && sidebar.classList.contains('ck-collapsed')) expandSidebar();
+    setSettingsOpen(true);
+  };
   return createElement('div', { style: { display: 'contents' } },
     createElement('div', { className: 'ck-activitybar' },
       TABS.map((t) => createElement(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
       createElement('div', { className: 'ck-ab-spacer' }),
       BOTTOM_TABS.map((t) => createElement(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
+      // 设置：打开全屏模态
+      createElement('button', { className: 'ck-ab-item', title: '设置', onClick: onSettingsClick },
+        createElement('svg', { className: 'ck-ab-icon', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+          createElement('circle', { cx: 12, cy: 12, r: 3 }),
+          createElement('path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' }))),
     ),
     createElement('div', { className: 'ck-panel' },
       createElement('div', { className: 'ck-panel-body' },
         Page ? createElement(Page) : createElement('div', { style: { padding: 12, color: '#888' } }, '页面「' + activeTab + '」尚未重写'),
       ),
     ),
+    // 设置模态（Portal 挂到 body，全窗遮罩 + 居中对话框）
+    settingsOpen ? createPortal(
+      createElement(SettingsModal, { onClose: () => setSettingsOpen(false) }),
+      document.body,
+    ) : null,
   );
 }
 

@@ -1,17 +1,17 @@
 /**
- * 设置页（React 版，feat/022-dsh-compat-c7 改造为"左导航 + 右内容"）
+ * 设置（全屏模态，feat/022-dsh-compat-c7）
  *
- * - 左导航：内置分类（外观/重试/延迟/安全）+ 插件分类（settings.section）
+ * 点击活动栏"设置"→ 全屏打开（不再塞进 320px 侧栏）。
+ * - 左导航：内置分类 + 插件分类（settings.section）
  * - 右内容：当前选中分类
  * - 底部：保存 / 恢复默认 / 刷新
- *
- * 插件分类通过 DSH 插槽 settings.section 注册：
- *   ctx.slots.register({ name:'settings.section', id, order, label }, ({ close, t }) => <组件/>)
+ * - 关闭：右上 ✕ / ESC
  */
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
 import { useSlot, specLabel } from '../use-slot.js';
 import { SlotErrorBoundary } from '../components/slot-error-boundary.js';
+import { useHideAiView } from '../use-hide-ai-view.js';
 
 const SETTINGS_SLOT = 'settings.section';
 
@@ -33,15 +33,16 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
   );
 }
 
-/** 设置页 */
-export function SettingsPage() {
+/** 设置全屏模态 */
+export function SettingsModal({ onClose }: { onClose: () => void }) {
+  useHideAiView();
+
   const [data, setData] = useState<any>(null);
   const [themes, setThemes] = useState<[string, string][]>(THEME_BUILTINS);
   const [theme, setTheme] = useState('system');
   const [saving, setSaving] = useState(false);
   const [active, setActive] = useState('appearance');
 
-  // 插件设置分类（settings.section）
   const pluginSections = useSlot(SETTINGS_SLOT);
 
   const load = useCallback(async () => {
@@ -68,6 +69,13 @@ export function SettingsPage() {
       }).catch(() => {});
     }
   }, []);
+
+  // ESC 关闭
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const onThemeChange = useCallback((v: string) => {
     setTheme(v);
@@ -100,9 +108,26 @@ export function SettingsPage() {
 
   const closePluginSection = useCallback(() => { setActive('appearance'); }, []);
 
-  if (data === null) return createElement('div', { className: 'ck-tab ck-tab-active' }, createElement('div', { className: 'ck-list-empty' }, '加载中…'));
+  const numVal = (key: string) => (data && (data[key] === null || data[key] === undefined)) ? '' : (data ? data[key] : '');
 
-  const numVal = (key: string) => data[key] === null || data[key] === undefined ? '' : data[key];
+  // 数据未就绪时，只显示"加载中"（保持全屏壳）
+  const loading = data === null;
+
+  // 关键：data 为 null 时提前返回，避免下面的 builder 访问 data.xxx 崩溃
+  if (loading) {
+    return createElement('div', { className: 'ck-settings-mask', onClick: (e: any) => { if (e.target === e.currentTarget) onClose(); } },
+      createElement('div', { className: 'ck-settings-dialog', onClick: (e: any) => e.stopPropagation() },
+        createElement('div', { className: 'ck-settings-head' },
+          createElement('span', { className: 'ck-settings-title' }, '设置'),
+          createElement('button', { className: 'ck-settings-close', title: '关闭（ESC）', onClick: onClose }, '✕'),
+        ),
+        createElement('div', { className: 'ck-set-layout' },
+          createElement('div', { className: 'ck-set-nav' }),
+          createElement('div', { className: 'ck-set-content' }, createElement('div', { className: 'ck-list-empty' }, '加载中…')),
+        ),
+      ),
+    );
+  }
 
   // ===== 内置分类内容 =====
   const appearance = createElement('div', { className: 'ck-card' },
@@ -164,7 +189,6 @@ export function SettingsPage() {
     createElement('p', { className: 'ck-about-tip' }, '开启后，webFetch 将拒绝访问内网、回环、保留地址（防 SSRF）。默认关闭（可访问本地项目）。'),
   );
 
-  // ===== 左导航定义 =====
   const NAV: [string, string][] = [
     ['appearance', '外观'],
     ['retry', '失败自动重试'],
@@ -173,9 +197,9 @@ export function SettingsPage() {
     ['security', '网络安全'],
   ];
 
-  // ===== 右内容选择 =====
   let content: any = null;
-  if (active === 'appearance') content = appearance;
+  if (loading) content = createElement('div', { className: 'ck-list-empty' }, '加载中…');
+  else if (active === 'appearance') content = appearance;
   else if (active === 'retry') content = retry;
   else if (active === 'send') content = sendDelay;
   else if (active === 'attach') content = attachDelay;
@@ -193,32 +217,39 @@ export function SettingsPage() {
     }
   }
 
-  return createElement('div', { className: 'ck-tab ck-tab-active ck-set-tab' },
-    createElement('div', { className: 'ck-set-layout' },
-      // 左导航
-      createElement('div', { className: 'ck-set-nav' },
-        ...NAV.map(([id, label]) => createElement('button', {
-          key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), onClick: () => setActive(id),
-        }, label)),
-        pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-sep' }) : null,
-        pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-title' }, '插件') : null,
-        ...pluginSections.map((s: any) => {
-          const id = 'plugin:' + s.pluginId + ':' + s.id;
-          const label = specLabel(s.spec, s.id);
-          return createElement('button', {
-            key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), title: label,
-            onClick: () => setActive(id),
-          }, label);
-        }),
+  // 外层遮罩（点遮罩关闭）+ 内层居中对话框
+  return createElement('div', { className: 'ck-settings-mask', onClick: (e: any) => { if (e.target === e.currentTarget) onClose(); } },
+    createElement('div', { className: 'ck-settings-dialog', onClick: (e: any) => e.stopPropagation() },
+      // 顶栏
+      createElement('div', { className: 'ck-settings-head' },
+        createElement('span', { className: 'ck-settings-title' }, '设置'),
+        createElement('button', { className: 'ck-settings-close', title: '关闭（ESC）', onClick: onClose }, '✕'),
       ),
-      // 右内容
-      createElement('div', { className: 'ck-set-content' }, content),
-    ),
-    // 底部操作
-    createElement('div', { className: 'ck-actions' },
-      createElement('button', { className: 'ck-btn ck-btn-primary', disabled: saving, onClick: save }, saving ? '保存中…' : '保存设置'),
-      createElement('button', { className: 'ck-btn ck-btn-secondary', onClick: reset }, '恢复默认'),
-      createElement('button', { className: 'ck-icon-btn', title: '刷新', onClick: load }, createElement(RefreshIcon)),
+      // 主体：左导航 + 右内容
+      createElement('div', { className: 'ck-set-layout' },
+        createElement('div', { className: 'ck-set-nav' },
+          ...NAV.map(([id, label]) => createElement('button', {
+            key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), onClick: () => setActive(id),
+          }, label)),
+          pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-sep' }) : null,
+          pluginSections.length > 0 ? createElement('div', { className: 'ck-set-nav-title' }, '插件') : null,
+          ...pluginSections.map((s: any) => {
+            const id = 'plugin:' + s.pluginId + ':' + s.id;
+            const label = specLabel(s.spec, s.id);
+            return createElement('button', {
+              key: id, className: 'ck-set-nav-item' + (active === id ? ' active' : ''), title: label,
+              onClick: () => setActive(id),
+            }, label);
+          }),
+        ),
+        createElement('div', { className: 'ck-set-content' }, content),
+      ),
+      // 底栏
+      createElement('div', { className: 'ck-settings-foot' },
+        createElement('button', { className: 'ck-btn ck-btn-primary', disabled: saving || loading, onClick: save }, saving ? '保存中…' : '保存设置'),
+        createElement('button', { className: 'ck-btn ck-btn-secondary', disabled: loading, onClick: reset }, '恢复默认'),
+        createElement('button', { className: 'ck-icon-btn', title: '刷新', onClick: load }, createElement(RefreshIcon)),
+      ),
     ),
   );
 }

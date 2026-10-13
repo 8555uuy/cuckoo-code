@@ -190,7 +190,7 @@
 
   /* ===== 主区域 ===== */
   .main-area { flex: 1; display: flex; min-height: 0; }
-  .viewport { flex: 1; min-width: 0; }
+  .viewport { flex: 1; min-width: 0; position: relative; }
 
   /* ===== 侧边栏 ===== */
   .ck-sidebar { width: 320px; flex-shrink: 0; display: flex; position: relative; background: var(--ck-bg); border-right: 1px solid var(--ck-border); }
@@ -1129,7 +1129,77 @@
 
   /* ===== 插件插槽里的 SVG 兜底尺寸 ===== */
   #ck-home-panels svg, #ck-home-footer svg { width: 16px; height: 16px; flex-shrink: 0; }
-\n  /* ===== 设置页：左导航 + 右内容（feat/022-dsh-compat-c7） ===== */\n  .ck-tab.ck-set-tab { flex: 1; min-height: 0; gap: 0; }\n  .ck-set-layout { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 0; overflow: hidden; }\n  .ck-set-nav { width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; overflow-y: auto; border-right: 1px solid var(--ck-border); }\n  .ck-set-nav-item { text-align: left; padding: 7px 10px; border: none; border-radius: 6px; background: transparent; color: var(--ck-text-2); font-size: 12.5px; font-family: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s; }\n  .ck-set-nav-item:hover { background: var(--ck-hover-bg); color: var(--ck-text); }\n  .ck-set-nav-item.active { background: var(--ck-primary-soft); color: var(--ck-primary); font-weight: 600; }\n  .ck-set-nav-sep { height: 1px; background: var(--ck-border); margin: 6px 4px; }\n  .ck-set-nav-title { font-size: 10.5px; color: var(--ck-text-dim); padding: 4px 10px 2px; letter-spacing: .5px; }\n  .ck-set-content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 12px; }\n  .ck-set-plugin-content { min-height: 100%; }\n
+
+  /* ===== 设置页：左导航 + 右内容（feat/022-dsh-compat-c7） ===== */
+  .ck-tab.ck-set-tab { flex: 1; min-height: 0; gap: 0; }
+  .ck-set-layout { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 0; overflow: hidden; }
+  .ck-set-nav { width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; overflow-y: auto; border-right: 1px solid var(--ck-border); }
+  .ck-set-nav-item { text-align: left; padding: 7px 10px; border: none; border-radius: 6px; background: transparent; color: var(--ck-text-2); font-size: 12.5px; font-family: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s; }
+  .ck-set-nav-item:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-set-nav-item.active { background: var(--ck-primary-soft); color: var(--ck-primary); font-weight: 600; }
+  .ck-set-nav-sep { height: 1px; background: var(--ck-border); margin: 6px 4px; }
+  .ck-set-nav-title { font-size: 10.5px; color: var(--ck-text-dim); padding: 4px 10px 2px; letter-spacing: .5px; }
+  .ck-set-content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 12px; }
+  .ck-set-plugin-content { min-height: 100%; }
+
+
+
+  /* ===== 设置：全屏模态（feat/022-dsh-compat-c7） ===== */
+  .ck-settings-head {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--ck-border);
+  }
+  .ck-settings-title { flex: 1; font-size: 16px; font-weight: 700; color: var(--ck-text); }
+  .ck-settings-close {
+    border: none; background: transparent; color: var(--ck-text-2);
+    font-size: 16px; cursor: pointer; padding: 4px 10px; border-radius: 6px;
+    font-family: inherit; transition: background .12s, color .12s;
+  }
+  .ck-settings-close:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-settings-foot {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-top: 1px solid var(--ck-border);
+  }
+  .ck-settings-full .ck-set-nav { width: 200px; padding: 10px 10px; }
+  .ck-settings-full .ck-set-nav-item { padding: 9px 12px; font-size: 13.5px; }
+  .ck-settings-full .ck-set-content { padding: 22px 28px; max-width: 900px; }
+
+
+  /* ===== 设置：居中模态 + 遮罩（feat/022-dsh-compat-c7） ===== */
+  .ck-settings-mask {
+    position: fixed; inset: 0; z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .45);
+  }
+  .ck-settings-dialog {
+    width: 880px; max-width: 92vw;
+    height: 640px; max-height: 86vh;
+    display: flex; flex-direction: column;
+    background: var(--ck-bg); color: var(--ck-text);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, .35);
+    border: 1px solid var(--ck-border);
+  }
+  .ck-settings-head {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--ck-border);
+  }
+  .ck-settings-title { flex: 1; font-size: 15px; font-weight: 700; color: var(--ck-text); }
+  .ck-settings-close {
+    border: none; background: transparent; color: var(--ck-text-2);
+    font-size: 16px; cursor: pointer; padding: 4px 10px; border-radius: 6px;
+    font-family: inherit; transition: background .12s, color .12s;
+  }
+  .ck-settings-close:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-settings-foot {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-top: 1px solid var(--ck-border);
+  }
+  .ck-settings-dialog .ck-set-nav { width: 180px; padding: 10px; }
+  .ck-settings-dialog .ck-set-nav-item { padding: 8px 12px; font-size: 13px; }
+  .ck-settings-dialog .ck-set-content { padding: 18px 22px; }
+
+
 /* ===== 目录 ===== */
   .ck-dir-path {
     font-family: "SF Mono", "Consolas", monospace; font-size: 11.5px;
@@ -24583,7 +24653,7 @@
             return root2;
           }
           var ReactVersion = "18.3.1";
-          function createPortal(children, containerInfo, implementation) {
+          function createPortal2(children, containerInfo, implementation) {
             var key = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
             {
               checkKeyStringCoercion(key);
@@ -25440,7 +25510,7 @@
             if (!isValidContainer(container)) {
               throw new Error("Target container is not a DOM element.");
             }
-            return createPortal(children, container, null, key);
+            return createPortal2(children, container, null, key);
           }
           function renderSubtreeIntoContainer(parentComponent, element, containerNode, callback) {
             return unstable_renderSubtreeIntoContainer(parentComponent, element, containerNode, callback);
@@ -27159,376 +27229,15 @@
   }
 
   // src/ui/shell/scripts/shell-frame.tsx
-  var import_react = __toESM(require_react(), 1);
+  var import_react5 = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
-  var SIDEBAR_COLLAPSED = 46;
-  var MIN_WIDTH = 320;
-  var MAX_WIDTH = 4e3;
-  var WIDTH_KEY = "cuckoo-sidebar-width";
-  function savedWidth() {
-    try {
-      const v = Number(localStorage.getItem(WIDTH_KEY));
-      if (Number.isFinite(v) && v >= MIN_WIDTH && v <= MAX_WIDTH) return Math.round(v);
-    } catch (_) {
-    }
-    return 320;
-  }
-  function expandSidebar() {
-    const sidebar = document.getElementById("ck-sidebar");
-    if (!sidebar || !sidebar.classList.contains("ck-collapsed")) return;
-    sidebar.classList.remove("ck-collapsed");
-    const w = savedWidth();
-    sidebar.style.width = w + "px";
-    try {
-      if (api.toggleSidebar) api.toggleSidebar(w);
-    } catch (_) {
-    }
-  }
-  function collapseSidebar() {
-    const sidebar = document.getElementById("ck-sidebar");
-    if (!sidebar || sidebar.classList.contains("ck-collapsed")) return;
-    sidebar.classList.add("ck-collapsed");
-    sidebar.style.width = "";
-    try {
-      if (api.toggleSidebar) api.toggleSidebar(SIDEBAR_COLLAPSED);
-    } catch (_) {
-    }
-  }
-  var TABS = [
-    { id: "home", title: "\u4E3B\u9875", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10" },
-    { id: "workspaces", title: "\u5DE5\u4F5C\u533A\uFF08\u4F1A\u8BDD\uFF09", icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
-    { id: "files", title: "\u9879\u76EE\u6587\u4EF6", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6" },
-    { id: "snippets", title: "\u63D0\u793A\u8BCD", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
-    { id: "skills", title: "\u6280\u80FD", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
-    { id: "plugins", title: "\u63D2\u4EF6", icon: "M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.2 2.2 0 0 1 0 4.4H2V19a2 2 0 0 0 2 2h3.8v-1.5a2.2 2.2 0 0 1 4.4 0V21H18a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" },
-    { id: "agents", title: "\u5B50\u4EE3\u7406", icon: "M3 8h18v12H3zM12 8V4" },
-    { id: "mcp", title: "MCP\uFF08\u8FDE\u63A5\u5668\uFF09", icon: "M9 12h6M8 7H7a5 5 0 0 0 0 10h1M16 7h1a5 5 0 0 1 0 10h-1" },
-    { id: "windows", title: "\u7A97\u53E3", icon: "M3 3h18v18H3zM3 9h18M9 21V9" },
-    { id: "token", title: "Token\uFF08\u8BCD\u5143\uFF09", icon: { text: "\u5143" } }
-  ];
-  var BOTTOM_TABS = [
-    { id: "about", title: "\u5173\u4E8E", icon: "M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 16v-4M12 8h.01" },
-    { id: "feishu", title: "\u98DE\u4E66\u540C\u6B65\uFF08\u624B\u673A\uFF09", icon: "M5 2h14v20H5zM11 18h2" },
-    { id: "settings", title: "\u8BBE\u7F6E", icon: "M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0" }
-  ];
-  var PAGES = {};
-  function registerPage(id, comp) {
-    PAGES[id] = comp;
-  }
-  function Icon({ icon }) {
-    if (typeof icon === "object" && "text" in icon) return (0, import_react.createElement)("span", { className: "ck-ab-text" }, icon.text);
-    return (0, import_react.createElement)("svg", { className: "ck-ab-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react.createElement)("path", { d: icon }));
-  }
-  function AbButton({ tab, active, onClick }) {
-    return (0, import_react.createElement)("button", { className: "ck-ab-item" + (active ? " ck-ab-active" : ""), title: tab.title, onClick }, (0, import_react.createElement)(Icon, { icon: tab.icon }));
-  }
-  function ShellFrame() {
-    const [activeTab, setActiveTab] = (0, import_react.useState)("home");
-    const Page = (0, import_react.useMemo)(() => PAGES[activeTab], [activeTab]);
-    const onTabClick = (id) => {
-      const sidebar = document.getElementById("ck-sidebar");
-      const collapsed = !!(sidebar && sidebar.classList.contains("ck-collapsed"));
-      if (collapsed) {
-        expandSidebar();
-        setActiveTab(id);
-        return;
-      }
-      if (id === activeTab) {
-        collapseSidebar();
-        return;
-      }
-      setActiveTab(id);
-    };
-    return (0, import_react.createElement)(
-      "div",
-      { style: { display: "contents" } },
-      (0, import_react.createElement)(
-        "div",
-        { className: "ck-activitybar" },
-        TABS.map((t) => (0, import_react.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
-        (0, import_react.createElement)("div", { className: "ck-ab-spacer" }),
-        BOTTOM_TABS.map((t) => (0, import_react.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) }))
-      ),
-      (0, import_react.createElement)(
-        "div",
-        { className: "ck-panel" },
-        (0, import_react.createElement)(
-          "div",
-          { className: "ck-panel-body" },
-          Page ? (0, import_react.createElement)(Page) : (0, import_react.createElement)("div", { style: { padding: 12, color: "#888" } }, "\u9875\u9762\u300C" + activeTab + "\u300D\u5C1A\u672A\u91CD\u5199")
-        )
-      )
-    );
-  }
-  function mountShellFrame() {
-    const sidebar = document.getElementById("ck-sidebar");
-    if (!sidebar) return;
-    if (!sidebar.dataset.ckOldRemoved) {
-      ["ck-dialog", "input-modal", "wg-modal"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el && el.parentNode !== document.body) {
-          try {
-            document.body.appendChild(el);
-          } catch (_) {
-          }
-        }
-      });
-      const keep = document.getElementById("ck-shell-react");
-      [...sidebar.childNodes].forEach((n) => {
-        if (n !== keep) {
-          try {
-            sidebar.removeChild(n);
-          } catch (_) {
-          }
-        }
-      });
-      sidebar.dataset.ckOldRemoved = "1";
-    }
-    let host = document.getElementById("ck-shell-react");
-    if (!host) {
-      host = document.createElement("div");
-      host.id = "ck-shell-react";
-      host.style.cssText = "display:contents;";
-      sidebar.appendChild(host);
-    }
-    if (host.__root) return;
-    const root = (0, import_client.createRoot)(host);
-    host.__root = root;
-    root.render((0, import_react.createElement)(ShellFrame));
-    if (!sidebar.__resizerAdded) {
-      const resizer = document.createElement("div");
-      resizer.className = "ck-sidebar-resizer";
-      resizer.title = "\u62D6\u52A8\u8C03\u6574\u5BBD\u5EA6";
-      sidebar.appendChild(resizer);
-      resizer.addEventListener("mousedown", (e) => {
-        if (sidebar.classList.contains("ck-collapsed")) return;
-        e.preventDefault();
-        try {
-          if (api.startSidebarDrag) api.startSidebarDrag();
-        } catch (_) {
-        }
-      });
-      sidebar.__resizerAdded = true;
-    }
-    if (!sidebar.__dragWired && api.onSidebarDrag) {
-      api.onSidebarDrag((w) => {
-        if (typeof w !== "number" || !Number.isFinite(w)) return;
-        const nw = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(w)));
-        try {
-          localStorage.setItem(WIDTH_KEY, String(nw));
-        } catch (_) {
-        }
-        if (!sidebar.classList.contains("ck-collapsed")) sidebar.style.width = nw + "px";
-      });
-      sidebar.__dragWired = true;
-    }
-    if (!document.__dragEndWired) {
-      document.addEventListener("mouseup", () => {
-        try {
-          if (api.endSidebarDrag) api.endSidebarDrag();
-        } catch (_) {
-        }
-      });
-      document.__dragEndWired = true;
-    }
-  }
+  var import_react_dom = __toESM(require_react_dom(), 1);
 
-  // src/ui/shell/scripts/statusbar.tsx
-  var import_react2 = __toESM(require_react(), 1);
-  var import_client2 = __toESM(require_client(), 1);
+  // src/ui/shell/scripts/pages/settings-react.tsx
+  var import_react4 = __toESM(require_react(), 1);
 
-  // src/ui/shell/scripts/recent.ts
-  var KEY = "cuckoo-shell-recent-tools";
-  var MAX = 5;
-  function snippetText(type, name) {
-    if (type === "skill") return "\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD";
-    if (type === "mcp") return "\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP";
-    if (type === "agent") return "\u8BF7\u4F7F\u7528 " + name + " \u5B50\u4EE3\u7406";
-    return name;
-  }
-  function typeLabel(type) {
-    if (type === "skill") return "\u6280\u80FD";
-    if (type === "mcp") return "MCP";
-    if (type === "agent") return "\u5B50\u4EE3\u7406";
-    return "\u63D0\u793A\u8BCD";
-  }
-  function loadRecent() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return [];
-      return arr.filter((x) => x && (x.type === "skill" || x.type === "mcp" || x.type === "agent" || x.type === "snippet") && typeof x.name === "string");
-    } catch (_) {
-      return [];
-    }
-  }
-  function saveRecent(list) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(list));
-    } catch (_) {
-    }
-  }
-  function addRecent(type, name, extra) {
-    if (!name) return;
-    let list = loadRecent().filter((x) => !(x.type === type && x.name === name));
-    const item = { type, name, ts: Date.now() };
-    if (extra && typeof extra.payload === "string") item.payload = extra.payload;
-    if (extra && typeof extra.autoSend === "boolean") item.autoSend = extra.autoSend;
-    list.unshift(item);
-    if (list.length > MAX) list = list.slice(0, MAX);
-    saveRecent(list);
-    renderRecent();
-    try {
-      window.dispatchEvent(new CustomEvent("cuckoo-recent-changed"));
-    } catch (_) {
-    }
-  }
-  function onRecentChanged(cb) {
-    const handler = () => cb();
-    window.addEventListener("cuckoo-recent-changed", handler);
-    return () => window.removeEventListener("cuckoo-recent-changed", handler);
-  }
-  function renderRecent() {
-    const box = document.getElementById("sb-recent");
-    if (!box) return;
-    const list = loadRecent();
-    if (list.length === 0) {
-      box.innerHTML = "";
-      return;
-    }
-    box.innerHTML = '<span class="sb-recent-label">\u6700\u8FD1</span>' + list.map((it) => {
-      const cls = "sb-chip sb-chip-" + it.type;
-      const tip = typeLabel(it.type) + "\uFF1A" + it.name + "\uFF08\u70B9\u51FB\u8FFD\u52A0\u5230\u8F93\u5165\u6846\uFF09";
-      return '<span class="' + cls + '" data-type="' + it.type + '" data-name="' + escapeHtml(it.name) + '" title="' + escapeHtml(tip) + '">' + escapeHtml(it.name) + "</span>";
-    }).join("");
-    box.querySelectorAll(".sb-chip").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const type = el.dataset.type;
-        const name = el.dataset.name;
-        if (type === "snippet") {
-          const it = list.find((x) => x.type === "snippet" && x.name === name);
-          if (it && it.payload && api.triggerSnippet) {
-            try {
-              await api.triggerSnippet(it.payload, it.autoSend !== false);
-            } catch (_) {
-            }
-          }
-        } else {
-          if (api.appendSnippet) {
-            try {
-              await api.appendSnippet(snippetText(type, name));
-            } catch (_) {
-            }
-          }
-        }
-      });
-    });
-  }
-
-  // src/ui/shell/scripts/statusbar.tsx
-  function formatTokenCount2(n) {
-    if (!isFinite(n) || n < 0) return "0";
-    if (n >= 1e8) return (n / 1e8).toFixed(2) + "\u4EBF";
-    if (n >= 1e4) return (n / 1e4).toFixed(2) + "\u4E07";
-    return String(Math.round(n));
-  }
-  function typeLabel2(type) {
-    if (type === "skill") return "\u6280\u80FD";
-    if (type === "mcp") return "MCP";
-    if (type === "agent") return "\u5B50\u4EE3\u7406";
-    return "\u63D0\u793A\u8BCD";
-  }
-  function snippetText2(type, name) {
-    if (type === "skill") return "\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD";
-    if (type === "mcp") return "\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP";
-    if (type === "agent") return "\u8BF7\u4F7F\u7528 " + name + " \u5B50\u4EE3\u7406";
-    return name;
-  }
-  function RecentChip({ it }) {
-    const tip = typeLabel2(it.type) + "\uFF1A" + it.name + "\uFF08\u70B9\u51FB\u8FFD\u52A0\u5230\u8F93\u5165\u6846\uFF09";
-    const onClick = (0, import_react2.useCallback)(async () => {
-      if (it.type === "snippet") {
-        if (it.payload && api.triggerSnippet) {
-          try {
-            await api.triggerSnippet(it.payload, it.autoSend !== false);
-          } catch (_) {
-          }
-        }
-      } else {
-        if (api.appendSnippet) {
-          try {
-            await api.appendSnippet(snippetText2(it.type, it.name));
-          } catch (_) {
-          }
-        }
-      }
-    }, [it]);
-    return (0, import_react2.createElement)("span", { className: "sb-chip sb-chip-" + it.type, title: tip, onClick }, it.name);
-  }
-  function StatusBar() {
-    const [context, setContext] = (0, import_react2.useState)(0);
-    const [tps, setTps] = (0, import_react2.useState)("");
-    const [recent, setRecent] = (0, import_react2.useState)(() => loadRecent());
-    (0, import_react2.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.onTokenUpdated) anyApi.onTokenUpdated((d) => {
-        if (d && typeof d.context === "number") setContext(d.context);
-      });
-      if (anyApi.onTpsUpdated) anyApi.onTpsUpdated((d) => {
-        setTps(d && d.tps ? String(d.tps) : "");
-      });
-      if (anyApi.getTokenUsage) {
-        anyApi.getTokenUsage().then((r) => {
-          if (!r || !r.success) return;
-          if (r.data && typeof r.data.context === "number") setContext(r.data.context);
-          if (typeof r.tps === "string") setTps(r.tps);
-        }).catch(() => {
-        });
-      }
-    }, []);
-    (0, import_react2.useEffect)(() => onRecentChanged(() => setRecent(loadRecent())), []);
-    return (0, import_react2.createElement)(
-      "div",
-      { className: "statusbar" },
-      (0, import_react2.createElement)(
-        "div",
-        { className: "sb-recent" },
-        recent.length > 0 ? (0, import_react2.createElement)("span", { className: "sb-recent-label" }, "\u6700\u8FD1") : null,
-        ...recent.map((it, i) => (0, import_react2.createElement)(RecentChip, { key: it.type + ":" + it.name + ":" + i, it }))
-      ),
-      (0, import_react2.createElement)("div", { className: "sb-spacer" }),
-      (0, import_react2.createElement)(
-        "div",
-        { className: "sb-item", title: "\u5BF9\u8BDD\u4E0A\u4E0B\u6587\uFF1A\u672C\u4F1A\u8BDD\u5F53\u524D\u5360\u7528\u7684 token \u603B\u91CF" },
-        (0, import_react2.createElement)("span", { className: "sb-label" }, "\u5BF9\u8BDD\u4E0A\u4E0B\u6587:"),
-        (0, import_react2.createElement)("span", { className: "sb-value" }, formatTokenCount2(context))
-      ),
-      (0, import_react2.createElement)(
-        "div",
-        { className: "sb-item", title: "\u6A21\u578B\u8F93\u51FA\u901F\u5EA6\uFF1Atokens/\u79D2\uFF08\u751F\u6210\u4E2D\u5B9E\u65F6\u66F4\u65B0\uFF0C\u7ED3\u675F\u540E\u4FDD\u7559\u6700\u7EC8\u503C\uFF09" },
-        (0, import_react2.createElement)("span", { className: "sb-label" }, "\u8F93\u51FA\u901F\u5EA6:"),
-        (0, import_react2.createElement)("span", { className: "sb-value" }, tps || "--"),
-        (0, import_react2.createElement)("span", { className: "sb-label" }, "t/s")
-      )
-    );
-  }
-  function mountStatusBar() {
-    const old = document.querySelector(".statusbar");
-    if (!old) return;
-    let host = document.getElementById("ck-statusbar-react");
-    if (!host) {
-      host = document.createElement("div");
-      host.id = "ck-statusbar-react";
-      host.style.cssText = "display:contents;";
-      old.parentElement?.insertBefore(host, old);
-      old.style.display = "none";
-    }
-    if (host.__root) return;
-    const root = (0, import_client2.createRoot)(host);
-    host.__root = root;
-    root.render((0, import_react2.createElement)(StatusBar));
-  }
+  // src/ui/shell/scripts/use-slot.ts
+  var import_react = __toESM(require_react(), 1);
 
   // src/ui/shell/scripts/dsh-client-runtime.ts
   var React = __toESM(require_react(), 1);
@@ -28054,1081 +27763,10 @@
     }
   }
 
-  // src/ui/shell/scripts/pages/home-react.tsx
-  var import_react4 = __toESM(require_react(), 1);
-
-  // src/ui/shell/scripts/components/ui-button.tsx
-  var import_react3 = __toESM(require_react(), 1);
-  function Svg({ d, cls }) {
-    return (0, import_react3.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react3.createElement)("path", { d }));
-  }
-  function UiButton({ icon, children, onClick, className, style, title }) {
-    return (0, import_react3.createElement)(
-      "button",
-      {
-        className: "ck-btn ck-btn-anim" + (className ? " " + className : ""),
-        onClick,
-        style,
-        title
-      },
-      icon ? (0, import_react3.createElement)(Svg, { d: icon, cls: "ck-btn-icon" }) : null,
-      children !== void 0 && children !== null ? (0, import_react3.createElement)("span", null, children) : null
-    );
-  }
-
-  // src/ui/shell/scripts/pages/home-react.tsx
-  var PANEL_SLOT = "sidebar.panellist";
-  var FOOTER_SLOT = "sidebar.footer.action";
-  var SlotErrorBoundary = class extends import_react4.Component {
-    constructor(props) {
-      super(props);
-      this.state = { err: null };
-    }
-    static getDerivedStateFromError(e) {
-      return { err: e && e.message ? e.message : String(e) };
-    }
-    componentDidCatch(e) {
-      console.error("[dsh-slot] \u7EC4\u4EF6\u5D29\u6E83", e);
-    }
-    render() {
-      if (this.state.err) {
-        return (0, import_react4.createElement)("span", { title: "\u63D2\u4EF6\u7EC4\u4EF6\u5D29\u6E83\uFF1A" + this.state.err, style: { color: "#e55", fontSize: 11 } }, "\u26A0 \u63D2\u4EF6\u51FA\u9519");
-      }
-      return this.props.children;
-    }
-  };
-  function specLabel(spec, fallback) {
-    if (!spec) return fallback;
-    const pick = (v) => {
-      if (typeof v === "function") {
-        try {
-          return v();
-        } catch (_) {
-          return null;
-        }
-      }
-      return v;
-    };
-    return String(pick(spec.label) || pick(spec.text) || pick(spec.title) || fallback);
-  }
-  function useSlot(slotName) {
-    const [items, setItems] = (0, import_react4.useState)([]);
-    (0, import_react4.useEffect)(() => {
-      const anyApi = api;
-      const refreshLocal = () => {
-        const local = getSlotItems(slotName).map((s) => ({ kind: "client", key: "c:" + s.key, spec: s.spec, Component: s.Component, id: s.id, pluginId: s.pluginId, t: s.t }));
-        setItems((prev) => {
-          const host = prev.filter((x) => x.kind === "host");
-          return [...local, ...host];
-        });
-      };
-      refreshLocal();
-      const unsub = subscribeSlots(refreshLocal);
-      const isMine = (m) => !!(m && m.slot === slotName);
-      const keyOf = (m) => m.pluginId + ":" + m.slot + ":" + m.id;
-      if (anyApi.listPluginSlots) {
-        anyApi.listPluginSlots().then((r) => {
-          if (!r || !r.success || !Array.isArray(r.slots)) return;
-          const host = r.slots.filter(isMine).map((m) => ({ kind: "host", key: "h:" + keyOf(m), spec: m.spec, id: m.id, pluginId: m.pluginId, order: m.order }));
-          setItems((prev) => [...prev.filter((x) => x.kind === "client"), ...host]);
-        }).catch(() => {
-        });
-      }
-      if (anyApi.onPluginSlotRegister) {
-        anyApi.onPluginSlotRegister((m) => {
-          if (!isMine(m)) return;
-          setItems((prev) => {
-            const k = "h:" + keyOf(m);
-            const next = prev.filter((x) => x.key !== k);
-            next.push({ kind: "host", key: k, spec: m.spec, id: m.id, pluginId: m.pluginId, order: m.order });
-            return next;
-          });
-        });
-      }
-      if (anyApi.onPluginSlotUnregister) {
-        anyApi.onPluginSlotUnregister((m) => {
-          if (!isMine(m)) return;
-          setItems((prev) => prev.filter((x) => !(x.kind === "host" && x.pluginId === m.pluginId && x.id === m.id)));
-        });
-      }
-      return unsub;
-    }, [slotName]);
-    return items;
-  }
-  function HomePage() {
-    const [harness, setHarness] = (0, import_react4.useState)(false);
-    const [version, setVersion] = (0, import_react4.useState)("");
-    const panels = useSlot(PANEL_SLOT);
-    const footers = useSlot(FOOTER_SLOT);
-    (0, import_react4.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.onHarnessMode) anyApi.onHarnessMode((d) => setHarness(!!(d && d.harness)));
-      if (anyApi.getAppInfo) anyApi.getAppInfo().then((r) => {
-        if (r && r.success) setVersion(r.version || "");
-      }).catch(() => {
-      });
-    }, []);
-    const newSession = (0, import_react4.useCallback)(async () => {
-      const anyApi = api;
-      try {
-        if (anyApi.newWebConversation) await anyApi.newWebConversation();
-        else if (api.home) api.home();
-      } catch (_) {
-      }
-    }, []);
-    const toggleHarness = (0, import_react4.useCallback)(async () => {
-      const anyApi = api;
-      if (anyApi.toggleHarness) {
-        try {
-          await anyApi.toggleHarness();
-        } catch (_) {
-        }
-      }
-    }, []);
-    const invokeCommand = (0, import_react4.useCallback)((spec) => {
-      const anyApi = api;
-      if (spec && spec.command && typeof anyApi.commandInvoke === "function") anyApi.commandInvoke(spec.command).catch(() => {
-      });
-    }, []);
-    const renderItem = (m) => {
-      const label = specLabel(m.spec, m.id);
-      const C = m.Component;
-      let injected = {};
-      try {
-        if (m.spec && typeof m.spec.inject === "function") injected = m.spec.inject({}) || {};
-      } catch (e) {
-      }
-      const t = typeof m.t === "function" ? m.t : ((k) => k);
-      const props = { wide: true, ...injected };
-      props.t = t;
-      const showLabel = !!(m.spec && (m.spec.label || m.spec.text || m.spec.title));
-      if (C) {
-        return (0, import_react4.createElement)(
-          "div",
-          {
-            key: m.key,
-            className: "ck-btn ck-btn-anim",
-            title: m.spec && m.spec.title ? String(m.spec.title) : label,
-            style: { flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, cursor: "default" }
-          },
-          (0, import_react4.createElement)(
-            "span",
-            { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
-            (0, import_react4.createElement)(SlotErrorBoundary, null, (0, import_react4.createElement)(C, props))
-          ),
-          showLabel ? (0, import_react4.createElement)("span", null, label) : null
-        );
-      }
-      return (0, import_react4.createElement)("button", {
-        key: m.key,
-        className: "ck-btn ck-btn-anim",
-        title: m.spec && m.spec.title ? String(m.spec.title) : label,
-        onClick: () => invokeCommand(m.spec),
-        style: { flex: "0 0 auto" }
-      }, (0, import_react4.createElement)("span", null, label));
-    };
-    return (0, import_react4.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active ck-home" },
-      // 滚动区：品牌 + 按钮 + 插件面板
-      (0, import_react4.createElement)(
-        "div",
-        { className: "ck-home-scroll" },
-        (0, import_react4.createElement)(
-          "div",
-          { style: { padding: "6px 2px 8px", display: "flex", alignItems: "baseline", gap: 6 } },
-          (0, import_react4.createElement)("span", { style: { fontSize: 20, fontWeight: 700, color: "var(--ck-text-2)", letterSpacing: ".2px", lineHeight: 1.2 } }, "Cuckoo Code"),
-          version ? (0, import_react4.createElement)("span", { style: { fontSize: 12, color: "var(--ck-text-dim)" } }, "v" + version) : null
-        ),
-        (0, import_react4.createElement)(
-          "div",
-          { className: "ck-actions", style: { flexDirection: "column", gap: 10, alignItems: "stretch" } },
-          (0, import_react4.createElement)(UiButton, { icon: "M12 5v14M5 12h14", onClick: newSession }, "\u65B0\u5EFA\u4F1A\u8BDD"),
-          (0, import_react4.createElement)("button", {
-            className: "ck-btn ck-btn-anim",
-            onClick: toggleHarness,
-            title: harness ? "\u5207\u56DE\u539F\u7248\u7F51\u9875" : "\u5207\u6362\u5230\u7EAF\u51C0\u5BF9\u8BDD\u6A21\u5F0F"
-          }, (0, import_react4.createElement)("span", null, harness ? "\u539F\u9875\u9762" : "\u7EAF\u51C0\u9875\u9762"))
-        ),
-        (0, import_react4.createElement)("div", { style: { height: 1, background: "var(--ck-border)", margin: "14px 0" } }),
-        (0, import_react4.createElement)(
-          "div",
-          { className: "ck-list", id: "ck-home-panels" },
-          panels.length === 0 ? (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u63D2\u4EF6\u9762\u677F") : panels.map(renderItem)
-        )
-      ),
-      // 底部动作（固定，滚动不影响）
-      footers.length > 0 ? (0, import_react4.createElement)("div", { className: "ck-home-footer", id: "ck-home-footer" }, footers.map(renderItem)) : null
-    );
-  }
-
-  // src/ui/shell/scripts/pages/about-react.tsx
-  var import_react5 = __toESM(require_react(), 1);
-  function AboutPage() {
-    const [version, setVersion] = (0, import_react5.useState)("\u2014");
-    const [qqUrl, setQqUrl] = (0, import_react5.useState)("");
-    (0, import_react5.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.getAppInfo) {
-        anyApi.getAppInfo().then((r) => {
-          if (r && r.success) setVersion(r.version || "\u2014");
-        }).catch(() => {
-        });
-      }
-      if (anyApi.getAssetUrl) {
-        anyApi.getAssetUrl("assets/qq-group.jpg").then((r) => {
-          if (r && r.success) setQqUrl(r.url);
-        }).catch(() => {
-        });
-      }
-    }, []);
-    const openGithub = (0, import_react5.useCallback)(() => {
-      const anyApi = api;
-      if (anyApi.openExternal) anyApi.openExternal("https://github.com/wangyongpeng90/cuckoo-code");
-    }, []);
-    return (0, import_react5.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react5.createElement)(
-        "div",
-        { className: "ck-about-head" },
-        (0, import_react5.createElement)("div", { className: "ck-about-logo" }, "C"),
-        (0, import_react5.createElement)("div", { className: "ck-about-title" }, "Cuckoo Code"),
-        (0, import_react5.createElement)("div", { className: "ck-about-ver" }, "\u7248\u672C ", (0, import_react5.createElement)("span", null, version))
-      ),
-      (0, import_react5.createElement)("p", { className: "ck-about-tip" }, "\u672C\u7248\u672C\u4E3A", (0, import_react5.createElement)("strong", null, "\u63D2\u4EF6\u6539\u9020\u7248"), "\uFF08plugin-ui-ext\uFF09\uFF0C\u5DF2\u7981\u7528\u539F\u7248\u5728\u7EBF\u66F4\u65B0\uFF0C\u4EE5\u514D\u88AB\u8986\u76D6\u4E22\u5931\u63D2\u4EF6\u7CFB\u7EDF\u3002"),
-      (0, import_react5.createElement)(
-        "div",
-        { className: "ck-about-group" },
-        (0, import_react5.createElement)("div", { className: "ck-about-group-title" }, "\u5F00\u6E90\u5730\u5740"),
-        (0, import_react5.createElement)("p", { className: "ck-about-tip" }, "\u672C\u7CFB\u7EDF\u4E3A\u5F00\u6E90\u9879\u76EE\uFF0C\u6B22\u8FCE\u70B9 Star \u652F\u6301\u3002"),
-        (0, import_react5.createElement)("a", { className: "ck-about-link", onClick: openGithub }, "github.com/wangyongpeng90/cuckoo-code")
-      ),
-      (0, import_react5.createElement)(
-        "div",
-        { className: "ck-about-group" },
-        (0, import_react5.createElement)("div", { className: "ck-about-group-title" }, "QQ \u7FA4\uFF1A1104042537"),
-        qqUrl ? (0, import_react5.createElement)("img", { className: "ck-about-qr", src: qqUrl, alt: "QQ \u7FA4" }) : null
-      )
-    );
-  }
-
-  // src/ui/shell/scripts/pages/skills-react.tsx
-  var import_react6 = __toESM(require_react(), 1);
-  function SkillItem({ s, onClick }) {
-    return (0, import_react6.createElement)(
-      "div",
-      { className: "ck-skill-item", onClick },
-      (0, import_react6.createElement)(
-        "div",
-        { className: "ck-skill-top" },
-        (0, import_react6.createElement)("span", { className: "ck-skill-name" }, s.name)
-      ),
-      (0, import_react6.createElement)("div", { className: "ck-skill-desc" }, s.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
-    );
-  }
-  function SkillsPage() {
-    const [skills, setSkills] = (0, import_react6.useState)(null);
-    const [err, setErr] = (0, import_react6.useState)(false);
-    const load = (0, import_react6.useCallback)(async () => {
-      if (!api.listSkills) {
-        setSkills([]);
-        return;
-      }
-      try {
-        const r = await api.listSkills();
-        setSkills((r && r.success ? r.skills : []) || []);
-        setErr(false);
-      } catch (_) {
-        setErr(true);
-        setSkills([]);
-      }
-    }, []);
-    (0, import_react6.useEffect)(() => {
-      load();
-    }, [load]);
-    const onSkillClick = (0, import_react6.useCallback)(async (name) => {
-      if (api.appendSnippet) {
-        try {
-          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD");
-        } catch (_) {
-        }
-      }
-      addRecent("skill", name);
-    }, []);
-    const list = skills || [];
-    const userSkills = list.filter((s) => s.source !== "project");
-    const projSkills = list.filter((s) => s.source === "project");
-    return (0, import_react6.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react6.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react6.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u6280\u80FD"),
-        (0, import_react6.createElement)(
-          "button",
-          { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load },
-          (0, import_react6.createElement)(
-            "svg",
-            { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-            (0, import_react6.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
-            (0, import_react6.createElement)("path", { d: "M21 3v6h-6" })
-          )
-        )
-      ),
-      (0, import_react6.createElement)(
-        "div",
-        { className: "ck-list" },
-        skills === null ? (0, import_react6.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react6.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react6.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u6280\u80FD", (0, import_react6.createElement)("br"), "\uFF08.cuckoo/skills/ \u6216 ~/.cuckoo/skills/\uFF09") : [
-          userSkills.length ? (0, import_react6.createElement)("div", { key: "u-title", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
-          ...userSkills.map((s) => (0, import_react6.createElement)(SkillItem, { key: "u-" + s.name, s, onClick: () => onSkillClick(s.name) })),
-          projSkills.length ? (0, import_react6.createElement)("div", { key: "p-title", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
-          ...projSkills.map((s) => (0, import_react6.createElement)(SkillItem, { key: "p-" + s.name, s, onClick: () => onSkillClick(s.name) }))
-        ]
-      )
-    );
-  }
-
-  // src/ui/shell/scripts/pages/mcp-react.tsx
-  var import_react7 = __toESM(require_react(), 1);
-  function RefreshIcon() {
-    return (0, import_react7.createElement)(
-      "svg",
-      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react7.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
-      (0, import_react7.createElement)("path", { d: "M21 3v6h-6" })
-    );
-  }
-  function McpItem({ s, onClick }) {
-    return (0, import_react7.createElement)(
-      "div",
-      { className: "ck-mcp-item", onClick },
-      (0, import_react7.createElement)(
-        "div",
-        { className: "ck-mcp-top" },
-        (0, import_react7.createElement)("span", { className: "ck-mcp-dot" + (s.connected ? " on" : "") }),
-        (0, import_react7.createElement)("span", { className: "ck-mcp-name" }, s.name)
-      ),
-      (0, import_react7.createElement)(
-        "div",
-        { className: "ck-mcp-bottom" },
-        (0, import_react7.createElement)("span", { className: "ck-mcp-tag" }, s.type || "stdio"),
-        (0, import_react7.createElement)("span", { className: "ck-mcp-tag" }, (s.toolCount || 0) + " \u5DE5\u5177")
-      )
-    );
-  }
-  function McpPage() {
-    const [servers, setServers] = (0, import_react7.useState)(null);
-    const [err, setErr] = (0, import_react7.useState)(false);
-    const load = (0, import_react7.useCallback)(async () => {
-      const anyApi = api;
-      if (!anyApi.listMcpServers) {
-        setServers([]);
-        return;
-      }
-      try {
-        const r = await anyApi.listMcpServers();
-        setServers((r && r.success ? r.servers : []) || []);
-        setErr(false);
-      } catch (_) {
-        setErr(true);
-        setServers([]);
-      }
-    }, []);
-    (0, import_react7.useEffect)(() => {
-      load();
-    }, [load]);
-    const onItemClick = (0, import_react7.useCallback)(async (name) => {
-      if (api.appendSnippet) {
-        try {
-          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP");
-        } catch (_) {
-        }
-      }
-      addRecent("mcp", name);
-    }, []);
-    const list = servers || [];
-    const userServers = list.filter((s) => s.source !== "project");
-    const projServers = list.filter((s) => s.source === "project");
-    return (0, import_react7.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react7.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react7.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "MCP\uFF08\u8FDE\u63A5\u5668\uFF09"),
-        (0, import_react7.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react7.createElement)(RefreshIcon))
-      ),
-      (0, import_react7.createElement)(
-        "div",
-        { className: "ck-list" },
-        servers === null ? (0, import_react7.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react7.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react7.createElement)("div", { className: "ck-list-empty" }, "\u672A\u914D\u7F6E MCP server") : [
-          userServers.length ? (0, import_react7.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
-          ...userServers.map((s) => (0, import_react7.createElement)(McpItem, { key: "u-" + s.name, s, onClick: () => onItemClick(s.name) })),
-          projServers.length ? (0, import_react7.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
-          ...projServers.map((s) => (0, import_react7.createElement)(McpItem, { key: "p-" + s.name, s, onClick: () => onItemClick(s.name) }))
-        ]
-      )
-    );
-  }
-
-  // src/ui/shell/scripts/pages/snippets-react.tsx
-  var import_react9 = __toESM(require_react(), 1);
-
-  // src/ui/shell/scripts/use-hide-ai-view.ts
-  var import_react8 = __toESM(require_react(), 1);
-  function useHideAiView() {
-    (0, import_react8.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {
-      });
-      return () => {
-        if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {
-        });
-      };
-    }, []);
-  }
-
-  // src/ui/shell/scripts/pages/snippets-react.tsx
-  var I = {
-    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
-    plus: "M12 5v14M5 12h14",
-    edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
-    del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
-    init: "M21 12a9 9 0 1 1-3-6.7M21 3v5h-5"
-  };
-  function Svg2({ d }) {
-    return (0, import_react9.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react9.createElement)("path", { d }));
-  }
-  function SnipModal({ initial, onSave, onCancel }) {
-    const [name, setName] = (0, import_react9.useState)(initial ? initial.name : "");
-    const [content, setContent] = (0, import_react9.useState)(initial ? initial.content : "");
-    const [autoSend, setAutoSend] = (0, import_react9.useState)(initial ? initial.autoSend !== false : true);
-    useHideAiView();
-    return (0, import_react9.createElement)(
-      "div",
-      { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
-        if (e.target === e.currentTarget) onCancel();
-      } },
-      (0, import_react9.createElement)(
-        "div",
-        { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
-        (0, import_react9.createElement)("h3", { style: { margin: "0 0 14px" } }, initial ? "\u7F16\u8F91\u63D0\u793A\u8BCD" : "\u65B0\u5EFA\u63D0\u793A\u8BCD"),
-        (0, import_react9.createElement)(
-          "div",
-          { style: { marginBottom: 10 } },
-          (0, import_react9.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
-          (0, import_react9.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" }, autoFocus: true })
-        ),
-        (0, import_react9.createElement)(
-          "div",
-          { style: { marginBottom: 10 } },
-          (0, import_react9.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u5185\u5BB9"),
-          (0, import_react9.createElement)("textarea", { value: content, onChange: (e) => setContent(e.target.value), rows: 5, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box", resize: "vertical" } })
-        ),
-        (0, import_react9.createElement)(
-          "label",
-          { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 13, marginBottom: 16 } },
-          (0, import_react9.createElement)("input", { type: "checkbox", checked: autoSend, onChange: (e) => setAutoSend(e.target.checked) }),
-          "\u81EA\u52A8\u53D1\u9001"
-        ),
-        (0, import_react9.createElement)(
-          "div",
-          { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
-          (0, import_react9.createElement)("button", { onClick: onCancel, style: { padding: "6px 16px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
-          (0, import_react9.createElement)("button", { onClick: () => onSave({ name: name.trim(), content, autoSend }), style: { padding: "6px 16px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
-        )
-      )
-    );
-  }
-  function SnippetsPage() {
-    const [snippets, setSnippets] = (0, import_react9.useState)(null);
-    const [modal, setModal] = (0, import_react9.useState)({ open: false, editing: null });
-    const load = (0, import_react9.useCallback)(async () => {
-      if (!api.listSnippets) {
-        setSnippets([]);
-        return;
-      }
-      try {
-        const res = await api.listSnippets();
-        setSnippets((res && res.success && Array.isArray(res.snippets) ? res.snippets : []) || []);
-      } catch (_) {
-        setSnippets([]);
-      }
-    }, []);
-    (0, import_react9.useEffect)(() => {
-      load();
-    }, [load]);
-    const save = (0, import_react9.useCallback)(async (data) => {
-      if (!data.name) {
-        await ckAlert("\u8BF7\u586B\u5199\u540D\u79F0");
-        return;
-      }
-      if (!data.content.trim()) {
-        await ckAlert("\u8BF7\u586B\u5199\u5185\u5BB9");
-        return;
-      }
-      const list2 = snippets || [];
-      let next;
-      if (modal.editing) {
-        next = list2.map((x) => x.id === modal.editing.id ? { id: x.id, ...data } : x);
-      } else {
-        next = [...list2, { id: "snip-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8), ...data }];
-      }
-      setSnippets(next);
-      setModal({ open: false, editing: null });
-      if (api.saveSnippets) {
-        try {
-          await api.saveSnippets(next);
-        } catch (_) {
-        }
-      }
-    }, [snippets, modal.editing]);
-    const del = (0, import_react9.useCallback)(async (s) => {
-      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u63D0\u793A\u8BCD\u300C" + s.name + "\u300D\uFF1F")) return;
-      const next = (snippets || []).filter((x) => x.id !== s.id);
-      setSnippets(next);
-      if (api.saveSnippets) {
-        try {
-          await api.saveSnippets(next);
-        } catch (_) {
-        }
-      }
-    }, [snippets]);
-    const trigger = (0, import_react9.useCallback)(async (s) => {
-      if (!api.triggerSnippet) return;
-      try {
-        await api.triggerSnippet(s.content, s.autoSend);
-      } catch (_) {
-      }
-      addRecent("snippet", s.name, { payload: s.content, autoSend: s.autoSend });
-    }, []);
-    const initProject = (0, import_react9.useCallback)(async () => {
-      if (!api.initProject) return;
-      try {
-        await api.initProject();
-      } catch (_) {
-      }
-    }, []);
-    const list = snippets || [];
-    return (0, import_react9.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react9.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react9.createElement)(
-          "button",
-          { className: "ck-btn ck-btn-anim", onClick: initProject },
-          (0, import_react9.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react9.createElement)("path", { d: I.init })),
-          (0, import_react9.createElement)("span", null, "\u91CD\u65B0\u9879\u76EE\u521D\u59CB\u5316")
-        )
-      ),
-      (0, import_react9.createElement)("div", { className: "ck-divider" }),
-      (0, import_react9.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react9.createElement)(
-          "button",
-          { className: "ck-btn ck-btn-anim", onClick: () => setModal({ open: true, editing: null }) },
-          (0, import_react9.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react9.createElement)("path", { d: I.plus })),
-          (0, import_react9.createElement)("span", null, "\u65B0\u5EFA\u5FEB\u6377\u63D0\u793A\u8BCD")
-        ),
-        (0, import_react9.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react9.createElement)(Svg2, { d: I.refresh }))
-      ),
-      (0, import_react9.createElement)(
-        "div",
-        { className: "ck-list" },
-        snippets === null ? (0, import_react9.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react9.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u63D0\u793A\u8BCD\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA") : list.map((s) => (0, import_react9.createElement)(
-          "div",
-          { key: s.id, className: "ck-snip-item", onClick: () => trigger(s) },
-          (0, import_react9.createElement)(
-            "div",
-            { className: "ck-snip-top" },
-            (0, import_react9.createElement)("span", { className: "ck-snip-name" }, s.name, s.autoSend ? (0, import_react9.createElement)("span", { className: "ck-snip-badge" }, "\u81EA\u52A8\u53D1\u9001") : null),
-            (0, import_react9.createElement)(
-              "div",
-              { className: "ck-snip-actions" },
-              (0, import_react9.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
-                e.stopPropagation();
-                setModal({ open: true, editing: s });
-              } }, (0, import_react9.createElement)(Svg2, { d: I.edit })),
-              (0, import_react9.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
-                e.stopPropagation();
-                del(s);
-              } }, (0, import_react9.createElement)(Svg2, { d: I.del }))
-            )
-          ),
-          (0, import_react9.createElement)("span", { className: "ck-snip-preview" }, s.content)
-        ))
-      ),
-      modal.open ? (0, import_react9.createElement)(SnipModal, { initial: modal.editing, onSave: save, onCancel: () => setModal({ open: false, editing: null }) }) : null
-    );
-  }
-
-  // src/ui/shell/scripts/pages/conversations-react.tsx
-  var import_react10 = __toESM(require_react(), 1);
-  function RefreshIcon2() {
-    return (0, import_react10.createElement)(
-      "svg",
-      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react10.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
-      (0, import_react10.createElement)("path", { d: "M21 3v6h-6" })
-    );
-  }
-  function PlusIcon() {
-    return (0, import_react10.createElement)(
-      "svg",
-      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react10.createElement)("path", { d: "M12 5v14M5 12h14" })
-    );
-  }
-  function ConversationsPage() {
-    const [sessions, setSessions] = (0, import_react10.useState)([]);
-    const [curUrl, setCurUrl] = (0, import_react10.useState)("");
-    const [busy, setBusy] = (0, import_react10.useState)(false);
-    const loadedRef = (0, import_react10.useRef)(false);
-    const load = (0, import_react10.useCallback)(async (retainOnEmpty) => {
-      const anyApi = api;
-      if (!anyApi.listWebSessions) return;
-      let res = null;
-      try {
-        res = await anyApi.listWebSessions();
-      } catch (_) {
-        res = null;
-      }
-      const list = res && res.success && Array.isArray(res.sessions) ? res.sessions : [];
-      const url = res && res.currentUrl || "";
-      if (!list.length) {
-        if (retainOnEmpty) return;
-        if (loadedRef.current) return;
-        return;
-      }
-      setSessions(list);
-      setCurUrl(url);
-      loadedRef.current = true;
-    }, []);
-    (0, import_react10.useEffect)(() => {
-      load();
-    }, [load]);
-    (0, import_react10.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.onHarnessBusy) anyApi.onHarnessBusy((b) => setBusy(b));
-    }, []);
-    (0, import_react10.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.onWebUrlChanged) anyApi.onWebUrlChanged(() => {
-        load(true);
-        setTimeout(() => load(true), 800);
-        setTimeout(() => load(true), 1800);
-        setTimeout(() => load(false), 3200);
-      });
-    }, [load]);
-    const onItemClick = (0, import_react10.useCallback)((s) => {
-      if (busy) return;
-      const anyApi = api;
-      if (s.href && anyApi.navigateWebSession) {
-        anyApi.navigateWebSession(s.href);
-        setCurUrl(s.href);
-      }
-    }, [busy]);
-    const onNew = (0, import_react10.useCallback)(async () => {
-      const anyApi = api;
-      if (anyApi.newWebConversation) {
-        await anyApi.newWebConversation();
-        load(true);
-        setTimeout(() => load(true), 800);
-        setTimeout(() => load(false), 1800);
-      }
-    }, [load]);
-    return (0, import_react10.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react10.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react10.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5BF9\u8BDD", onClick: onNew }, (0, import_react10.createElement)(PlusIcon)),
-        (0, import_react10.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5BF9\u8BDD"),
-        (0, import_react10.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: () => load() }, (0, import_react10.createElement)(RefreshIcon2))
-      ),
-      (0, import_react10.createElement)(
-        "div",
-        { className: "ck-list" },
-        sessions.length === 0 ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026\uFF08\u82E5\u6301\u7EED\u4E3A\u7A7A\uFF0C\u8BF7\u70B9\u5237\u65B0\uFF09") : sessions.map((s) => (0, import_react10.createElement)("div", {
-          key: s.href,
-          className: "ck-conv-item" + (s.href === curUrl ? " ck-conv-active" : "") + (busy ? " ck-conv-disabled" : ""),
-          title: s.title,
-          onClick: () => onItemClick(s)
-        }, (0, import_react10.createElement)("span", { className: "ck-conv-title" }, s.title)))
-      )
-    );
-  }
-
-  // src/ui/shell/scripts/pages/token-react.tsx
-  var import_react11 = __toESM(require_react(), 1);
-  function CompactIcon() {
-    return (0, import_react11.createElement)(
-      "svg",
-      { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react11.createElement)("path", { d: "M8 3v4M8 7H4M8 7l-4-4" }),
-      (0, import_react11.createElement)("path", { d: "M16 21v-4M16 17h4M16 17l4 4" }),
-      (0, import_react11.createElement)("path", { d: "M4 14h16" })
-    );
-  }
-  function SaveIcon() {
-    return (0, import_react11.createElement)(
-      "svg",
-      { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react11.createElement)("path", { d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" }),
-      (0, import_react11.createElement)("path", { d: "M17 21v-8H7v8" }),
-      (0, import_react11.createElement)("path", { d: "M7 3v5h8" })
-    );
-  }
-  function Chart({ daily }) {
-    if (!Array.isArray(daily) || daily.length === 0) {
-      return (0, import_react11.createElement)("div", { className: "ck-chart" }, (0, import_react11.createElement)("div", { className: "ck-list-empty", style: { width: "100%" } }, "\u6682\u65E0\u6570\u636E"));
-    }
-    const sorted = daily.slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
-    let max = Math.max.apply(null, sorted.map((d) => d.value || 0));
-    if (max <= 0) max = 1;
-    return (0, import_react11.createElement)(
-      "div",
-      { className: "ck-chart" },
-      sorted.map((d) => {
-        const v = d.value || 0;
-        const pct = Math.max(1, Math.round(v / max * 100));
-        const day = (d.date || "").slice(5).replace("-", "/");
-        return (0, import_react11.createElement)(
-          "div",
-          { key: d.date, className: "ck-bar-row", title: d.date + "\uFF1A" + formatShort(v) + " tokens" },
-          (0, import_react11.createElement)("span", { className: "ck-bar-label" }, day),
-          (0, import_react11.createElement)("div", { className: "ck-bar-track" }, (0, import_react11.createElement)("div", { className: "ck-bar", style: { width: pct + "%" } }))
-        );
-      })
-    );
-  }
-  function TokenPage() {
-    const [data, setData] = (0, import_react11.useState)({});
-    const [systemTotal, setSystemTotal] = (0, import_react11.useState)(0);
-    const [auto, setAuto] = (0, import_react11.useState)({ enabled: false, threshold: 80 });
-    const [saving, setSaving] = (0, import_react11.useState)(false);
-    (0, import_react11.useEffect)(() => {
-      const anyApi = api;
-      if (anyApi.onTokenUpdated) {
-        anyApi.onTokenUpdated((d) => {
-          if (d) setData(d);
-        });
-      }
-      if (anyApi.getTokenUsage) {
-        anyApi.getTokenUsage().then((r) => {
-          if (r && r.success && r.data) setData(r.data);
-        }).catch(() => {
-        });
-      }
-      if (anyApi.onTotalUpdated) {
-        anyApi.onTotalUpdated((d) => {
-          if (d && typeof d.systemTotal === "number") setSystemTotal(d.systemTotal);
-        });
-      }
-      if (anyApi.getSystemTotal) {
-        anyApi.getSystemTotal().then((r) => {
-          if (r && r.success) setSystemTotal(r.systemTotal);
-        }).catch(() => {
-        });
-      }
-    }, []);
-    const loadAuto = (0, import_react11.useCallback)(async () => {
-      if (!api.getAutoCompact) return;
-      try {
-        const r = await api.getAutoCompact();
-        if (r && r.success && r.data) setAuto({ enabled: r.data.enabled === true, threshold: r.data.threshold });
-      } catch (_) {
-      }
-    }, []);
-    (0, import_react11.useEffect)(() => {
-      loadAuto();
-    }, [loadAuto]);
-    const onCompact = (0, import_react11.useCallback)(async () => {
-      if (!api.triggerCompact) return;
-      if (!await ckConfirm("\u786E\u5B9A\u538B\u7F29\u4E0A\u4E0B\u6587\uFF1F\u5C06\u751F\u6210\u6458\u8981\u5E76\u5728\u65B0\u4F1A\u8BDD\u7EE7\u7EED\u3002", "\u538B\u7F29\u4E0A\u4E0B\u6587")) return;
-      try {
-        await api.triggerCompact();
-      } catch (_) {
-      }
-    }, []);
-    const onSaveAuto = (0, import_react11.useCallback)(async () => {
-      if (!api.saveAutoCompact) return;
-      if (!Number.isFinite(auto.threshold) || auto.threshold <= 0) {
-        await ckAlert("\u9608\u503C\u9700\u4E3A\u6B63\u6570\uFF08\u4E07\uFF09");
-        return;
-      }
-      setSaving(true);
-      try {
-        const r = await api.saveAutoCompact({ enabled: auto.enabled, threshold: auto.threshold });
-        if (r && r.success) {
-          await ckAlert("\u5DF2\u4FDD\u5B58");
-        } else {
-          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-        }
-      } catch (e) {
-        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
-      }
-      setSaving(false);
-    }, [auto]);
-    return (0, import_react11.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react11.createElement)(
-        "div",
-        { className: "ck-token-hero" },
-        (0, import_react11.createElement)("span", { className: "ck-token-hero-label" }, "\u5F53\u524D\u4E0A\u4E0B\u6587"),
-        (0, import_react11.createElement)(
-          "div",
-          { className: "ck-token-hero-value" },
-          (0, import_react11.createElement)("span", null, formatTokenCount(data.context || 0)),
-          (0, import_react11.createElement)("span", { className: "ck-token-hero-unit" }, "tokens")
-        )
-      ),
-      (0, import_react11.createElement)(
-        "button",
-        { className: "ck-btn ck-btn-anim", onClick: onCompact },
-        (0, import_react11.createElement)(CompactIcon),
-        (0, import_react11.createElement)("span", null, "\u538B\u7F29\u4E0A\u4E0B\u6587")
-      ),
-      (0, import_react11.createElement)(
-        "div",
-        { className: "ck-stat-list" },
-        (0, import_react11.createElement)("div", { className: "ck-stat-item" }, (0, import_react11.createElement)("span", { className: "ck-stat-key" }, "\u5BF9\u8BDD\u7D2F\u8BA1"), (0, import_react11.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.cumulative || 0))),
-        (0, import_react11.createElement)("div", { className: "ck-stat-item" }, (0, import_react11.createElement)("span", { className: "ck-stat-key" }, "\u4ECA\u65E5\u7A97\u53E3"), (0, import_react11.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.todayCumulative || 0))),
-        (0, import_react11.createElement)("div", { className: "ck-stat-item" }, (0, import_react11.createElement)("span", { className: "ck-stat-key" }, "\u7A97\u53E3\u7D2F\u8BA1"), (0, import_react11.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.windowCumulative || 0))),
-        (0, import_react11.createElement)("div", { className: "ck-stat-item" }, (0, import_react11.createElement)("span", { className: "ck-stat-key" }, "\u7CFB\u7EDF\u603B\u7D2F\u8BA1"), (0, import_react11.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(systemTotal)))
-      ),
-      (0, import_react11.createElement)(
-        "div",
-        { className: "ck-auto-block" },
-        (0, import_react11.createElement)(
-          "div",
-          { className: "ck-auto-head" },
-          (0, import_react11.createElement)("span", { className: "ck-stat-key" }, "\u81EA\u52A8\u538B\u7F29"),
-          (0, import_react11.createElement)(
-            "label",
-            { className: "ck-switch" },
-            (0, import_react11.createElement)("input", { type: "checkbox", checked: auto.enabled, onChange: (e) => setAuto({ ...auto, enabled: e.target.checked }) }),
-            (0, import_react11.createElement)("span", { className: "ck-switch-track" })
-          )
-        ),
-        (0, import_react11.createElement)(
-          "div",
-          { className: "ck-auto-body" },
-          (0, import_react11.createElement)("span", null, "\u8D85\u8FC7"),
-          (0, import_react11.createElement)("input", { type: "number", min: 1, value: auto.threshold, onChange: (e) => setAuto({ ...auto, threshold: parseFloat(e.target.value) }) }),
-          (0, import_react11.createElement)("span", null, "\u4E07 tokens \u65F6\u89E6\u53D1")
-        ),
-        (0, import_react11.createElement)(
-          "button",
-          { className: "ck-btn ck-btn-anim", disabled: saving, onClick: onSaveAuto },
-          (0, import_react11.createElement)(SaveIcon),
-          (0, import_react11.createElement)("span", null, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E")
-        )
-      ),
-      (0, import_react11.createElement)("div", { className: "ck-chart-block" }, (0, import_react11.createElement)(Chart, { daily: data.daily || [] }))
-    );
-  }
-
-  // src/ui/shell/scripts/pages/feishu-react.tsx
-  var import_react12 = __toESM(require_react(), 1);
-  function ToggleRow({ label, checked, onChange }) {
-    return (0, import_react12.createElement)(
-      "div",
-      { className: "ck-set-field ck-set-toggle" },
-      (0, import_react12.createElement)("span", { className: "ck-set-key" }, label),
-      (0, import_react12.createElement)(
-        "label",
-        { className: "ck-switch" },
-        (0, import_react12.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
-        (0, import_react12.createElement)("span", { className: "ck-switch-track" })
-      )
-    );
-  }
-  function FeishuPage() {
-    const [cfg, setCfg] = (0, import_react12.useState)({});
-    const [status, setStatus] = (0, import_react12.useState)({ status: "", detail: "" });
-    const [chats, setChats] = (0, import_react12.useState)([]);
-    const [binding, setBinding] = (0, import_react12.useState)({});
-    const loadBinding = (0, import_react12.useCallback)(async () => {
-      if (!api.getFeishuBinding) return;
-      try {
-        const b = await api.getFeishuBinding();
-        if (api.listFeishuChats) {
-          const lr = await api.listFeishuChats();
-          setChats(lr && lr.success && lr.chats || []);
-        }
-        setBinding(b || {});
-      } catch (_) {
-      }
-    }, []);
-    const load = (0, import_react12.useCallback)(async () => {
-      if (!api.getFeishuConfig) return;
-      try {
-        const r = await api.getFeishuConfig();
-        if (r && r.success) {
-          setCfg(r.config || {});
-          setStatus({ status: r.status || "", detail: r.statusDetail || "" });
-        }
-        await loadBinding();
-      } catch (_) {
-      }
-    }, [loadBinding]);
-    (0, import_react12.useEffect)(() => {
-      load();
-    }, [load]);
-    const save = (0, import_react12.useCallback)(async () => {
-      if (!api.saveFeishuConfig) return;
-      try {
-        const r = await api.saveFeishuConfig(cfg);
-        if (r && r.success) {
-          await load();
-        } else {
-          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-        }
-      } catch (e) {
-        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
-      }
-    }, [cfg, load]);
-    const savePush = (0, import_react12.useCallback)(async () => {
-      if (!api.saveFeishuConfig) return;
-      try {
-        const r = await api.saveFeishuConfig({ pushUserMessage: !!cfg.pushUserMessage, pushAiReply: !!cfg.pushAiReply, pushToolStatus: !!cfg.pushToolStatus, pushToolName: !!cfg.pushToolName });
-        if (!(r && r.success)) await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-      } catch (e) {
-        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
-      }
-    }, [cfg]);
-    const onBind = (0, import_react12.useCallback)(async (chatId) => {
-      if (!api.bindFeishuChat) return;
-      const chat = chats.find((c) => c.chatId === chatId);
-      try {
-        await api.bindFeishuChat(chatId, chat ? chat.name : "");
-        await loadBinding();
-      } catch (_) {
-      }
-    }, [chats, loadBinding]);
-    const onUnbind = (0, import_react12.useCallback)(async () => {
-      if (!api.bindFeishuChat) return;
-      try {
-        await api.bindFeishuChat("", "");
-        await loadBinding();
-      } catch (_) {
-      }
-    }, [loadBinding]);
-    const onDisconnect = (0, import_react12.useCallback)(async () => {
-      const anyApi = api;
-      if (!anyApi.disconnectFeishu) return;
-      try {
-        await anyApi.disconnectFeishu();
-      } catch (_) {
-      }
-      await load();
-    }, [load]);
-    const statusLabel = status.status === "connected" ? "\u5DF2\u8FDE\u63A5" : status.status === "connecting" ? "\u8FDE\u63A5\u4E2D\u2026" : status.status === "error" ? "\u9519\u8BEF\uFF1A" + (status.detail || "") : "\u672A\u8FDE\u63A5";
-    return (0, import_react12.createElement)(
-      "div",
-      { className: "ck-tab ck-tab-active" },
-      (0, import_react12.createElement)(
-        "div",
-        { className: "ck-card" },
-        (0, import_react12.createElement)("div", { className: "ck-set-group-title" }, "\u98DE\u4E66\u540C\u6B65"),
-        (0, import_react12.createElement)(
-          "p",
-          { className: "ck-about-tip" },
-          "\u8FD8\u6CA1\u914D\u7F6E\u8FC7\uFF1F",
-          (0, import_react12.createElement)("a", { href: "#", style: { color: "var(--ck-primary)", cursor: "pointer", textDecoration: "underline" }, onClick: (e) => {
-            e.preventDefault();
-            if (api.openFeishuSetup) api.openFeishuSetup();
-          } }, "\u67E5\u770B\u56FE\u6587\u914D\u7F6E\u6559\u7A0B \u2192")
-        ),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "ck-set-field" },
-          (0, import_react12.createElement)("span", { className: "ck-set-key" }, "App ID"),
-          (0, import_react12.createElement)("input", { type: "text", className: "ck-set-input", placeholder: "cli_xxxxxx", value: cfg.appId || "", onChange: (e) => setCfg({ ...cfg, appId: e.target.value }) })
-        ),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "ck-set-field" },
-          (0, import_react12.createElement)("span", { className: "ck-set-key" }, "App Secret"),
-          (0, import_react12.createElement)("input", { type: "password", className: "ck-set-input", placeholder: cfg.hasSecret ? "\uFF08\u5DF2\u4FDD\u5B58\uFF0C\u7559\u7A7A\u5219\u4E0D\u53D8\uFF09" : "\u586B\u5199\u5E94\u7528\u7684 App Secret", value: cfg.appSecret || "", onChange: (e) => setCfg({ ...cfg, appSecret: e.target.value }) })
-        ),
-        (0, import_react12.createElement)(ToggleRow, { label: "\u542F\u7528\u98DE\u4E66\u540C\u6B65", checked: !!cfg.enabled, onChange: (v) => setCfg({ ...cfg, enabled: v }) }),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "ck-actions" },
-          (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: save }, "\u4FDD\u5B58\u5E76\u8FDE\u63A5"),
-          (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onDisconnect }, "\u65AD\u5F00")
-        ),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "fs-status" },
-          (0, import_react12.createElement)("span", { className: "fs-dot" + (status.status === "connected" ? " connected" : status.status === "error" ? " error" : status.status === "connecting" ? " connecting" : "") }),
-          (0, import_react12.createElement)("span", { className: "ck-set-key" }, statusLabel)
-        )
-      ),
-      (0, import_react12.createElement)(
-        "div",
-        { className: "ck-card" },
-        (0, import_react12.createElement)("div", { className: "ck-set-group-title" }, "\u672C\u7A97\u53E3\u7ED1\u5B9A\u7684\u98DE\u4E66\u7FA4"),
-        (0, import_react12.createElement)("p", { className: "ck-about-tip" }, "\u628A\u673A\u5668\u4EBA\u62C9\u8FDB\u4E00\u4E2A\u98DE\u4E66\u7FA4\uFF0C\u8FD9\u91CC\u9009\u5B83\u3002", (0, import_react12.createElement)("strong", null, "\u6BCF\u4E2A\u7A97\u53E3\u7ED1\u5B9A\u5404\u81EA\u7684\u7FA4"), "\uFF0C\u5BF9\u8BDD\u4E92\u4E0D\u5E72\u6270\u3002"),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "ck-set-field" },
-          (0, import_react12.createElement)("span", { className: "ck-set-key" }, "\u98DE\u4E66\u7FA4"),
-          (0, import_react12.createElement)(
-            "select",
-            { className: "ck-set-input", value: binding.chatId || "", onChange: (e) => onBind(e.target.value) },
-            (0, import_react12.createElement)("option", { value: "" }, "\uFF08\u672A\u7ED1\u5B9A \u2014\u2014 \u8BE5\u7A97\u53E3\u98DE\u4E66\u529F\u80FD\u5173\u95ED\uFF09"),
-            ...chats.map((c) => (0, import_react12.createElement)("option", { key: c.chatId, value: c.chatId }, c.name))
-          )
-        ),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "ck-actions" },
-          (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: loadBinding }, "\u5237\u65B0\u7FA4\u5217\u8868"),
-          (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onUnbind }, "\u89E3\u7ED1")
-        ),
-        (0, import_react12.createElement)(
-          "div",
-          { className: "fs-status" },
-          (0, import_react12.createElement)("span", { className: "ck-set-key" }, binding && binding.chatId ? "\u5DF2\u7ED1\u5B9A\uFF1A" + (binding.chatName || binding.chatId) : "\u672A\u7ED1\u5B9A")
-        )
-      ),
-      (0, import_react12.createElement)(
-        "div",
-        { className: "ck-card" },
-        (0, import_react12.createElement)("div", { className: "ck-set-group-title" }, "\u63A8\u9001\u5185\u5BB9\uFF08Cuckoo \u2192 \u98DE\u4E66\uFF09"),
-        (0, import_react12.createElement)(ToggleRow, { label: "\u7528\u6237\u6D88\u606F", checked: cfg.pushUserMessage !== false, onChange: (v) => setCfg({ ...cfg, pushUserMessage: v }) }),
-        (0, import_react12.createElement)(ToggleRow, { label: "AI \u56DE\u590D", checked: cfg.pushAiReply !== false, onChange: (v) => setCfg({ ...cfg, pushAiReply: v }) }),
-        (0, import_react12.createElement)(ToggleRow, { label: "\u5DE5\u5177\u8C03\u7528\u72B6\u6001", checked: cfg.pushToolStatus !== false, onChange: (v) => setCfg({ ...cfg, pushToolStatus: v }) }),
-        (0, import_react12.createElement)(ToggleRow, { label: "\u5DE5\u5177\u72B6\u6001\u5E26\u5DE5\u5177\u540D\uFF08\u9ED8\u8BA4\u5173\uFF0C\u9690\u79C1\uFF09", checked: cfg.pushToolName === true, onChange: (v) => setCfg({ ...cfg, pushToolName: v }) }),
-        (0, import_react12.createElement)("div", { className: "ck-actions" }, (0, import_react12.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: savePush }, "\u4FDD\u5B58\u63A8\u9001\u8BBE\u7F6E"))
-      ),
-      (0, import_react12.createElement)(
-        "div",
-        { className: "ck-card" },
-        (0, import_react12.createElement)("div", { className: "ck-set-group-title" }, "\u63A5\u6536\uFF08\u98DE\u4E66 \u2192 Cuckoo\uFF09"),
-        (0, import_react12.createElement)("p", { className: "ck-about-tip" }, "\u5728", (0, import_react12.createElement)("strong", null, "\u7ED1\u5B9A\u7684\u7FA4"), "\u91CC\u53D1\u6D88\u606F\uFF08\u53EF @ \u6216\u76F4\u63A5\u53D1\uFF09\uFF0C\u4F1A\u9001\u5230", (0, import_react12.createElement)("strong", null, "\u672C\u7A97\u53E3"), "\u53D1\u7ED9 AI\u3002", (0, import_react12.createElement)("br"), "\u4E00\u4E2A\u7FA4\u53EA\u5BF9\u5E94\u4E00\u4E2A\u7A97\u53E3\uFF1B\u672A\u7ED1\u5B9A\u7FA4\u7684\u7A97\u53E3\u4E0D\u63A8\u4E5F\u4E0D\u6536\u3002")
-      )
-    );
-  }
-
-  // src/ui/shell/scripts/pages/settings-react.tsx
-  var import_react15 = __toESM(require_react(), 1);
-
   // src/ui/shell/scripts/use-slot.ts
-  var import_react13 = __toESM(require_react(), 1);
-  function useSlot2(slotName) {
-    const [items, setItems] = (0, import_react13.useState)([]);
-    (0, import_react13.useEffect)(() => {
+  function useSlot(slotName) {
+    const [items, setItems] = (0, import_react.useState)([]);
+    (0, import_react.useEffect)(() => {
       const anyApi = api;
       const keyOf = (m) => m.pluginId + ":" + m.slot + ":" + m.id;
       const isMine = (m) => !!(m && m.slot === slotName);
@@ -29182,7 +27820,7 @@
     }, [slotName]);
     return items;
   }
-  function specLabel2(spec, fallback) {
+  function specLabel(spec, fallback) {
     if (!spec) return fallback;
     const pick = (v) => {
       if (typeof v === "function") {
@@ -29198,8 +27836,8 @@
   }
 
   // src/ui/shell/scripts/components/slot-error-boundary.tsx
-  var import_react14 = __toESM(require_react(), 1);
-  var SlotErrorBoundary2 = class extends import_react14.Component {
+  var import_react2 = __toESM(require_react(), 1);
+  var SlotErrorBoundary = class extends import_react2.Component {
     constructor(props) {
       super(props);
       this.state = { err: null };
@@ -29212,7 +27850,7 @@
     }
     render() {
       if (this.state.err) {
-        return (0, import_react14.createElement)(
+        return (0, import_react2.createElement)(
           "span",
           { title: "\u63D2\u4EF6\u7EC4\u4EF6\u5D29\u6E83\uFF1A" + this.state.err, style: { color: "#e55", fontSize: 11 } },
           "\u26A0 " + (this.props.label || "\u63D2\u4EF6\u51FA\u9519")
@@ -29222,38 +27860,53 @@
     }
   };
 
+  // src/ui/shell/scripts/use-hide-ai-view.ts
+  var import_react3 = __toESM(require_react(), 1);
+  function useHideAiView() {
+    (0, import_react3.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {
+      });
+      return () => {
+        if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {
+        });
+      };
+    }, []);
+  }
+
   // src/ui/shell/scripts/pages/settings-react.tsx
   var SETTINGS_SLOT = "settings.section";
   var THEME_BUILTINS = [["system", "\u8DDF\u968F\u7CFB\u7EDF"], ["light", "\u6D45\u8272"], ["dark", "\u6DF1\u8272"]];
-  function RefreshIcon3() {
-    return (0, import_react15.createElement)(
+  function RefreshIcon() {
+    return (0, import_react4.createElement)(
       "svg",
       { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-      (0, import_react15.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
-      (0, import_react15.createElement)("path", { d: "M21 3v6h-6" })
+      (0, import_react4.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react4.createElement)("path", { d: "M21 3v6h-6" })
     );
   }
-  function ToggleRow2({ label, checked, onChange }) {
-    return (0, import_react15.createElement)(
+  function ToggleRow({ label, checked, onChange }) {
+    return (0, import_react4.createElement)(
       "div",
       { className: "ck-set-field ck-set-toggle" },
-      (0, import_react15.createElement)("span", { className: "ck-set-key" }, label),
-      (0, import_react15.createElement)(
+      (0, import_react4.createElement)("span", { className: "ck-set-key" }, label),
+      (0, import_react4.createElement)(
         "label",
         { className: "ck-switch" },
-        (0, import_react15.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
-        (0, import_react15.createElement)("span", { className: "ck-switch-track" })
+        (0, import_react4.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
+        (0, import_react4.createElement)("span", { className: "ck-switch-track" })
       )
     );
   }
-  function SettingsPage() {
-    const [data, setData] = (0, import_react15.useState)(null);
-    const [themes, setThemes] = (0, import_react15.useState)(THEME_BUILTINS);
-    const [theme, setTheme] = (0, import_react15.useState)("system");
-    const [saving, setSaving] = (0, import_react15.useState)(false);
-    const [active, setActive] = (0, import_react15.useState)("appearance");
-    const pluginSections = useSlot2(SETTINGS_SLOT);
-    const load = (0, import_react15.useCallback)(async () => {
+  function SettingsModal({ onClose }) {
+    useHideAiView();
+    const [data, setData] = (0, import_react4.useState)(null);
+    const [themes, setThemes] = (0, import_react4.useState)(THEME_BUILTINS);
+    const [theme, setTheme] = (0, import_react4.useState)("system");
+    const [saving, setSaving] = (0, import_react4.useState)(false);
+    const [active, setActive] = (0, import_react4.useState)("appearance");
+    const pluginSections = useSlot(SETTINGS_SLOT);
+    const load = (0, import_react4.useCallback)(async () => {
       if (!api.getSettings) return;
       try {
         const r = await api.getSettings();
@@ -29261,10 +27914,10 @@
       } catch (_) {
       }
     }, []);
-    (0, import_react15.useEffect)(() => {
+    (0, import_react4.useEffect)(() => {
       load();
     }, [load]);
-    (0, import_react15.useEffect)(() => {
+    (0, import_react4.useEffect)(() => {
       const anyApi = api;
       if (typeof anyApi.themeGet === "function") {
         anyApi.themeGet().then((r) => {
@@ -29280,14 +27933,21 @@
         });
       }
     }, []);
-    const onThemeChange = (0, import_react15.useCallback)((v) => {
+    (0, import_react4.useEffect)(() => {
+      const onKey = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+    const onThemeChange = (0, import_react4.useCallback)((v) => {
       setTheme(v);
       const anyApi = api;
       if (typeof anyApi.themeSet === "function") anyApi.themeSet(v).catch(() => {
       });
     }, []);
-    const setField = (0, import_react15.useCallback)((key, v) => setData((d) => ({ ...d, [key]: v })), []);
-    const save = (0, import_react15.useCallback)(async () => {
+    const setField = (0, import_react4.useCallback)((key, v) => setData((d) => ({ ...d, [key]: v })), []);
+    const save = (0, import_react4.useCallback)(async () => {
       if (!api.saveSettings) return;
       setSaving(true);
       try {
@@ -29303,7 +27963,7 @@
       }
       setSaving(false);
     }, [data]);
-    const reset = (0, import_react15.useCallback)(async () => {
+    const reset = (0, import_react4.useCallback)(async () => {
       const anyApi = api;
       if (!anyApi.resetSettings) return;
       if (!await ckConfirm("\u786E\u5B9A\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E\uFF1F")) return;
@@ -29313,91 +27973,115 @@
       } catch (_) {
       }
     }, []);
-    const closePluginSection = (0, import_react15.useCallback)(() => {
+    const closePluginSection = (0, import_react4.useCallback)(() => {
       setActive("appearance");
     }, []);
-    if (data === null) return (0, import_react15.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react15.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"));
-    const numVal = (key) => data[key] === null || data[key] === void 0 ? "" : data[key];
-    const appearance = (0, import_react15.createElement)(
+    const numVal = (key) => data && (data[key] === null || data[key] === void 0) ? "" : data ? data[key] : "";
+    const loading = data === null;
+    if (loading) {
+      return (0, import_react4.createElement)(
+        "div",
+        { className: "ck-settings-mask", onClick: (e) => {
+          if (e.target === e.currentTarget) onClose();
+        } },
+        (0, import_react4.createElement)(
+          "div",
+          { className: "ck-settings-dialog", onClick: (e) => e.stopPropagation() },
+          (0, import_react4.createElement)(
+            "div",
+            { className: "ck-settings-head" },
+            (0, import_react4.createElement)("span", { className: "ck-settings-title" }, "\u8BBE\u7F6E"),
+            (0, import_react4.createElement)("button", { className: "ck-settings-close", title: "\u5173\u95ED\uFF08ESC\uFF09", onClick: onClose }, "\u2715")
+          ),
+          (0, import_react4.createElement)(
+            "div",
+            { className: "ck-set-layout" },
+            (0, import_react4.createElement)("div", { className: "ck-set-nav" }),
+            (0, import_react4.createElement)("div", { className: "ck-set-content" }, (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"))
+          )
+        )
+      );
+    }
+    const appearance = (0, import_react4.createElement)(
       "div",
       { className: "ck-card" },
-      (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u5916\u89C2"),
-      (0, import_react15.createElement)(
+      (0, import_react4.createElement)("div", { className: "ck-set-group-title" }, "\u5916\u89C2"),
+      (0, import_react4.createElement)(
         "div",
         { className: "ck-set-field" },
-        (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u4E3B\u9898"),
-        (0, import_react15.createElement)(
+        (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u4E3B\u9898"),
+        (0, import_react4.createElement)(
           "select",
           { className: "ck-set-input", value: theme, onChange: (e) => onThemeChange(e.target.value) },
-          ...themes.map(([v, label]) => (0, import_react15.createElement)("option", { key: v, value: v }, label))
+          ...themes.map(([v, label]) => (0, import_react4.createElement)("option", { key: v, value: v }, label))
         )
       )
     );
-    const retry = (0, import_react15.createElement)(
+    const retry = (0, import_react4.createElement)(
       "div",
       { className: "ck-card" },
-      (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u5931\u8D25\u81EA\u52A8\u91CD\u8BD5"),
-      (0, import_react15.createElement)(ToggleRow2, { label: "\u542F\u7528\u81EA\u52A8\u91CD\u8BD5", checked: data.retryEnabled !== false, onChange: (v) => setField("retryEnabled", v) }),
-      (0, import_react15.createElement)(
+      (0, import_react4.createElement)("div", { className: "ck-set-group-title" }, "\u5931\u8D25\u81EA\u52A8\u91CD\u8BD5"),
+      (0, import_react4.createElement)(ToggleRow, { label: "\u542F\u7528\u81EA\u52A8\u91CD\u8BD5", checked: data.retryEnabled !== false, onChange: (v) => setField("retryEnabled", v) }),
+      (0, import_react4.createElement)(
         "div",
         { className: "ck-set-field" },
-        (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u95F4\u9694\uFF08\u79D2\uFF09"),
-        (0, import_react15.createElement)(
+        (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u95F4\u9694\uFF08\u79D2\uFF09"),
+        (0, import_react4.createElement)(
           "div",
           { className: "ck-set-inline" },
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMin"), onChange: (e) => setField("retryDelayMin", parseFloat(e.target.value) || 0) }),
-          (0, import_react15.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMax"), onChange: (e) => setField("retryDelayMax", parseFloat(e.target.value) || 0) })
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMin"), onChange: (e) => setField("retryDelayMin", parseFloat(e.target.value) || 0) }),
+          (0, import_react4.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retryDelayMax"), onChange: (e) => setField("retryDelayMax", parseFloat(e.target.value) || 0) })
         )
       ),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retryCount"), onChange: (e) => setField("retryCount", parseInt(e.target.value, 10) || 0) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u95F4\u9694\uFF08\u79D2\uFF09"), (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retry429Delay"), onChange: (e) => setField("retry429Delay", parseFloat(e.target.value) || 0) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retry429Count"), onChange: (e) => setField("retry429Count", parseInt(e.target.value, 10) || 0) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react15.createElement)("textarea", { className: "ck-set-textarea", rows: 3, value: data.retryPrompt || "", onChange: (e) => setField("retryPrompt", e.target.value) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "AI \u56DE\u590D\u8D85\u65F6\u540E\u91CD\u8BD5\uFF08\u79D2\uFF09"), (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("xhrIdleTimeout"), onChange: (e) => setField("xhrIdleTimeout", parseFloat(e.target.value) || 0) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react15.createElement)("input", { type: "text", className: "ck-set-input", value: data.watchdogPrompt || "", onChange: (e) => setField("watchdogPrompt", e.target.value) })),
-      (0, import_react15.createElement)("div", { className: "ck-set-field" }, (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("watchdogCount"), onChange: (e) => setField("watchdogCount", parseInt(e.target.value, 10) || 0) }))
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u666E\u901A\u5931\u8D25\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retryCount"), onChange: (e) => setField("retryCount", parseInt(e.target.value, 10) || 0) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u95F4\u9694\uFF08\u79D2\uFF09"), (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("retry429Delay"), onChange: (e) => setField("retry429Delay", parseFloat(e.target.value) || 0) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u64CD\u4F5C\u9891\u7E41\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("retry429Count"), onChange: (e) => setField("retry429Count", parseInt(e.target.value, 10) || 0) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react4.createElement)("textarea", { className: "ck-set-textarea", rows: 3, value: data.retryPrompt || "", onChange: (e) => setField("retryPrompt", e.target.value) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "AI \u56DE\u590D\u8D85\u65F6\u540E\u91CD\u8BD5\uFF08\u79D2\uFF09"), (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 1, value: numVal("xhrIdleTimeout"), onChange: (e) => setField("xhrIdleTimeout", parseFloat(e.target.value) || 0) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u63D0\u793A\u8BCD"), (0, import_react4.createElement)("input", { type: "text", className: "ck-set-input", value: data.watchdogPrompt || "", onChange: (e) => setField("watchdogPrompt", e.target.value) })),
+      (0, import_react4.createElement)("div", { className: "ck-set-field" }, (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u8D85\u65F6\u91CD\u8BD5\u6B21\u6570\uFF08\u8D1F\u6570=\u65E0\u9650\uFF09"), (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", step: 1, value: numVal("watchdogCount"), onChange: (e) => setField("watchdogCount", parseInt(e.target.value, 10) || 0) }))
     );
-    const sendDelay = (0, import_react15.createElement)(
+    const sendDelay = (0, import_react4.createElement)(
       "div",
       { className: "ck-card" },
-      (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u53D1\u9001\u5EF6\u8FDF"),
-      (0, import_react15.createElement)(
+      (0, import_react4.createElement)("div", { className: "ck-set-group-title" }, "\u53D1\u9001\u5EF6\u8FDF"),
+      (0, import_react4.createElement)(
         "div",
         { className: "ck-set-field" },
-        (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u5EF6\u8FDF\u533A\u95F4\uFF08\u79D2\uFF09"),
-        (0, import_react15.createElement)(
+        (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u5EF6\u8FDF\u533A\u95F4\uFF08\u79D2\uFF09"),
+        (0, import_react4.createElement)(
           "div",
           { className: "ck-set-inline" },
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMin"), onChange: (e) => setField("sendDelayMin", parseFloat(e.target.value) || 0) }),
-          (0, import_react15.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMax"), onChange: (e) => setField("sendDelayMax", parseFloat(e.target.value) || 0) })
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMin"), onChange: (e) => setField("sendDelayMin", parseFloat(e.target.value) || 0) }),
+          (0, import_react4.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("sendDelayMax"), onChange: (e) => setField("sendDelayMax", parseFloat(e.target.value) || 0) })
         )
       )
     );
-    const attachDelay = (0, import_react15.createElement)(
+    const attachDelay = (0, import_react4.createElement)(
       "div",
       { className: "ck-card" },
-      (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u9644\u4EF6\u4E0A\u4F20\u95F4\u9694"),
-      (0, import_react15.createElement)(
+      (0, import_react4.createElement)("div", { className: "ck-set-group-title" }, "\u9644\u4EF6\u4E0A\u4F20\u95F4\u9694"),
+      (0, import_react4.createElement)(
         "div",
         { className: "ck-set-field" },
-        (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u4E0A\u4F20\u540E\u68C0\u6D4B\u7B49\u5F85\uFF08\u79D2\uFF09"),
-        (0, import_react15.createElement)(
+        (0, import_react4.createElement)("span", { className: "ck-set-key" }, "\u4E0A\u4F20\u540E\u68C0\u6D4B\u7B49\u5F85\uFF08\u79D2\uFF09"),
+        (0, import_react4.createElement)(
           "div",
           { className: "ck-set-inline" },
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMin"), onChange: (e) => setField("attachDelayMin", parseFloat(e.target.value) || 0) }),
-          (0, import_react15.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
-          (0, import_react15.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMax"), onChange: (e) => setField("attachDelayMax", parseFloat(e.target.value) || 0) })
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMin"), onChange: (e) => setField("attachDelayMin", parseFloat(e.target.value) || 0) }),
+          (0, import_react4.createElement)("span", { className: "ck-set-sep" }, "\u81F3"),
+          (0, import_react4.createElement)("input", { type: "number", className: "ck-set-input", min: 0, step: 0.1, value: numVal("attachDelayMax"), onChange: (e) => setField("attachDelayMax", parseFloat(e.target.value) || 0) })
         )
       )
     );
-    const security = (0, import_react15.createElement)(
+    const security = (0, import_react4.createElement)(
       "div",
       { className: "ck-card" },
-      (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u7F51\u7EDC\u5B89\u5168"),
-      (0, import_react15.createElement)(ToggleRow2, { label: "\u62D2\u7EDD webFetch \u8BBF\u95EE\u5185\u7F51/\u672C\u5730\u5730\u5740", checked: data.ssrfGuard === true, onChange: (v) => setField("ssrfGuard", v) }),
-      (0, import_react15.createElement)("p", { className: "ck-about-tip" }, "\u5F00\u542F\u540E\uFF0CwebFetch \u5C06\u62D2\u7EDD\u8BBF\u95EE\u5185\u7F51\u3001\u56DE\u73AF\u3001\u4FDD\u7559\u5730\u5740\uFF08\u9632 SSRF\uFF09\u3002\u9ED8\u8BA4\u5173\u95ED\uFF08\u53EF\u8BBF\u95EE\u672C\u5730\u9879\u76EE\uFF09\u3002")
+      (0, import_react4.createElement)("div", { className: "ck-set-group-title" }, "\u7F51\u7EDC\u5B89\u5168"),
+      (0, import_react4.createElement)(ToggleRow, { label: "\u62D2\u7EDD webFetch \u8BBF\u95EE\u5185\u7F51/\u672C\u5730\u5730\u5740", checked: data.ssrfGuard === true, onChange: (v) => setField("ssrfGuard", v) }),
+      (0, import_react4.createElement)("p", { className: "ck-about-tip" }, "\u5F00\u542F\u540E\uFF0CwebFetch \u5C06\u62D2\u7EDD\u8BBF\u95EE\u5185\u7F51\u3001\u56DE\u73AF\u3001\u4FDD\u7559\u5730\u5740\uFF08\u9632 SSRF\uFF09\u3002\u9ED8\u8BA4\u5173\u95ED\uFF08\u53EF\u8BBF\u95EE\u672C\u5730\u9879\u76EE\uFF09\u3002")
     );
     const NAV = [
       ["appearance", "\u5916\u89C2"],
@@ -29407,7 +28091,8 @@
       ["security", "\u7F51\u7EDC\u5B89\u5168"]
     ];
     let content = null;
-    if (active === "appearance") content = appearance;
+    if (loading) content = (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026");
+    else if (active === "appearance") content = appearance;
     else if (active === "retry") content = retry;
     else if (active === "send") content = sendDelay;
     else if (active === "attach") content = attachDelay;
@@ -29418,53 +28103,1507 @@
       if (item && item.Component) {
         const C = item.Component;
         const props = { close: closePluginSection, t: item.t || ((k) => k), wide: true };
-        content = (0, import_react15.createElement)(
+        content = (0, import_react4.createElement)(
           "div",
           { className: "ck-set-plugin-content" },
-          (0, import_react15.createElement)(SlotErrorBoundary2, { label: "\u63D2\u4EF6\u8BBE\u7F6E" }, (0, import_react15.createElement)(C, props))
+          (0, import_react4.createElement)(SlotErrorBoundary, { label: "\u63D2\u4EF6\u8BBE\u7F6E" }, (0, import_react4.createElement)(C, props))
         );
       } else {
-        content = (0, import_react15.createElement)("div", { className: "ck-list-empty" }, "\u63D2\u4EF6\u8BBE\u7F6E\u4E0D\u53EF\u7528");
+        content = (0, import_react4.createElement)("div", { className: "ck-list-empty" }, "\u63D2\u4EF6\u8BBE\u7F6E\u4E0D\u53EF\u7528");
       }
     }
-    return (0, import_react15.createElement)(
+    return (0, import_react4.createElement)(
       "div",
-      { className: "ck-tab ck-tab-active ck-set-tab" },
-      (0, import_react15.createElement)(
+      { className: "ck-settings-mask", onClick: (e) => {
+        if (e.target === e.currentTarget) onClose();
+      } },
+      (0, import_react4.createElement)(
         "div",
-        { className: "ck-set-layout" },
-        // 左导航
-        (0, import_react15.createElement)(
+        { className: "ck-settings-dialog", onClick: (e) => e.stopPropagation() },
+        // 顶栏
+        (0, import_react4.createElement)(
           "div",
-          { className: "ck-set-nav" },
-          ...NAV.map(([id, label]) => (0, import_react15.createElement)("button", {
-            key: id,
-            className: "ck-set-nav-item" + (active === id ? " active" : ""),
-            onClick: () => setActive(id)
-          }, label)),
-          pluginSections.length > 0 ? (0, import_react15.createElement)("div", { className: "ck-set-nav-sep" }) : null,
-          pluginSections.length > 0 ? (0, import_react15.createElement)("div", { className: "ck-set-nav-title" }, "\u63D2\u4EF6") : null,
-          ...pluginSections.map((s) => {
-            const id = "plugin:" + s.pluginId + ":" + s.id;
-            const label = specLabel2(s.spec, s.id);
-            return (0, import_react15.createElement)("button", {
+          { className: "ck-settings-head" },
+          (0, import_react4.createElement)("span", { className: "ck-settings-title" }, "\u8BBE\u7F6E"),
+          (0, import_react4.createElement)("button", { className: "ck-settings-close", title: "\u5173\u95ED\uFF08ESC\uFF09", onClick: onClose }, "\u2715")
+        ),
+        // 主体：左导航 + 右内容
+        (0, import_react4.createElement)(
+          "div",
+          { className: "ck-set-layout" },
+          (0, import_react4.createElement)(
+            "div",
+            { className: "ck-set-nav" },
+            ...NAV.map(([id, label]) => (0, import_react4.createElement)("button", {
               key: id,
               className: "ck-set-nav-item" + (active === id ? " active" : ""),
-              title: label,
               onClick: () => setActive(id)
-            }, label);
-          })
+            }, label)),
+            pluginSections.length > 0 ? (0, import_react4.createElement)("div", { className: "ck-set-nav-sep" }) : null,
+            pluginSections.length > 0 ? (0, import_react4.createElement)("div", { className: "ck-set-nav-title" }, "\u63D2\u4EF6") : null,
+            ...pluginSections.map((s) => {
+              const id = "plugin:" + s.pluginId + ":" + s.id;
+              const label = specLabel(s.spec, s.id);
+              return (0, import_react4.createElement)("button", {
+                key: id,
+                className: "ck-set-nav-item" + (active === id ? " active" : ""),
+                title: label,
+                onClick: () => setActive(id)
+              }, label);
+            })
+          ),
+          (0, import_react4.createElement)("div", { className: "ck-set-content" }, content)
         ),
-        // 右内容
-        (0, import_react15.createElement)("div", { className: "ck-set-content" }, content)
+        // 底栏
+        (0, import_react4.createElement)(
+          "div",
+          { className: "ck-settings-foot" },
+          (0, import_react4.createElement)("button", { className: "ck-btn ck-btn-primary", disabled: saving || loading, onClick: save }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"),
+          (0, import_react4.createElement)("button", { className: "ck-btn ck-btn-secondary", disabled: loading, onClick: reset }, "\u6062\u590D\u9ED8\u8BA4"),
+          (0, import_react4.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react4.createElement)(RefreshIcon))
+        )
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/shell-frame.tsx
+  var SIDEBAR_COLLAPSED = 46;
+  var MIN_WIDTH = 320;
+  var MAX_WIDTH = 4e3;
+  var WIDTH_KEY = "cuckoo-sidebar-width";
+  function savedWidth() {
+    try {
+      const v = Number(localStorage.getItem(WIDTH_KEY));
+      if (Number.isFinite(v) && v >= MIN_WIDTH && v <= MAX_WIDTH) return Math.round(v);
+    } catch (_) {
+    }
+    return 320;
+  }
+  function expandSidebar() {
+    const sidebar = document.getElementById("ck-sidebar");
+    if (!sidebar || !sidebar.classList.contains("ck-collapsed")) return;
+    sidebar.classList.remove("ck-collapsed");
+    const w = savedWidth();
+    sidebar.style.width = w + "px";
+    try {
+      if (api.toggleSidebar) api.toggleSidebar(w);
+    } catch (_) {
+    }
+  }
+  function collapseSidebar() {
+    const sidebar = document.getElementById("ck-sidebar");
+    if (!sidebar || sidebar.classList.contains("ck-collapsed")) return;
+    sidebar.classList.add("ck-collapsed");
+    sidebar.style.width = "";
+    try {
+      if (api.toggleSidebar) api.toggleSidebar(SIDEBAR_COLLAPSED);
+    } catch (_) {
+    }
+  }
+  var TABS = [
+    { id: "home", title: "\u4E3B\u9875", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10" },
+    { id: "workspaces", title: "\u5DE5\u4F5C\u533A\uFF08\u4F1A\u8BDD\uFF09", icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
+    { id: "files", title: "\u9879\u76EE\u6587\u4EF6", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6" },
+    { id: "snippets", title: "\u63D0\u793A\u8BCD", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
+    { id: "skills", title: "\u6280\u80FD", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
+    { id: "plugins", title: "\u63D2\u4EF6", icon: "M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.2 2.2 0 0 1 0 4.4H2V19a2 2 0 0 0 2 2h3.8v-1.5a2.2 2.2 0 0 1 4.4 0V21H18a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" },
+    { id: "agents", title: "\u5B50\u4EE3\u7406", icon: "M3 8h18v12H3zM12 8V4" },
+    { id: "mcp", title: "MCP\uFF08\u8FDE\u63A5\u5668\uFF09", icon: "M9 12h6M8 7H7a5 5 0 0 0 0 10h1M16 7h1a5 5 0 0 1 0 10h-1" },
+    { id: "windows", title: "\u7A97\u53E3", icon: "M3 3h18v18H3zM3 9h18M9 21V9" },
+    { id: "token", title: "Token\uFF08\u8BCD\u5143\uFF09", icon: { text: "\u5143" } }
+  ];
+  var BOTTOM_TABS = [
+    { id: "about", title: "\u5173\u4E8E", icon: "M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 16v-4M12 8h.01" },
+    { id: "feishu", title: "\u98DE\u4E66\u540C\u6B65\uFF08\u624B\u673A\uFF09", icon: "M5 2h14v20H5zM11 18h2" }
+  ];
+  var PAGES = {};
+  function registerPage(id, comp) {
+    PAGES[id] = comp;
+  }
+  function Icon({ icon }) {
+    if (typeof icon === "object" && "text" in icon) return (0, import_react5.createElement)("span", { className: "ck-ab-text" }, icon.text);
+    return (0, import_react5.createElement)("svg", { className: "ck-ab-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react5.createElement)("path", { d: icon }));
+  }
+  function AbButton({ tab, active, onClick }) {
+    return (0, import_react5.createElement)("button", { className: "ck-ab-item" + (active ? " ck-ab-active" : ""), title: tab.title, onClick }, (0, import_react5.createElement)(Icon, { icon: tab.icon }));
+  }
+  function ShellFrame() {
+    const [activeTab, setActiveTab] = (0, import_react5.useState)("home");
+    const [settingsOpen, setSettingsOpen] = (0, import_react5.useState)(false);
+    const Page = (0, import_react5.useMemo)(() => PAGES[activeTab], [activeTab]);
+    const onTabClick = (id) => {
+      const sidebar = document.getElementById("ck-sidebar");
+      const collapsed = !!(sidebar && sidebar.classList.contains("ck-collapsed"));
+      if (collapsed) {
+        expandSidebar();
+        setActiveTab(id);
+        return;
+      }
+      if (id === activeTab) {
+        collapseSidebar();
+        return;
+      }
+      setActiveTab(id);
+    };
+    const onSettingsClick = () => {
+      const sidebar = document.getElementById("ck-sidebar");
+      if (sidebar && sidebar.classList.contains("ck-collapsed")) expandSidebar();
+      setSettingsOpen(true);
+    };
+    return (0, import_react5.createElement)(
+      "div",
+      { style: { display: "contents" } },
+      (0, import_react5.createElement)(
+        "div",
+        { className: "ck-activitybar" },
+        TABS.map((t) => (0, import_react5.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
+        (0, import_react5.createElement)("div", { className: "ck-ab-spacer" }),
+        BOTTOM_TABS.map((t) => (0, import_react5.createElement)(AbButton, { key: t.id, tab: t, active: activeTab === t.id, onClick: () => onTabClick(t.id) })),
+        // 设置：打开全屏模态
+        (0, import_react5.createElement)(
+          "button",
+          { className: "ck-ab-item", title: "\u8BBE\u7F6E", onClick: onSettingsClick },
+          (0, import_react5.createElement)(
+            "svg",
+            { className: "ck-ab-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+            (0, import_react5.createElement)("circle", { cx: 12, cy: 12, r: 3 }),
+            (0, import_react5.createElement)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
+          )
+        )
       ),
-      // 底部操作
-      (0, import_react15.createElement)(
+      (0, import_react5.createElement)(
+        "div",
+        { className: "ck-panel" },
+        (0, import_react5.createElement)(
+          "div",
+          { className: "ck-panel-body" },
+          Page ? (0, import_react5.createElement)(Page) : (0, import_react5.createElement)("div", { style: { padding: 12, color: "#888" } }, "\u9875\u9762\u300C" + activeTab + "\u300D\u5C1A\u672A\u91CD\u5199")
+        )
+      ),
+      // 设置模态（Portal 挂到 body，全窗遮罩 + 居中对话框）
+      settingsOpen ? (0, import_react_dom.createPortal)(
+        (0, import_react5.createElement)(SettingsModal, { onClose: () => setSettingsOpen(false) }),
+        document.body
+      ) : null
+    );
+  }
+  function mountShellFrame() {
+    const sidebar = document.getElementById("ck-sidebar");
+    if (!sidebar) return;
+    if (!sidebar.dataset.ckOldRemoved) {
+      ["ck-dialog", "input-modal", "wg-modal"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el.parentNode !== document.body) {
+          try {
+            document.body.appendChild(el);
+          } catch (_) {
+          }
+        }
+      });
+      const keep = document.getElementById("ck-shell-react");
+      [...sidebar.childNodes].forEach((n) => {
+        if (n !== keep) {
+          try {
+            sidebar.removeChild(n);
+          } catch (_) {
+          }
+        }
+      });
+      sidebar.dataset.ckOldRemoved = "1";
+    }
+    let host = document.getElementById("ck-shell-react");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "ck-shell-react";
+      host.style.cssText = "display:contents;";
+      sidebar.appendChild(host);
+    }
+    if (host.__root) return;
+    const root = (0, import_client.createRoot)(host);
+    host.__root = root;
+    root.render((0, import_react5.createElement)(ShellFrame));
+    if (!sidebar.__resizerAdded) {
+      const resizer = document.createElement("div");
+      resizer.className = "ck-sidebar-resizer";
+      resizer.title = "\u62D6\u52A8\u8C03\u6574\u5BBD\u5EA6";
+      sidebar.appendChild(resizer);
+      resizer.addEventListener("mousedown", (e) => {
+        if (sidebar.classList.contains("ck-collapsed")) return;
+        e.preventDefault();
+        try {
+          if (api.startSidebarDrag) api.startSidebarDrag();
+        } catch (_) {
+        }
+      });
+      sidebar.__resizerAdded = true;
+    }
+    if (!sidebar.__dragWired && api.onSidebarDrag) {
+      api.onSidebarDrag((w) => {
+        if (typeof w !== "number" || !Number.isFinite(w)) return;
+        const nw = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(w)));
+        try {
+          localStorage.setItem(WIDTH_KEY, String(nw));
+        } catch (_) {
+        }
+        if (!sidebar.classList.contains("ck-collapsed")) sidebar.style.width = nw + "px";
+      });
+      sidebar.__dragWired = true;
+    }
+    if (!document.__dragEndWired) {
+      document.addEventListener("mouseup", () => {
+        try {
+          if (api.endSidebarDrag) api.endSidebarDrag();
+        } catch (_) {
+        }
+      });
+      document.__dragEndWired = true;
+    }
+  }
+
+  // src/ui/shell/scripts/statusbar.tsx
+  var import_react6 = __toESM(require_react(), 1);
+  var import_client2 = __toESM(require_client(), 1);
+
+  // src/ui/shell/scripts/recent.ts
+  var KEY = "cuckoo-shell-recent-tools";
+  var MAX = 5;
+  function snippetText(type, name) {
+    if (type === "skill") return "\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD";
+    if (type === "mcp") return "\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP";
+    if (type === "agent") return "\u8BF7\u4F7F\u7528 " + name + " \u5B50\u4EE3\u7406";
+    return name;
+  }
+  function typeLabel(type) {
+    if (type === "skill") return "\u6280\u80FD";
+    if (type === "mcp") return "MCP";
+    if (type === "agent") return "\u5B50\u4EE3\u7406";
+    return "\u63D0\u793A\u8BCD";
+  }
+  function loadRecent() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      return arr.filter((x) => x && (x.type === "skill" || x.type === "mcp" || x.type === "agent" || x.type === "snippet") && typeof x.name === "string");
+    } catch (_) {
+      return [];
+    }
+  }
+  function saveRecent(list) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+    } catch (_) {
+    }
+  }
+  function addRecent(type, name, extra) {
+    if (!name) return;
+    let list = loadRecent().filter((x) => !(x.type === type && x.name === name));
+    const item = { type, name, ts: Date.now() };
+    if (extra && typeof extra.payload === "string") item.payload = extra.payload;
+    if (extra && typeof extra.autoSend === "boolean") item.autoSend = extra.autoSend;
+    list.unshift(item);
+    if (list.length > MAX) list = list.slice(0, MAX);
+    saveRecent(list);
+    renderRecent();
+    try {
+      window.dispatchEvent(new CustomEvent("cuckoo-recent-changed"));
+    } catch (_) {
+    }
+  }
+  function onRecentChanged(cb) {
+    const handler = () => cb();
+    window.addEventListener("cuckoo-recent-changed", handler);
+    return () => window.removeEventListener("cuckoo-recent-changed", handler);
+  }
+  function renderRecent() {
+    const box = document.getElementById("sb-recent");
+    if (!box) return;
+    const list = loadRecent();
+    if (list.length === 0) {
+      box.innerHTML = "";
+      return;
+    }
+    box.innerHTML = '<span class="sb-recent-label">\u6700\u8FD1</span>' + list.map((it) => {
+      const cls = "sb-chip sb-chip-" + it.type;
+      const tip = typeLabel(it.type) + "\uFF1A" + it.name + "\uFF08\u70B9\u51FB\u8FFD\u52A0\u5230\u8F93\u5165\u6846\uFF09";
+      return '<span class="' + cls + '" data-type="' + it.type + '" data-name="' + escapeHtml(it.name) + '" title="' + escapeHtml(tip) + '">' + escapeHtml(it.name) + "</span>";
+    }).join("");
+    box.querySelectorAll(".sb-chip").forEach((el) => {
+      el.addEventListener("click", async () => {
+        const type = el.dataset.type;
+        const name = el.dataset.name;
+        if (type === "snippet") {
+          const it = list.find((x) => x.type === "snippet" && x.name === name);
+          if (it && it.payload && api.triggerSnippet) {
+            try {
+              await api.triggerSnippet(it.payload, it.autoSend !== false);
+            } catch (_) {
+            }
+          }
+        } else {
+          if (api.appendSnippet) {
+            try {
+              await api.appendSnippet(snippetText(type, name));
+            } catch (_) {
+            }
+          }
+        }
+      });
+    });
+  }
+
+  // src/ui/shell/scripts/statusbar.tsx
+  function formatTokenCount2(n) {
+    if (!isFinite(n) || n < 0) return "0";
+    if (n >= 1e8) return (n / 1e8).toFixed(2) + "\u4EBF";
+    if (n >= 1e4) return (n / 1e4).toFixed(2) + "\u4E07";
+    return String(Math.round(n));
+  }
+  function typeLabel2(type) {
+    if (type === "skill") return "\u6280\u80FD";
+    if (type === "mcp") return "MCP";
+    if (type === "agent") return "\u5B50\u4EE3\u7406";
+    return "\u63D0\u793A\u8BCD";
+  }
+  function snippetText2(type, name) {
+    if (type === "skill") return "\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD";
+    if (type === "mcp") return "\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP";
+    if (type === "agent") return "\u8BF7\u4F7F\u7528 " + name + " \u5B50\u4EE3\u7406";
+    return name;
+  }
+  function RecentChip({ it }) {
+    const tip = typeLabel2(it.type) + "\uFF1A" + it.name + "\uFF08\u70B9\u51FB\u8FFD\u52A0\u5230\u8F93\u5165\u6846\uFF09";
+    const onClick = (0, import_react6.useCallback)(async () => {
+      if (it.type === "snippet") {
+        if (it.payload && api.triggerSnippet) {
+          try {
+            await api.triggerSnippet(it.payload, it.autoSend !== false);
+          } catch (_) {
+          }
+        }
+      } else {
+        if (api.appendSnippet) {
+          try {
+            await api.appendSnippet(snippetText2(it.type, it.name));
+          } catch (_) {
+          }
+        }
+      }
+    }, [it]);
+    return (0, import_react6.createElement)("span", { className: "sb-chip sb-chip-" + it.type, title: tip, onClick }, it.name);
+  }
+  function StatusBar() {
+    const [context, setContext] = (0, import_react6.useState)(0);
+    const [tps, setTps] = (0, import_react6.useState)("");
+    const [recent, setRecent] = (0, import_react6.useState)(() => loadRecent());
+    (0, import_react6.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onTokenUpdated) anyApi.onTokenUpdated((d) => {
+        if (d && typeof d.context === "number") setContext(d.context);
+      });
+      if (anyApi.onTpsUpdated) anyApi.onTpsUpdated((d) => {
+        setTps(d && d.tps ? String(d.tps) : "");
+      });
+      if (anyApi.getTokenUsage) {
+        anyApi.getTokenUsage().then((r) => {
+          if (!r || !r.success) return;
+          if (r.data && typeof r.data.context === "number") setContext(r.data.context);
+          if (typeof r.tps === "string") setTps(r.tps);
+        }).catch(() => {
+        });
+      }
+    }, []);
+    (0, import_react6.useEffect)(() => onRecentChanged(() => setRecent(loadRecent())), []);
+    return (0, import_react6.createElement)(
+      "div",
+      { className: "statusbar" },
+      (0, import_react6.createElement)(
+        "div",
+        { className: "sb-recent" },
+        recent.length > 0 ? (0, import_react6.createElement)("span", { className: "sb-recent-label" }, "\u6700\u8FD1") : null,
+        ...recent.map((it, i) => (0, import_react6.createElement)(RecentChip, { key: it.type + ":" + it.name + ":" + i, it }))
+      ),
+      (0, import_react6.createElement)("div", { className: "sb-spacer" }),
+      (0, import_react6.createElement)(
+        "div",
+        { className: "sb-item", title: "\u5BF9\u8BDD\u4E0A\u4E0B\u6587\uFF1A\u672C\u4F1A\u8BDD\u5F53\u524D\u5360\u7528\u7684 token \u603B\u91CF" },
+        (0, import_react6.createElement)("span", { className: "sb-label" }, "\u5BF9\u8BDD\u4E0A\u4E0B\u6587:"),
+        (0, import_react6.createElement)("span", { className: "sb-value" }, formatTokenCount2(context))
+      ),
+      (0, import_react6.createElement)(
+        "div",
+        { className: "sb-item", title: "\u6A21\u578B\u8F93\u51FA\u901F\u5EA6\uFF1Atokens/\u79D2\uFF08\u751F\u6210\u4E2D\u5B9E\u65F6\u66F4\u65B0\uFF0C\u7ED3\u675F\u540E\u4FDD\u7559\u6700\u7EC8\u503C\uFF09" },
+        (0, import_react6.createElement)("span", { className: "sb-label" }, "\u8F93\u51FA\u901F\u5EA6:"),
+        (0, import_react6.createElement)("span", { className: "sb-value" }, tps || "--"),
+        (0, import_react6.createElement)("span", { className: "sb-label" }, "t/s")
+      )
+    );
+  }
+  function mountStatusBar() {
+    const old = document.querySelector(".statusbar");
+    if (!old) return;
+    let host = document.getElementById("ck-statusbar-react");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "ck-statusbar-react";
+      host.style.cssText = "display:contents;";
+      old.parentElement?.insertBefore(host, old);
+      old.style.display = "none";
+    }
+    if (host.__root) return;
+    const root = (0, import_client2.createRoot)(host);
+    host.__root = root;
+    root.render((0, import_react6.createElement)(StatusBar));
+  }
+
+  // src/ui/shell/scripts/pages/home-react.tsx
+  var import_react8 = __toESM(require_react(), 1);
+
+  // src/ui/shell/scripts/components/ui-button.tsx
+  var import_react7 = __toESM(require_react(), 1);
+  function Svg({ d, cls }) {
+    return (0, import_react7.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react7.createElement)("path", { d }));
+  }
+  function UiButton({ icon, children, onClick, className, style, title }) {
+    return (0, import_react7.createElement)(
+      "button",
+      {
+        className: "ck-btn ck-btn-anim" + (className ? " " + className : ""),
+        onClick,
+        style,
+        title
+      },
+      icon ? (0, import_react7.createElement)(Svg, { d: icon, cls: "ck-btn-icon" }) : null,
+      children !== void 0 && children !== null ? (0, import_react7.createElement)("span", null, children) : null
+    );
+  }
+
+  // src/ui/shell/scripts/pages/home-react.tsx
+  var PANEL_SLOT = "sidebar.panellist";
+  var FOOTER_SLOT = "sidebar.footer.action";
+  var SlotErrorBoundary2 = class extends import_react8.Component {
+    constructor(props) {
+      super(props);
+      this.state = { err: null };
+    }
+    static getDerivedStateFromError(e) {
+      return { err: e && e.message ? e.message : String(e) };
+    }
+    componentDidCatch(e) {
+      console.error("[dsh-slot] \u7EC4\u4EF6\u5D29\u6E83", e);
+    }
+    render() {
+      if (this.state.err) {
+        return (0, import_react8.createElement)("span", { title: "\u63D2\u4EF6\u7EC4\u4EF6\u5D29\u6E83\uFF1A" + this.state.err, style: { color: "#e55", fontSize: 11 } }, "\u26A0 \u63D2\u4EF6\u51FA\u9519");
+      }
+      return this.props.children;
+    }
+  };
+  function specLabel2(spec, fallback) {
+    if (!spec) return fallback;
+    const pick = (v) => {
+      if (typeof v === "function") {
+        try {
+          return v();
+        } catch (_) {
+          return null;
+        }
+      }
+      return v;
+    };
+    return String(pick(spec.label) || pick(spec.text) || pick(spec.title) || fallback);
+  }
+  function useSlot2(slotName) {
+    const [items, setItems] = (0, import_react8.useState)([]);
+    (0, import_react8.useEffect)(() => {
+      const anyApi = api;
+      const refreshLocal = () => {
+        const local = getSlotItems(slotName).map((s) => ({ kind: "client", key: "c:" + s.key, spec: s.spec, Component: s.Component, id: s.id, pluginId: s.pluginId, t: s.t }));
+        setItems((prev) => {
+          const host = prev.filter((x) => x.kind === "host");
+          return [...local, ...host];
+        });
+      };
+      refreshLocal();
+      const unsub = subscribeSlots(refreshLocal);
+      const isMine = (m) => !!(m && m.slot === slotName);
+      const keyOf = (m) => m.pluginId + ":" + m.slot + ":" + m.id;
+      if (anyApi.listPluginSlots) {
+        anyApi.listPluginSlots().then((r) => {
+          if (!r || !r.success || !Array.isArray(r.slots)) return;
+          const host = r.slots.filter(isMine).map((m) => ({ kind: "host", key: "h:" + keyOf(m), spec: m.spec, id: m.id, pluginId: m.pluginId, order: m.order }));
+          setItems((prev) => [...prev.filter((x) => x.kind === "client"), ...host]);
+        }).catch(() => {
+        });
+      }
+      if (anyApi.onPluginSlotRegister) {
+        anyApi.onPluginSlotRegister((m) => {
+          if (!isMine(m)) return;
+          setItems((prev) => {
+            const k = "h:" + keyOf(m);
+            const next = prev.filter((x) => x.key !== k);
+            next.push({ kind: "host", key: k, spec: m.spec, id: m.id, pluginId: m.pluginId, order: m.order });
+            return next;
+          });
+        });
+      }
+      if (anyApi.onPluginSlotUnregister) {
+        anyApi.onPluginSlotUnregister((m) => {
+          if (!isMine(m)) return;
+          setItems((prev) => prev.filter((x) => !(x.kind === "host" && x.pluginId === m.pluginId && x.id === m.id)));
+        });
+      }
+      return unsub;
+    }, [slotName]);
+    return items;
+  }
+  function HomePage() {
+    const [harness, setHarness] = (0, import_react8.useState)(false);
+    const [version, setVersion] = (0, import_react8.useState)("");
+    const panels = useSlot2(PANEL_SLOT);
+    const footers = useSlot2(FOOTER_SLOT);
+    (0, import_react8.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onHarnessMode) anyApi.onHarnessMode((d) => setHarness(!!(d && d.harness)));
+      if (anyApi.getAppInfo) anyApi.getAppInfo().then((r) => {
+        if (r && r.success) setVersion(r.version || "");
+      }).catch(() => {
+      });
+    }, []);
+    const newSession = (0, import_react8.useCallback)(async () => {
+      const anyApi = api;
+      try {
+        if (anyApi.newWebConversation) await anyApi.newWebConversation();
+        else if (api.home) api.home();
+      } catch (_) {
+      }
+    }, []);
+    const toggleHarness = (0, import_react8.useCallback)(async () => {
+      const anyApi = api;
+      if (anyApi.toggleHarness) {
+        try {
+          await anyApi.toggleHarness();
+        } catch (_) {
+        }
+      }
+    }, []);
+    const invokeCommand = (0, import_react8.useCallback)((spec) => {
+      const anyApi = api;
+      if (spec && spec.command && typeof anyApi.commandInvoke === "function") anyApi.commandInvoke(spec.command).catch(() => {
+      });
+    }, []);
+    const renderItem = (m) => {
+      const label = specLabel2(m.spec, m.id);
+      const C = m.Component;
+      let injected = {};
+      try {
+        if (m.spec && typeof m.spec.inject === "function") injected = m.spec.inject({}) || {};
+      } catch (e) {
+      }
+      const t = typeof m.t === "function" ? m.t : ((k) => k);
+      const props = { wide: true, ...injected };
+      props.t = t;
+      const showLabel = !!(m.spec && (m.spec.label || m.spec.text || m.spec.title));
+      if (C) {
+        return (0, import_react8.createElement)(
+          "div",
+          {
+            key: m.key,
+            className: "ck-btn ck-btn-anim",
+            title: m.spec && m.spec.title ? String(m.spec.title) : label,
+            style: { flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, cursor: "default" }
+          },
+          (0, import_react8.createElement)(
+            "span",
+            { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+            (0, import_react8.createElement)(SlotErrorBoundary2, null, (0, import_react8.createElement)(C, props))
+          ),
+          showLabel ? (0, import_react8.createElement)("span", null, label) : null
+        );
+      }
+      return (0, import_react8.createElement)("button", {
+        key: m.key,
+        className: "ck-btn ck-btn-anim",
+        title: m.spec && m.spec.title ? String(m.spec.title) : label,
+        onClick: () => invokeCommand(m.spec),
+        style: { flex: "0 0 auto" }
+      }, (0, import_react8.createElement)("span", null, label));
+    };
+    return (0, import_react8.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active ck-home" },
+      // 滚动区：品牌 + 按钮 + 插件面板
+      (0, import_react8.createElement)(
+        "div",
+        { className: "ck-home-scroll" },
+        (0, import_react8.createElement)(
+          "div",
+          { style: { padding: "6px 2px 8px", display: "flex", alignItems: "baseline", gap: 6 } },
+          (0, import_react8.createElement)("span", { style: { fontSize: 20, fontWeight: 700, color: "var(--ck-text-2)", letterSpacing: ".2px", lineHeight: 1.2 } }, "Cuckoo Code"),
+          version ? (0, import_react8.createElement)("span", { style: { fontSize: 12, color: "var(--ck-text-dim)" } }, "v" + version) : null
+        ),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-actions", style: { flexDirection: "column", gap: 10, alignItems: "stretch" } },
+          (0, import_react8.createElement)(UiButton, { icon: "M12 5v14M5 12h14", onClick: newSession }, "\u65B0\u5EFA\u4F1A\u8BDD"),
+          (0, import_react8.createElement)("button", {
+            className: "ck-btn ck-btn-anim",
+            onClick: toggleHarness,
+            title: harness ? "\u5207\u56DE\u539F\u7248\u7F51\u9875" : "\u5207\u6362\u5230\u7EAF\u51C0\u5BF9\u8BDD\u6A21\u5F0F"
+          }, (0, import_react8.createElement)("span", null, harness ? "\u539F\u9875\u9762" : "\u7EAF\u51C0\u9875\u9762"))
+        ),
+        (0, import_react8.createElement)("div", { style: { height: 1, background: "var(--ck-border)", margin: "14px 0" } }),
+        (0, import_react8.createElement)(
+          "div",
+          { className: "ck-list", id: "ck-home-panels" },
+          panels.length === 0 ? (0, import_react8.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u63D2\u4EF6\u9762\u677F") : panels.map(renderItem)
+        )
+      ),
+      // 底部动作（固定，滚动不影响）
+      footers.length > 0 ? (0, import_react8.createElement)("div", { className: "ck-home-footer", id: "ck-home-footer" }, footers.map(renderItem)) : null
+    );
+  }
+
+  // src/ui/shell/scripts/pages/about-react.tsx
+  var import_react9 = __toESM(require_react(), 1);
+  function AboutPage() {
+    const [version, setVersion] = (0, import_react9.useState)("\u2014");
+    const [qqUrl, setQqUrl] = (0, import_react9.useState)("");
+    (0, import_react9.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.getAppInfo) {
+        anyApi.getAppInfo().then((r) => {
+          if (r && r.success) setVersion(r.version || "\u2014");
+        }).catch(() => {
+        });
+      }
+      if (anyApi.getAssetUrl) {
+        anyApi.getAssetUrl("assets/qq-group.jpg").then((r) => {
+          if (r && r.success) setQqUrl(r.url);
+        }).catch(() => {
+        });
+      }
+    }, []);
+    const openGithub = (0, import_react9.useCallback)(() => {
+      const anyApi = api;
+      if (anyApi.openExternal) anyApi.openExternal("https://github.com/wangyongpeng90/cuckoo-code");
+    }, []);
+    return (0, import_react9.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-about-head" },
+        (0, import_react9.createElement)("div", { className: "ck-about-logo" }, "C"),
+        (0, import_react9.createElement)("div", { className: "ck-about-title" }, "Cuckoo Code"),
+        (0, import_react9.createElement)("div", { className: "ck-about-ver" }, "\u7248\u672C ", (0, import_react9.createElement)("span", null, version))
+      ),
+      (0, import_react9.createElement)("p", { className: "ck-about-tip" }, "\u672C\u7248\u672C\u4E3A", (0, import_react9.createElement)("strong", null, "\u63D2\u4EF6\u6539\u9020\u7248"), "\uFF08plugin-ui-ext\uFF09\uFF0C\u5DF2\u7981\u7528\u539F\u7248\u5728\u7EBF\u66F4\u65B0\uFF0C\u4EE5\u514D\u88AB\u8986\u76D6\u4E22\u5931\u63D2\u4EF6\u7CFB\u7EDF\u3002"),
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-about-group" },
+        (0, import_react9.createElement)("div", { className: "ck-about-group-title" }, "\u5F00\u6E90\u5730\u5740"),
+        (0, import_react9.createElement)("p", { className: "ck-about-tip" }, "\u672C\u7CFB\u7EDF\u4E3A\u5F00\u6E90\u9879\u76EE\uFF0C\u6B22\u8FCE\u70B9 Star \u652F\u6301\u3002"),
+        (0, import_react9.createElement)("a", { className: "ck-about-link", onClick: openGithub }, "github.com/wangyongpeng90/cuckoo-code")
+      ),
+      (0, import_react9.createElement)(
+        "div",
+        { className: "ck-about-group" },
+        (0, import_react9.createElement)("div", { className: "ck-about-group-title" }, "QQ \u7FA4\uFF1A1104042537"),
+        qqUrl ? (0, import_react9.createElement)("img", { className: "ck-about-qr", src: qqUrl, alt: "QQ \u7FA4" }) : null
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/pages/skills-react.tsx
+  var import_react10 = __toESM(require_react(), 1);
+  function SkillItem({ s, onClick }) {
+    return (0, import_react10.createElement)(
+      "div",
+      { className: "ck-skill-item", onClick },
+      (0, import_react10.createElement)(
+        "div",
+        { className: "ck-skill-top" },
+        (0, import_react10.createElement)("span", { className: "ck-skill-name" }, s.name)
+      ),
+      (0, import_react10.createElement)("div", { className: "ck-skill-desc" }, s.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
+    );
+  }
+  function SkillsPage() {
+    const [skills, setSkills] = (0, import_react10.useState)(null);
+    const [err, setErr] = (0, import_react10.useState)(false);
+    const load = (0, import_react10.useCallback)(async () => {
+      if (!api.listSkills) {
+        setSkills([]);
+        return;
+      }
+      try {
+        const r = await api.listSkills();
+        setSkills((r && r.success ? r.skills : []) || []);
+        setErr(false);
+      } catch (_) {
+        setErr(true);
+        setSkills([]);
+      }
+    }, []);
+    (0, import_react10.useEffect)(() => {
+      load();
+    }, [load]);
+    const onSkillClick = (0, import_react10.useCallback)(async (name) => {
+      if (api.appendSnippet) {
+        try {
+          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u6280\u80FD");
+        } catch (_) {
+        }
+      }
+      addRecent("skill", name);
+    }, []);
+    const list = skills || [];
+    const userSkills = list.filter((s) => s.source !== "project");
+    const projSkills = list.filter((s) => s.source === "project");
+    return (0, import_react10.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react10.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-primary", disabled: saving, onClick: save }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E"),
-        (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: reset }, "\u6062\u590D\u9ED8\u8BA4"),
-        (0, import_react15.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react15.createElement)(RefreshIcon3))
+        (0, import_react10.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u6280\u80FD"),
+        (0, import_react10.createElement)(
+          "button",
+          { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load },
+          (0, import_react10.createElement)(
+            "svg",
+            { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+            (0, import_react10.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+            (0, import_react10.createElement)("path", { d: "M21 3v6h-6" })
+          )
+        )
+      ),
+      (0, import_react10.createElement)(
+        "div",
+        { className: "ck-list" },
+        skills === null ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react10.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u6280\u80FD", (0, import_react10.createElement)("br"), "\uFF08.cuckoo/skills/ \u6216 ~/.cuckoo/skills/\uFF09") : [
+          userSkills.length ? (0, import_react10.createElement)("div", { key: "u-title", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+          ...userSkills.map((s) => (0, import_react10.createElement)(SkillItem, { key: "u-" + s.name, s, onClick: () => onSkillClick(s.name) })),
+          projSkills.length ? (0, import_react10.createElement)("div", { key: "p-title", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          ...projSkills.map((s) => (0, import_react10.createElement)(SkillItem, { key: "p-" + s.name, s, onClick: () => onSkillClick(s.name) }))
+        ]
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/pages/mcp-react.tsx
+  var import_react11 = __toESM(require_react(), 1);
+  function RefreshIcon2() {
+    return (0, import_react11.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react11.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react11.createElement)("path", { d: "M21 3v6h-6" })
+    );
+  }
+  function McpItem({ s, onClick }) {
+    return (0, import_react11.createElement)(
+      "div",
+      { className: "ck-mcp-item", onClick },
+      (0, import_react11.createElement)(
+        "div",
+        { className: "ck-mcp-top" },
+        (0, import_react11.createElement)("span", { className: "ck-mcp-dot" + (s.connected ? " on" : "") }),
+        (0, import_react11.createElement)("span", { className: "ck-mcp-name" }, s.name)
+      ),
+      (0, import_react11.createElement)(
+        "div",
+        { className: "ck-mcp-bottom" },
+        (0, import_react11.createElement)("span", { className: "ck-mcp-tag" }, s.type || "stdio"),
+        (0, import_react11.createElement)("span", { className: "ck-mcp-tag" }, (s.toolCount || 0) + " \u5DE5\u5177")
+      )
+    );
+  }
+  function McpPage() {
+    const [servers, setServers] = (0, import_react11.useState)(null);
+    const [err, setErr] = (0, import_react11.useState)(false);
+    const load = (0, import_react11.useCallback)(async () => {
+      const anyApi = api;
+      if (!anyApi.listMcpServers) {
+        setServers([]);
+        return;
+      }
+      try {
+        const r = await anyApi.listMcpServers();
+        setServers((r && r.success ? r.servers : []) || []);
+        setErr(false);
+      } catch (_) {
+        setErr(true);
+        setServers([]);
+      }
+    }, []);
+    (0, import_react11.useEffect)(() => {
+      load();
+    }, [load]);
+    const onItemClick = (0, import_react11.useCallback)(async (name) => {
+      if (api.appendSnippet) {
+        try {
+          await api.appendSnippet("\u8BF7\u4F7F\u7528 " + name + " \u8FD9\u4E2A MCP");
+        } catch (_) {
+        }
+      }
+      addRecent("mcp", name);
+    }, []);
+    const list = servers || [];
+    const userServers = list.filter((s) => s.source !== "project");
+    const projServers = list.filter((s) => s.source === "project");
+    return (0, import_react11.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react11.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react11.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "MCP\uFF08\u8FDE\u63A5\u5668\uFF09"),
+        (0, import_react11.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react11.createElement)(RefreshIcon2))
+      ),
+      (0, import_react11.createElement)(
+        "div",
+        { className: "ck-list" },
+        servers === null ? (0, import_react11.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react11.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react11.createElement)("div", { className: "ck-list-empty" }, "\u672A\u914D\u7F6E MCP server") : [
+          userServers.length ? (0, import_react11.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+          ...userServers.map((s) => (0, import_react11.createElement)(McpItem, { key: "u-" + s.name, s, onClick: () => onItemClick(s.name) })),
+          projServers.length ? (0, import_react11.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          ...projServers.map((s) => (0, import_react11.createElement)(McpItem, { key: "p-" + s.name, s, onClick: () => onItemClick(s.name) }))
+        ]
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/pages/snippets-react.tsx
+  var import_react12 = __toESM(require_react(), 1);
+  var I = {
+    refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+    plus: "M12 5v14M5 12h14",
+    edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+    del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+    init: "M21 12a9 9 0 1 1-3-6.7M21 3v5h-5"
+  };
+  function Svg2({ d }) {
+    return (0, import_react12.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react12.createElement)("path", { d }));
+  }
+  function SnipModal({ initial, onSave, onCancel }) {
+    const [name, setName] = (0, import_react12.useState)(initial ? initial.name : "");
+    const [content, setContent] = (0, import_react12.useState)(initial ? initial.content : "");
+    const [autoSend, setAutoSend] = (0, import_react12.useState)(initial ? initial.autoSend !== false : true);
+    useHideAiView();
+    return (0, import_react12.createElement)(
+      "div",
+      { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
+        if (e.target === e.currentTarget) onCancel();
+      } },
+      (0, import_react12.createElement)(
+        "div",
+        { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
+        (0, import_react12.createElement)("h3", { style: { margin: "0 0 14px" } }, initial ? "\u7F16\u8F91\u63D0\u793A\u8BCD" : "\u65B0\u5EFA\u63D0\u793A\u8BCD"),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react12.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
+          (0, import_react12.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" }, autoFocus: true })
+        ),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { marginBottom: 10 } },
+          (0, import_react12.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u5185\u5BB9"),
+          (0, import_react12.createElement)("textarea", { value: content, onChange: (e) => setContent(e.target.value), rows: 5, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box", resize: "vertical" } })
+        ),
+        (0, import_react12.createElement)(
+          "label",
+          { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 13, marginBottom: 16 } },
+          (0, import_react12.createElement)("input", { type: "checkbox", checked: autoSend, onChange: (e) => setAutoSend(e.target.checked) }),
+          "\u81EA\u52A8\u53D1\u9001"
+        ),
+        (0, import_react12.createElement)(
+          "div",
+          { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
+          (0, import_react12.createElement)("button", { onClick: onCancel, style: { padding: "6px 16px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react12.createElement)("button", { onClick: () => onSave({ name: name.trim(), content, autoSend }), style: { padding: "6px 16px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
+        )
+      )
+    );
+  }
+  function SnippetsPage() {
+    const [snippets, setSnippets] = (0, import_react12.useState)(null);
+    const [modal, setModal] = (0, import_react12.useState)({ open: false, editing: null });
+    const load = (0, import_react12.useCallback)(async () => {
+      if (!api.listSnippets) {
+        setSnippets([]);
+        return;
+      }
+      try {
+        const res = await api.listSnippets();
+        setSnippets((res && res.success && Array.isArray(res.snippets) ? res.snippets : []) || []);
+      } catch (_) {
+        setSnippets([]);
+      }
+    }, []);
+    (0, import_react12.useEffect)(() => {
+      load();
+    }, [load]);
+    const save = (0, import_react12.useCallback)(async (data) => {
+      if (!data.name) {
+        await ckAlert("\u8BF7\u586B\u5199\u540D\u79F0");
+        return;
+      }
+      if (!data.content.trim()) {
+        await ckAlert("\u8BF7\u586B\u5199\u5185\u5BB9");
+        return;
+      }
+      const list2 = snippets || [];
+      let next;
+      if (modal.editing) {
+        next = list2.map((x) => x.id === modal.editing.id ? { id: x.id, ...data } : x);
+      } else {
+        next = [...list2, { id: "snip-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8), ...data }];
+      }
+      setSnippets(next);
+      setModal({ open: false, editing: null });
+      if (api.saveSnippets) {
+        try {
+          await api.saveSnippets(next);
+        } catch (_) {
+        }
+      }
+    }, [snippets, modal.editing]);
+    const del = (0, import_react12.useCallback)(async (s) => {
+      if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u63D0\u793A\u8BCD\u300C" + s.name + "\u300D\uFF1F")) return;
+      const next = (snippets || []).filter((x) => x.id !== s.id);
+      setSnippets(next);
+      if (api.saveSnippets) {
+        try {
+          await api.saveSnippets(next);
+        } catch (_) {
+        }
+      }
+    }, [snippets]);
+    const trigger = (0, import_react12.useCallback)(async (s) => {
+      if (!api.triggerSnippet) return;
+      try {
+        await api.triggerSnippet(s.content, s.autoSend);
+      } catch (_) {
+      }
+      addRecent("snippet", s.name, { payload: s.content, autoSend: s.autoSend });
+    }, []);
+    const initProject = (0, import_react12.useCallback)(async () => {
+      if (!api.initProject) return;
+      try {
+        await api.initProject();
+      } catch (_) {
+      }
+    }, []);
+    const list = snippets || [];
+    return (0, import_react12.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react12.createElement)(
+          "button",
+          { className: "ck-btn ck-btn-anim", onClick: initProject },
+          (0, import_react12.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react12.createElement)("path", { d: I.init })),
+          (0, import_react12.createElement)("span", null, "\u91CD\u65B0\u9879\u76EE\u521D\u59CB\u5316")
+        )
+      ),
+      (0, import_react12.createElement)("div", { className: "ck-divider" }),
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react12.createElement)(
+          "button",
+          { className: "ck-btn ck-btn-anim", onClick: () => setModal({ open: true, editing: null }) },
+          (0, import_react12.createElement)("svg", { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react12.createElement)("path", { d: I.plus })),
+          (0, import_react12.createElement)("span", null, "\u65B0\u5EFA\u5FEB\u6377\u63D0\u793A\u8BCD")
+        ),
+        (0, import_react12.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react12.createElement)(Svg2, { d: I.refresh }))
+      ),
+      (0, import_react12.createElement)(
+        "div",
+        { className: "ck-list" },
+        snippets === null ? (0, import_react12.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react12.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u63D0\u793A\u8BCD\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA") : list.map((s) => (0, import_react12.createElement)(
+          "div",
+          { key: s.id, className: "ck-snip-item", onClick: () => trigger(s) },
+          (0, import_react12.createElement)(
+            "div",
+            { className: "ck-snip-top" },
+            (0, import_react12.createElement)("span", { className: "ck-snip-name" }, s.name, s.autoSend ? (0, import_react12.createElement)("span", { className: "ck-snip-badge" }, "\u81EA\u52A8\u53D1\u9001") : null),
+            (0, import_react12.createElement)(
+              "div",
+              { className: "ck-snip-actions" },
+              (0, import_react12.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
+                e.stopPropagation();
+                setModal({ open: true, editing: s });
+              } }, (0, import_react12.createElement)(Svg2, { d: I.edit })),
+              (0, import_react12.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
+                e.stopPropagation();
+                del(s);
+              } }, (0, import_react12.createElement)(Svg2, { d: I.del }))
+            )
+          ),
+          (0, import_react12.createElement)("span", { className: "ck-snip-preview" }, s.content)
+        ))
+      ),
+      modal.open ? (0, import_react12.createElement)(SnipModal, { initial: modal.editing, onSave: save, onCancel: () => setModal({ open: false, editing: null }) }) : null
+    );
+  }
+
+  // src/ui/shell/scripts/pages/conversations-react.tsx
+  var import_react13 = __toESM(require_react(), 1);
+  function RefreshIcon3() {
+    return (0, import_react13.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react13.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }),
+      (0, import_react13.createElement)("path", { d: "M21 3v6h-6" })
+    );
+  }
+  function PlusIcon() {
+    return (0, import_react13.createElement)(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react13.createElement)("path", { d: "M12 5v14M5 12h14" })
+    );
+  }
+  function ConversationsPage() {
+    const [sessions, setSessions] = (0, import_react13.useState)([]);
+    const [curUrl, setCurUrl] = (0, import_react13.useState)("");
+    const [busy, setBusy] = (0, import_react13.useState)(false);
+    const loadedRef = (0, import_react13.useRef)(false);
+    const load = (0, import_react13.useCallback)(async (retainOnEmpty) => {
+      const anyApi = api;
+      if (!anyApi.listWebSessions) return;
+      let res = null;
+      try {
+        res = await anyApi.listWebSessions();
+      } catch (_) {
+        res = null;
+      }
+      const list = res && res.success && Array.isArray(res.sessions) ? res.sessions : [];
+      const url = res && res.currentUrl || "";
+      if (!list.length) {
+        if (retainOnEmpty) return;
+        if (loadedRef.current) return;
+        return;
+      }
+      setSessions(list);
+      setCurUrl(url);
+      loadedRef.current = true;
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      load();
+    }, [load]);
+    (0, import_react13.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onHarnessBusy) anyApi.onHarnessBusy((b) => setBusy(b));
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onWebUrlChanged) anyApi.onWebUrlChanged(() => {
+        load(true);
+        setTimeout(() => load(true), 800);
+        setTimeout(() => load(true), 1800);
+        setTimeout(() => load(false), 3200);
+      });
+    }, [load]);
+    const onItemClick = (0, import_react13.useCallback)((s) => {
+      if (busy) return;
+      const anyApi = api;
+      if (s.href && anyApi.navigateWebSession) {
+        anyApi.navigateWebSession(s.href);
+        setCurUrl(s.href);
+      }
+    }, [busy]);
+    const onNew = (0, import_react13.useCallback)(async () => {
+      const anyApi = api;
+      if (anyApi.newWebConversation) {
+        await anyApi.newWebConversation();
+        load(true);
+        setTimeout(() => load(true), 800);
+        setTimeout(() => load(false), 1800);
+      }
+    }, [load]);
+    return (0, import_react13.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react13.createElement)(
+        "div",
+        { className: "ck-actions" },
+        (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5BF9\u8BDD", onClick: onNew }, (0, import_react13.createElement)(PlusIcon)),
+        (0, import_react13.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5BF9\u8BDD"),
+        (0, import_react13.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: () => load() }, (0, import_react13.createElement)(RefreshIcon3))
+      ),
+      (0, import_react13.createElement)(
+        "div",
+        { className: "ck-list" },
+        sessions.length === 0 ? (0, import_react13.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026\uFF08\u82E5\u6301\u7EED\u4E3A\u7A7A\uFF0C\u8BF7\u70B9\u5237\u65B0\uFF09") : sessions.map((s) => (0, import_react13.createElement)("div", {
+          key: s.href,
+          className: "ck-conv-item" + (s.href === curUrl ? " ck-conv-active" : "") + (busy ? " ck-conv-disabled" : ""),
+          title: s.title,
+          onClick: () => onItemClick(s)
+        }, (0, import_react13.createElement)("span", { className: "ck-conv-title" }, s.title)))
+      )
+    );
+  }
+
+  // src/ui/shell/scripts/pages/token-react.tsx
+  var import_react14 = __toESM(require_react(), 1);
+  function CompactIcon() {
+    return (0, import_react14.createElement)(
+      "svg",
+      { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react14.createElement)("path", { d: "M8 3v4M8 7H4M8 7l-4-4" }),
+      (0, import_react14.createElement)("path", { d: "M16 21v-4M16 17h4M16 17l4 4" }),
+      (0, import_react14.createElement)("path", { d: "M4 14h16" })
+    );
+  }
+  function SaveIcon() {
+    return (0, import_react14.createElement)(
+      "svg",
+      { className: "ck-btn-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+      (0, import_react14.createElement)("path", { d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" }),
+      (0, import_react14.createElement)("path", { d: "M17 21v-8H7v8" }),
+      (0, import_react14.createElement)("path", { d: "M7 3v5h8" })
+    );
+  }
+  function Chart({ daily }) {
+    if (!Array.isArray(daily) || daily.length === 0) {
+      return (0, import_react14.createElement)("div", { className: "ck-chart" }, (0, import_react14.createElement)("div", { className: "ck-list-empty", style: { width: "100%" } }, "\u6682\u65E0\u6570\u636E"));
+    }
+    const sorted = daily.slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    let max = Math.max.apply(null, sorted.map((d) => d.value || 0));
+    if (max <= 0) max = 1;
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-chart" },
+      sorted.map((d) => {
+        const v = d.value || 0;
+        const pct = Math.max(1, Math.round(v / max * 100));
+        const day = (d.date || "").slice(5).replace("-", "/");
+        return (0, import_react14.createElement)(
+          "div",
+          { key: d.date, className: "ck-bar-row", title: d.date + "\uFF1A" + formatShort(v) + " tokens" },
+          (0, import_react14.createElement)("span", { className: "ck-bar-label" }, day),
+          (0, import_react14.createElement)("div", { className: "ck-bar-track" }, (0, import_react14.createElement)("div", { className: "ck-bar", style: { width: pct + "%" } }))
+        );
+      })
+    );
+  }
+  function TokenPage() {
+    const [data, setData] = (0, import_react14.useState)({});
+    const [systemTotal, setSystemTotal] = (0, import_react14.useState)(0);
+    const [auto, setAuto] = (0, import_react14.useState)({ enabled: false, threshold: 80 });
+    const [saving, setSaving] = (0, import_react14.useState)(false);
+    (0, import_react14.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onTokenUpdated) {
+        anyApi.onTokenUpdated((d) => {
+          if (d) setData(d);
+        });
+      }
+      if (anyApi.getTokenUsage) {
+        anyApi.getTokenUsage().then((r) => {
+          if (r && r.success && r.data) setData(r.data);
+        }).catch(() => {
+        });
+      }
+      if (anyApi.onTotalUpdated) {
+        anyApi.onTotalUpdated((d) => {
+          if (d && typeof d.systemTotal === "number") setSystemTotal(d.systemTotal);
+        });
+      }
+      if (anyApi.getSystemTotal) {
+        anyApi.getSystemTotal().then((r) => {
+          if (r && r.success) setSystemTotal(r.systemTotal);
+        }).catch(() => {
+        });
+      }
+    }, []);
+    const loadAuto = (0, import_react14.useCallback)(async () => {
+      if (!api.getAutoCompact) return;
+      try {
+        const r = await api.getAutoCompact();
+        if (r && r.success && r.data) setAuto({ enabled: r.data.enabled === true, threshold: r.data.threshold });
+      } catch (_) {
+      }
+    }, []);
+    (0, import_react14.useEffect)(() => {
+      loadAuto();
+    }, [loadAuto]);
+    const onCompact = (0, import_react14.useCallback)(async () => {
+      if (!api.triggerCompact) return;
+      if (!await ckConfirm("\u786E\u5B9A\u538B\u7F29\u4E0A\u4E0B\u6587\uFF1F\u5C06\u751F\u6210\u6458\u8981\u5E76\u5728\u65B0\u4F1A\u8BDD\u7EE7\u7EED\u3002", "\u538B\u7F29\u4E0A\u4E0B\u6587")) return;
+      try {
+        await api.triggerCompact();
+      } catch (_) {
+      }
+    }, []);
+    const onSaveAuto = (0, import_react14.useCallback)(async () => {
+      if (!api.saveAutoCompact) return;
+      if (!Number.isFinite(auto.threshold) || auto.threshold <= 0) {
+        await ckAlert("\u9608\u503C\u9700\u4E3A\u6B63\u6570\uFF08\u4E07\uFF09");
+        return;
+      }
+      setSaving(true);
+      try {
+        const r = await api.saveAutoCompact({ enabled: auto.enabled, threshold: auto.threshold });
+        if (r && r.success) {
+          await ckAlert("\u5DF2\u4FDD\u5B58");
+        } else {
+          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+        }
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+      setSaving(false);
+    }, [auto]);
+    return (0, import_react14.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-token-hero" },
+        (0, import_react14.createElement)("span", { className: "ck-token-hero-label" }, "\u5F53\u524D\u4E0A\u4E0B\u6587"),
+        (0, import_react14.createElement)(
+          "div",
+          { className: "ck-token-hero-value" },
+          (0, import_react14.createElement)("span", null, formatTokenCount(data.context || 0)),
+          (0, import_react14.createElement)("span", { className: "ck-token-hero-unit" }, "tokens")
+        )
+      ),
+      (0, import_react14.createElement)(
+        "button",
+        { className: "ck-btn ck-btn-anim", onClick: onCompact },
+        (0, import_react14.createElement)(CompactIcon),
+        (0, import_react14.createElement)("span", null, "\u538B\u7F29\u4E0A\u4E0B\u6587")
+      ),
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-stat-list" },
+        (0, import_react14.createElement)("div", { className: "ck-stat-item" }, (0, import_react14.createElement)("span", { className: "ck-stat-key" }, "\u5BF9\u8BDD\u7D2F\u8BA1"), (0, import_react14.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.cumulative || 0))),
+        (0, import_react14.createElement)("div", { className: "ck-stat-item" }, (0, import_react14.createElement)("span", { className: "ck-stat-key" }, "\u4ECA\u65E5\u7A97\u53E3"), (0, import_react14.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.todayCumulative || 0))),
+        (0, import_react14.createElement)("div", { className: "ck-stat-item" }, (0, import_react14.createElement)("span", { className: "ck-stat-key" }, "\u7A97\u53E3\u7D2F\u8BA1"), (0, import_react14.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(data.windowCumulative || 0))),
+        (0, import_react14.createElement)("div", { className: "ck-stat-item" }, (0, import_react14.createElement)("span", { className: "ck-stat-key" }, "\u7CFB\u7EDF\u603B\u7D2F\u8BA1"), (0, import_react14.createElement)("span", { className: "ck-stat-val" }, formatTokenCount(systemTotal)))
+      ),
+      (0, import_react14.createElement)(
+        "div",
+        { className: "ck-auto-block" },
+        (0, import_react14.createElement)(
+          "div",
+          { className: "ck-auto-head" },
+          (0, import_react14.createElement)("span", { className: "ck-stat-key" }, "\u81EA\u52A8\u538B\u7F29"),
+          (0, import_react14.createElement)(
+            "label",
+            { className: "ck-switch" },
+            (0, import_react14.createElement)("input", { type: "checkbox", checked: auto.enabled, onChange: (e) => setAuto({ ...auto, enabled: e.target.checked }) }),
+            (0, import_react14.createElement)("span", { className: "ck-switch-track" })
+          )
+        ),
+        (0, import_react14.createElement)(
+          "div",
+          { className: "ck-auto-body" },
+          (0, import_react14.createElement)("span", null, "\u8D85\u8FC7"),
+          (0, import_react14.createElement)("input", { type: "number", min: 1, value: auto.threshold, onChange: (e) => setAuto({ ...auto, threshold: parseFloat(e.target.value) }) }),
+          (0, import_react14.createElement)("span", null, "\u4E07 tokens \u65F6\u89E6\u53D1")
+        ),
+        (0, import_react14.createElement)(
+          "button",
+          { className: "ck-btn ck-btn-anim", disabled: saving, onClick: onSaveAuto },
+          (0, import_react14.createElement)(SaveIcon),
+          (0, import_react14.createElement)("span", null, saving ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58\u8BBE\u7F6E")
+        )
+      ),
+      (0, import_react14.createElement)("div", { className: "ck-chart-block" }, (0, import_react14.createElement)(Chart, { daily: data.daily || [] }))
+    );
+  }
+
+  // src/ui/shell/scripts/pages/feishu-react.tsx
+  var import_react15 = __toESM(require_react(), 1);
+  function ToggleRow2({ label, checked, onChange }) {
+    return (0, import_react15.createElement)(
+      "div",
+      { className: "ck-set-field ck-set-toggle" },
+      (0, import_react15.createElement)("span", { className: "ck-set-key" }, label),
+      (0, import_react15.createElement)(
+        "label",
+        { className: "ck-switch" },
+        (0, import_react15.createElement)("input", { type: "checkbox", checked, onChange: (e) => onChange(e.target.checked) }),
+        (0, import_react15.createElement)("span", { className: "ck-switch-track" })
+      )
+    );
+  }
+  function FeishuPage() {
+    const [cfg, setCfg] = (0, import_react15.useState)({});
+    const [status, setStatus] = (0, import_react15.useState)({ status: "", detail: "" });
+    const [chats, setChats] = (0, import_react15.useState)([]);
+    const [binding, setBinding] = (0, import_react15.useState)({});
+    const loadBinding = (0, import_react15.useCallback)(async () => {
+      if (!api.getFeishuBinding) return;
+      try {
+        const b = await api.getFeishuBinding();
+        if (api.listFeishuChats) {
+          const lr = await api.listFeishuChats();
+          setChats(lr && lr.success && lr.chats || []);
+        }
+        setBinding(b || {});
+      } catch (_) {
+      }
+    }, []);
+    const load = (0, import_react15.useCallback)(async () => {
+      if (!api.getFeishuConfig) return;
+      try {
+        const r = await api.getFeishuConfig();
+        if (r && r.success) {
+          setCfg(r.config || {});
+          setStatus({ status: r.status || "", detail: r.statusDetail || "" });
+        }
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [loadBinding]);
+    (0, import_react15.useEffect)(() => {
+      load();
+    }, [load]);
+    const save = (0, import_react15.useCallback)(async () => {
+      if (!api.saveFeishuConfig) return;
+      try {
+        const r = await api.saveFeishuConfig(cfg);
+        if (r && r.success) {
+          await load();
+        } else {
+          await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+        }
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+    }, [cfg, load]);
+    const savePush = (0, import_react15.useCallback)(async () => {
+      if (!api.saveFeishuConfig) return;
+      try {
+        const r = await api.saveFeishuConfig({ pushUserMessage: !!cfg.pushUserMessage, pushAiReply: !!cfg.pushAiReply, pushToolStatus: !!cfg.pushToolStatus, pushToolName: !!cfg.pushToolName });
+        if (!(r && r.success)) await ckAlert(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+      } catch (e) {
+        await ckAlert("\u4FDD\u5B58\u5931\u8D25: " + (e.message || e));
+      }
+    }, [cfg]);
+    const onBind = (0, import_react15.useCallback)(async (chatId) => {
+      if (!api.bindFeishuChat) return;
+      const chat = chats.find((c) => c.chatId === chatId);
+      try {
+        await api.bindFeishuChat(chatId, chat ? chat.name : "");
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [chats, loadBinding]);
+    const onUnbind = (0, import_react15.useCallback)(async () => {
+      if (!api.bindFeishuChat) return;
+      try {
+        await api.bindFeishuChat("", "");
+        await loadBinding();
+      } catch (_) {
+      }
+    }, [loadBinding]);
+    const onDisconnect = (0, import_react15.useCallback)(async () => {
+      const anyApi = api;
+      if (!anyApi.disconnectFeishu) return;
+      try {
+        await anyApi.disconnectFeishu();
+      } catch (_) {
+      }
+      await load();
+    }, [load]);
+    const statusLabel = status.status === "connected" ? "\u5DF2\u8FDE\u63A5" : status.status === "connecting" ? "\u8FDE\u63A5\u4E2D\u2026" : status.status === "error" ? "\u9519\u8BEF\uFF1A" + (status.detail || "") : "\u672A\u8FDE\u63A5";
+    return (0, import_react15.createElement)(
+      "div",
+      { className: "ck-tab ck-tab-active" },
+      (0, import_react15.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u98DE\u4E66\u540C\u6B65"),
+        (0, import_react15.createElement)(
+          "p",
+          { className: "ck-about-tip" },
+          "\u8FD8\u6CA1\u914D\u7F6E\u8FC7\uFF1F",
+          (0, import_react15.createElement)("a", { href: "#", style: { color: "var(--ck-primary)", cursor: "pointer", textDecoration: "underline" }, onClick: (e) => {
+            e.preventDefault();
+            if (api.openFeishuSetup) api.openFeishuSetup();
+          } }, "\u67E5\u770B\u56FE\u6587\u914D\u7F6E\u6559\u7A0B \u2192")
+        ),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react15.createElement)("span", { className: "ck-set-key" }, "App ID"),
+          (0, import_react15.createElement)("input", { type: "text", className: "ck-set-input", placeholder: "cli_xxxxxx", value: cfg.appId || "", onChange: (e) => setCfg({ ...cfg, appId: e.target.value }) })
+        ),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react15.createElement)("span", { className: "ck-set-key" }, "App Secret"),
+          (0, import_react15.createElement)("input", { type: "password", className: "ck-set-input", placeholder: cfg.hasSecret ? "\uFF08\u5DF2\u4FDD\u5B58\uFF0C\u7559\u7A7A\u5219\u4E0D\u53D8\uFF09" : "\u586B\u5199\u5E94\u7528\u7684 App Secret", value: cfg.appSecret || "", onChange: (e) => setCfg({ ...cfg, appSecret: e.target.value }) })
+        ),
+        (0, import_react15.createElement)(ToggleRow2, { label: "\u542F\u7528\u98DE\u4E66\u540C\u6B65", checked: !!cfg.enabled, onChange: (v) => setCfg({ ...cfg, enabled: v }) }),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "ck-actions" },
+          (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: save }, "\u4FDD\u5B58\u5E76\u8FDE\u63A5"),
+          (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onDisconnect }, "\u65AD\u5F00")
+        ),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "fs-status" },
+          (0, import_react15.createElement)("span", { className: "fs-dot" + (status.status === "connected" ? " connected" : status.status === "error" ? " error" : status.status === "connecting" ? " connecting" : "") }),
+          (0, import_react15.createElement)("span", { className: "ck-set-key" }, statusLabel)
+        )
+      ),
+      (0, import_react15.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u672C\u7A97\u53E3\u7ED1\u5B9A\u7684\u98DE\u4E66\u7FA4"),
+        (0, import_react15.createElement)("p", { className: "ck-about-tip" }, "\u628A\u673A\u5668\u4EBA\u62C9\u8FDB\u4E00\u4E2A\u98DE\u4E66\u7FA4\uFF0C\u8FD9\u91CC\u9009\u5B83\u3002", (0, import_react15.createElement)("strong", null, "\u6BCF\u4E2A\u7A97\u53E3\u7ED1\u5B9A\u5404\u81EA\u7684\u7FA4"), "\uFF0C\u5BF9\u8BDD\u4E92\u4E0D\u5E72\u6270\u3002"),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "ck-set-field" },
+          (0, import_react15.createElement)("span", { className: "ck-set-key" }, "\u98DE\u4E66\u7FA4"),
+          (0, import_react15.createElement)(
+            "select",
+            { className: "ck-set-input", value: binding.chatId || "", onChange: (e) => onBind(e.target.value) },
+            (0, import_react15.createElement)("option", { value: "" }, "\uFF08\u672A\u7ED1\u5B9A \u2014\u2014 \u8BE5\u7A97\u53E3\u98DE\u4E66\u529F\u80FD\u5173\u95ED\uFF09"),
+            ...chats.map((c) => (0, import_react15.createElement)("option", { key: c.chatId, value: c.chatId }, c.name))
+          )
+        ),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "ck-actions" },
+          (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: loadBinding }, "\u5237\u65B0\u7FA4\u5217\u8868"),
+          (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-secondary", onClick: onUnbind }, "\u89E3\u7ED1")
+        ),
+        (0, import_react15.createElement)(
+          "div",
+          { className: "fs-status" },
+          (0, import_react15.createElement)("span", { className: "ck-set-key" }, binding && binding.chatId ? "\u5DF2\u7ED1\u5B9A\uFF1A" + (binding.chatName || binding.chatId) : "\u672A\u7ED1\u5B9A")
+        )
+      ),
+      (0, import_react15.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u63A8\u9001\u5185\u5BB9\uFF08Cuckoo \u2192 \u98DE\u4E66\uFF09"),
+        (0, import_react15.createElement)(ToggleRow2, { label: "\u7528\u6237\u6D88\u606F", checked: cfg.pushUserMessage !== false, onChange: (v) => setCfg({ ...cfg, pushUserMessage: v }) }),
+        (0, import_react15.createElement)(ToggleRow2, { label: "AI \u56DE\u590D", checked: cfg.pushAiReply !== false, onChange: (v) => setCfg({ ...cfg, pushAiReply: v }) }),
+        (0, import_react15.createElement)(ToggleRow2, { label: "\u5DE5\u5177\u8C03\u7528\u72B6\u6001", checked: cfg.pushToolStatus !== false, onChange: (v) => setCfg({ ...cfg, pushToolStatus: v }) }),
+        (0, import_react15.createElement)(ToggleRow2, { label: "\u5DE5\u5177\u72B6\u6001\u5E26\u5DE5\u5177\u540D\uFF08\u9ED8\u8BA4\u5173\uFF0C\u9690\u79C1\uFF09", checked: cfg.pushToolName === true, onChange: (v) => setCfg({ ...cfg, pushToolName: v }) }),
+        (0, import_react15.createElement)("div", { className: "ck-actions" }, (0, import_react15.createElement)("button", { className: "ck-btn ck-btn-primary", onClick: savePush }, "\u4FDD\u5B58\u63A8\u9001\u8BBE\u7F6E"))
+      ),
+      (0, import_react15.createElement)(
+        "div",
+        { className: "ck-card" },
+        (0, import_react15.createElement)("div", { className: "ck-set-group-title" }, "\u63A5\u6536\uFF08\u98DE\u4E66 \u2192 Cuckoo\uFF09"),
+        (0, import_react15.createElement)("p", { className: "ck-about-tip" }, "\u5728", (0, import_react15.createElement)("strong", null, "\u7ED1\u5B9A\u7684\u7FA4"), "\u91CC\u53D1\u6D88\u606F\uFF08\u53EF @ \u6216\u76F4\u63A5\u53D1\uFF09\uFF0C\u4F1A\u9001\u5230", (0, import_react15.createElement)("strong", null, "\u672C\u7A97\u53E3"), "\u53D1\u7ED9 AI\u3002", (0, import_react15.createElement)("br"), "\u4E00\u4E2A\u7FA4\u53EA\u5BF9\u5E94\u4E00\u4E2A\u7A97\u53E3\uFF1B\u672A\u7ED1\u5B9A\u7FA4\u7684\u7A97\u53E3\u4E0D\u63A8\u4E5F\u4E0D\u6536\u3002")
       )
     );
   }
@@ -31053,7 +31192,6 @@
     registerPage("conversations", ConversationsPage);
     registerPage("token", TokenPage);
     registerPage("feishu", FeishuPage);
-    registerPage("settings", SettingsPage);
     registerPage("agents", AgentsPage);
     registerPage("files", FilesPage);
     registerPage("windows", WindowsPage);

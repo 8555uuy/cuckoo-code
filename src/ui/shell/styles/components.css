@@ -855,4 +855,73 @@
 
   /* ===== 插件插槽里的 SVG 兜底尺寸 ===== */
   #ck-home-panels svg, #ck-home-footer svg { width: 16px; height: 16px; flex-shrink: 0; }
-\n  /* ===== 设置页：左导航 + 右内容（feat/022-dsh-compat-c7） ===== */\n  .ck-tab.ck-set-tab { flex: 1; min-height: 0; gap: 0; }\n  .ck-set-layout { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 0; overflow: hidden; }\n  .ck-set-nav { width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; overflow-y: auto; border-right: 1px solid var(--ck-border); }\n  .ck-set-nav-item { text-align: left; padding: 7px 10px; border: none; border-radius: 6px; background: transparent; color: var(--ck-text-2); font-size: 12.5px; font-family: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s; }\n  .ck-set-nav-item:hover { background: var(--ck-hover-bg); color: var(--ck-text); }\n  .ck-set-nav-item.active { background: var(--ck-primary-soft); color: var(--ck-primary); font-weight: 600; }\n  .ck-set-nav-sep { height: 1px; background: var(--ck-border); margin: 6px 4px; }\n  .ck-set-nav-title { font-size: 10.5px; color: var(--ck-text-dim); padding: 4px 10px 2px; letter-spacing: .5px; }\n  .ck-set-content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 12px; }\n  .ck-set-plugin-content { min-height: 100%; }\n
+
+  /* ===== 设置页：左导航 + 右内容（feat/022-dsh-compat-c7） ===== */
+  .ck-tab.ck-set-tab { flex: 1; min-height: 0; gap: 0; }
+  .ck-set-layout { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 0; overflow: hidden; }
+  .ck-set-nav { width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; overflow-y: auto; border-right: 1px solid var(--ck-border); }
+  .ck-set-nav-item { text-align: left; padding: 7px 10px; border: none; border-radius: 6px; background: transparent; color: var(--ck-text-2); font-size: 12.5px; font-family: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s; }
+  .ck-set-nav-item:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-set-nav-item.active { background: var(--ck-primary-soft); color: var(--ck-primary); font-weight: 600; }
+  .ck-set-nav-sep { height: 1px; background: var(--ck-border); margin: 6px 4px; }
+  .ck-set-nav-title { font-size: 10.5px; color: var(--ck-text-dim); padding: 4px 10px 2px; letter-spacing: .5px; }
+  .ck-set-content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 12px; }
+  .ck-set-plugin-content { min-height: 100%; }
+
+
+
+  /* ===== 设置：全屏模态（feat/022-dsh-compat-c7） ===== */
+  .ck-settings-head {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--ck-border);
+  }
+  .ck-settings-title { flex: 1; font-size: 16px; font-weight: 700; color: var(--ck-text); }
+  .ck-settings-close {
+    border: none; background: transparent; color: var(--ck-text-2);
+    font-size: 16px; cursor: pointer; padding: 4px 10px; border-radius: 6px;
+    font-family: inherit; transition: background .12s, color .12s;
+  }
+  .ck-settings-close:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-settings-foot {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-top: 1px solid var(--ck-border);
+  }
+  .ck-settings-full .ck-set-nav { width: 200px; padding: 10px 10px; }
+  .ck-settings-full .ck-set-nav-item { padding: 9px 12px; font-size: 13.5px; }
+  .ck-settings-full .ck-set-content { padding: 22px 28px; max-width: 900px; }
+
+
+  /* ===== 设置：居中模态 + 遮罩（feat/022-dsh-compat-c7） ===== */
+  .ck-settings-mask {
+    position: fixed; inset: 0; z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .45);
+  }
+  .ck-settings-dialog {
+    width: 880px; max-width: 92vw;
+    height: 640px; max-height: 86vh;
+    display: flex; flex-direction: column;
+    background: var(--ck-bg); color: var(--ck-text);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, .35);
+    border: 1px solid var(--ck-border);
+  }
+  .ck-settings-head {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--ck-border);
+  }
+  .ck-settings-title { flex: 1; font-size: 15px; font-weight: 700; color: var(--ck-text); }
+  .ck-settings-close {
+    border: none; background: transparent; color: var(--ck-text-2);
+    font-size: 16px; cursor: pointer; padding: 4px 10px; border-radius: 6px;
+    font-family: inherit; transition: background .12s, color .12s;
+  }
+  .ck-settings-close:hover { background: var(--ck-hover-bg); color: var(--ck-text); }
+  .ck-settings-foot {
+    flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-top: 1px solid var(--ck-border);
+  }
+  .ck-settings-dialog .ck-set-nav { width: 180px; padding: 10px; }
+  .ck-settings-dialog .ck-set-nav-item { padding: 8px 12px; font-size: 13px; }
+  .ck-settings-dialog .ck-set-content { padding: 18px 22px; }
+
