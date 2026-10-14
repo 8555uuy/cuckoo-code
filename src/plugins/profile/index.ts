@@ -7,3 +7,5 @@ export * from './paths.js';
 export * from './manifest.js';
 export * from './patch.js';
 export * from './init.js';
+export * from './pnpm.js';
+export * from './installer.js';
