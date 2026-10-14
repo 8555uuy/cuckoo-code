@@ -1300,6 +1300,28 @@
   .ck-set-row-col .ck-set-row-label { font-size: 13px; font-weight: 600; color: var(--ck-text); }
 
 
+  /* ===== 设置：恢复默认移到左导航底部浮动 ===== */
+  .ck-set-nav-foot { margin-top: auto; padding-top: 10px; }
+  .ck-set-nav-reset {
+    width: 100%; padding: 9px 12px;
+    background: transparent; border: 1px solid var(--ck-border);
+    border-radius: 8px; color: var(--ck-text-2);
+    font-size: 12.5px; font-family: inherit; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .ck-set-nav-reset:hover { background: var(--ck-hover-bg); color: var(--ck-text); border-color: var(--ck-border-strong); }
+  .ck-set-nav-reset:disabled { opacity: .5; cursor: default; }
+  /* 顶栏下方的"已保存"提示 */
+  .ck-settings-saved-top {
+    position: absolute; top: 8px; left: 20px; z-index: 2;
+    font-size: 12px; color: var(--ck-primary);
+  }
+
+
+  /* ===== 确认弹窗（ck-dialog）在设置模态之上 ===== */
+  #ck-dialog { position: fixed; z-index: 9500; }
+
+
 /* ===== 目录 ===== */
   .ck-dir-path {
     font-family: "SF Mono", "Consolas", monospace; font-size: 11.5px;
@@ -28279,9 +28301,10 @@
         (0, import_react6.createElement)("input", { type: "number", className: "ck-set-input ck-set-input-sm", min: 0, step: 1, value: numVal("xhrIdleTimeout"), onChange: (e) => setField("xhrIdleTimeout", parseFloat(e.target.value) || 0) })
       ),
       (0, import_react6.createElement)(
-        SettingRow,
-        { label: "\u8D85\u65F6\u91CD\u8BD5\u63D0\u793A\u8BCD", desc: "\u8D85\u65F6\u540E\u81EA\u52A8\u53D1\u9001\u7684\u63D0\u793A\u8BCD" },
-        (0, import_react6.createElement)("input", { type: "text", className: "ck-set-input ck-set-input-sm", value: data.watchdogPrompt || "", onChange: (e) => setField("watchdogPrompt", e.target.value) })
+        "div",
+        { className: "ck-set-row-col" },
+        (0, import_react6.createElement)("div", { className: "ck-set-row-label" }, "\u8D85\u65F6\u91CD\u8BD5\u63D0\u793A\u8BCD"),
+        (0, import_react6.createElement)("textarea", { className: "ck-set-textarea", rows: 3, value: data.watchdogPrompt || "", onChange: (e) => setField("watchdogPrompt", e.target.value) })
       ),
       (0, import_react6.createElement)(
         SettingRow,
@@ -28399,7 +28422,13 @@
                 title: label,
                 onClick: () => setActive(id)
               }, label);
-            })
+            }),
+            // 底部浮动：恢复默认（margin-top:auto 推到最下）
+            (0, import_react6.createElement)(
+              "div",
+              { className: "ck-set-nav-foot" },
+              (0, import_react6.createElement)("button", { className: "ck-set-nav-reset", disabled: loading, onClick: reset }, "\u6062\u590D\u9ED8\u8BA4")
+            )
           ),
           (0, import_react6.createElement)(
             "div",
@@ -28408,14 +28437,8 @@
             content
           )
         ),
-        // 底栏（自动保存，无"保存"按钮；显示保存状态）
-        (0, import_react6.createElement)(
-          "div",
-          { className: "ck-settings-foot" },
-          (0, import_react6.createElement)("span", { className: "ck-settings-saved" }, savedTip),
-          (0, import_react6.createElement)("div", { style: { flex: 1 } }),
-          (0, import_react6.createElement)("button", { className: "ck-btn ck-btn-secondary", disabled: loading, onClick: reset }, "\u6062\u590D\u9ED8\u8BA4")
-        )
+        // 顶栏下方显示"已保存"提示（自动保存状态）
+        savedTip ? (0, import_react6.createElement)("div", { className: "ck-settings-saved ck-settings-saved-top" }, savedTip) : null
       )
     );
   }

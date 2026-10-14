@@ -177,8 +177,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     ),
     createElement(SettingRow, { label: 'AI 回复超时后重试（秒）', desc: 'AI 回复静默超过该时长则重试' },
       createElement('input', { type: 'number', className: 'ck-set-input ck-set-input-sm', min: 0, step: 1, value: numVal('xhrIdleTimeout'), onChange: (e: any) => setField('xhrIdleTimeout', parseFloat(e.target.value) || 0) })),
-    createElement(SettingRow, { label: '超时重试提示词', desc: '超时后自动发送的提示词' },
-      createElement('input', { type: 'text', className: 'ck-set-input ck-set-input-sm', value: data.watchdogPrompt || '', onChange: (e: any) => setField('watchdogPrompt', e.target.value) })),
+    createElement('div', { className: 'ck-set-row-col' },
+      createElement('div', { className: 'ck-set-row-label' }, '超时重试提示词'),
+      createElement('textarea', { className: 'ck-set-textarea', rows: 3, value: data.watchdogPrompt || '', onChange: (e: any) => setField('watchdogPrompt', e.target.value) }),
+    ),
     createElement(SettingRow, { label: '超时重试次数', desc: '负数 = 无限重试' },
       createElement('input', { type: 'number', className: 'ck-set-input ck-set-input-sm', step: 1, value: numVal('watchdogCount'), onChange: (e: any) => setField('watchdogCount', parseInt(e.target.value, 10) || 0) })),
   );
@@ -269,18 +271,18 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               onClick: () => setActive(id),
             }, label);
           }),
+          // 底部浮动：恢复默认（margin-top:auto 推到最下）
+          createElement('div', { className: 'ck-set-nav-foot' },
+            createElement('button', { className: 'ck-set-nav-reset', disabled: loading, onClick: reset }, '恢复默认'),
+          ),
         ),
         createElement('div', { className: 'ck-set-content' },
           pageTitle ? createElement('div', { className: 'ck-set-page-title' }, pageTitle) : null,
           content,
         ),
       ),
-      // 底栏（自动保存，无"保存"按钮；显示保存状态）
-      createElement('div', { className: 'ck-settings-foot' },
-        createElement('span', { className: 'ck-settings-saved' }, savedTip),
-        createElement('div', { style: { flex: 1 } }),
-        createElement('button', { className: 'ck-btn ck-btn-secondary', disabled: loading, onClick: reset }, '恢复默认'),
-      ),
+      // 顶栏下方显示"已保存"提示（自动保存状态）
+      savedTip ? createElement('div', { className: 'ck-settings-saved ck-settings-saved-top' }, savedTip) : null,
     ),
   );
 }

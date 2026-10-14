@@ -1025,3 +1025,25 @@
   }
   .ck-set-row-col .ck-set-row-label { font-size: 13px; font-weight: 600; color: var(--ck-text); }
 
+
+  /* ===== 设置：恢复默认移到左导航底部浮动 ===== */
+  .ck-set-nav-foot { margin-top: auto; padding-top: 10px; }
+  .ck-set-nav-reset {
+    width: 100%; padding: 9px 12px;
+    background: transparent; border: 1px solid var(--ck-border);
+    border-radius: 8px; color: var(--ck-text-2);
+    font-size: 12.5px; font-family: inherit; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .ck-set-nav-reset:hover { background: var(--ck-hover-bg); color: var(--ck-text); border-color: var(--ck-border-strong); }
+  .ck-set-nav-reset:disabled { opacity: .5; cursor: default; }
+  /* 顶栏下方的"已保存"提示 */
+  .ck-settings-saved-top {
+    position: absolute; top: 8px; left: 20px; z-index: 2;
+    font-size: 12px; color: var(--ck-primary);
+  }
+
+
+  /* ===== 确认弹窗（ck-dialog）在设置模态之上 ===== */
+  #ck-dialog { position: fixed; z-index: 9500; }
+
