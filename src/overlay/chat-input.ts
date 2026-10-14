@@ -61,22 +61,24 @@ async function setInputContent(input: any, msg: string): Promise<boolean> {
       document.execCommand('selectAll', false, undefined);
       document.execCommand('delete', false, undefined);
 
-      // 分段 Paste：每段 ≤6000 字符，不会触发 ChatGPT 的附件行为，且每段都很快。
-      // 实测 12000 字符只需约 350ms。
+      // 分段 insertText：每段 ≤6000 字符，不会触发 ChatGPT 的附件行为，且每段都很快。
+      // 用 execCommand('insertText') 而非合成 ClipboardEvent('paste')：
+      // 后者是合成事件（isTrusted=false），ProseMirror（ChatGPT 等）会拒收，导致填入静默失败。
       const CHUNK_SIZE = 6000;
       for (let i = 0; i < msg.length; i += CHUNK_SIZE) {
         const chunk = msg.slice(i, i + CHUNK_SIZE);
-        const dt = new DataTransfer();
-        dt.setData('text/plain', chunk);
-        const pasteEvent = new ClipboardEvent('paste', {
-          bubbles: true,
-          cancelable: true,
-          clipboardData: dt,
-        });
-        input.dispatchEvent(pasteEvent);
+        document.execCommand('insertText', false, chunk);
         if (i + CHUNK_SIZE < msg.length) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
+      }
+      // 读回校验：编辑器可能拒绝写入（合成事件/受控组件），不能无条件返回 true。
+      // 以"去空白后长度 ≥ 期望的 90%"为准，容忍编辑器对空白/换行的处理差异。
+      const probe = msg.replace(/\s+/g, '');
+      const writtenCompact = getInputText(input).replace(/\s+/g, '');
+      if (!writtenCompact || writtenCompact.length < probe.length * 0.9) {
+        console.error('[Cuckoo Code] 输入框写入校验失败：期望约 ' + probe.length + ' 字，实际 ' + writtenCompact.length + ' 字');
+        return false;
       }
       return true;
     }
@@ -95,8 +97,10 @@ async function setInputContent(input: any, msg: string): Promise<boolean> {
  * @returns 是否成功
  */
 // 当前待发送的消息（可被 cancelPendingSend 取消）
-interface PendingSend { timer: any; input: any; cancelled: boolean; }
+interface PendingSend { timer: any; input: any; cancelled: boolean; text: string; tag: string; }
 let pendingSend: PendingSend | null = null;
+// 最近一条「已发出」的工具结果文本（用于上下文耗尽续接：新会话需知道工具执行结果）
+let lastToolResultText = '';
 
 // 「用户消息已发出」回调（供 bridge 上报飞书等；overlay 不依赖上层，用回调注入）
 // 系统内部消息的 tag（不视为"用户消息"，不上报飞书）
@@ -140,10 +144,11 @@ async function sendToChat(msg: string, tag?: string, fixedDelay?: number, afterS
     console.log('[Cuckoo Code] 找不到输入框，无法发送消息');
     return false;
   }
-  const token: PendingSend = { timer: null, input: input, cancelled: false };
+  const token: PendingSend = { timer: null, input: input, cancelled: false, text: msg, tag: tag || '' };
   pendingSend = token;
   if (!(await setInputContent(input, msg))) {
     if (pendingSend === token) pendingSend = null;
+    console.error('[Cuckoo Code] 消息填入输入框失败，已放弃发送（tag=' + (tag || '') + '）');
     return false;
   }
   // 填充期间被取消：不发送（输入框内容保留）
@@ -183,6 +188,30 @@ function cancelPendingSend(): boolean {
   // 不清空输入框：保留待发内容，用户可自行决定发送或删除
   console.log('[Cuckoo Code] 已取消待发送的消息（输入框内容保留）');
   return true;
+}
+
+/**
+ * 取最近一条「已发出」的工具结果文本（上下文耗尽续接用）。
+ * @returns 最近工具结果；无则空串
+ */
+function getLastToolResultText(): string {
+  return lastToolResultText || '';
+}
+
+/**
+ * 取出并取消当前待发消息，返回其文本（无待发则 null）。
+ * 用于「上下文耗尽续接」：捞回刚填入、未及发送的工具结果，带到新会话补发。
+ * @returns 待发文本；无则 null
+ */
+function takePendingSendText(): string | null {
+  if (!pendingSend) return null;
+  const t = pendingSend;
+  t.cancelled = true;
+  if (t.timer) clearTimeout(t.timer);
+  pendingSend = null;
+  const text = t.text || '';
+  console.log('[Cuckoo Code] 取出待发消息（长度=' + text.length + '，tag=' + t.tag + '）');
+  return text || null;
 }
 /**
  * 将消息填入 DeepSeek 聊天输入框并触发发送（工具结果回传的公共实现）
@@ -237,6 +266,10 @@ async function sendCombinedJsResultsToChat(results: any, onSent?: () => void): P
   // provider 可自定义回传格式（某些平台对格式敏感，如触发风控）
   msg = applyResultTransform(msg, getCurrentProvider());
 
+  // 末尾提醒（放在 transform 之后，保证一定在消息末尾、且不被 transform 影响）：
+  // 避免 AI 在本该给结论/该问用户时仍继续调工具
+  msg += sep + '提醒：需要给我结果或需要我确定的回答中不要调用工具哦。';
+
   // 追加（不覆盖）：保留用户已输入的内容，工具结果拼在其后一起发送
   const input = findInputArea();
   if (input) {
@@ -247,6 +280,8 @@ async function sendCombinedJsResultsToChat(results: any, onSent?: () => void): P
     }
   }
   console.log('[Cuckoo Code] 回传 JS 汇总执行结果, 消息长度=' + msg.length);
+  // 记录最近工具结果（上下文耗尽续接时，新会话需据此继续）
+  lastToolResultText = msg;
   return sendMessageToChat(msg, 'JS汇总', onSent);
 }
 /**
@@ -537,6 +572,8 @@ export {
   applyResultTransform,
   sendCombinedJsResultsToChat,
   cancelPendingSend,
+  takePendingSendText,
+  getLastToolResultText,
   findInputArea,
   isInputVisible,
   sendInitialPromptToInput,

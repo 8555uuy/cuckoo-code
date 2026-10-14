@@ -26,6 +26,11 @@ let electronAPI: any = {
   updateProjectDir: () => {
     return ipcRenderer.invoke('init-project', { skipPrompt: true });
   },
+  // 窗口组转移：源窗口刷新后完成全量分享，上报 shareId（或错误）给主进程
+  switchShareReady: (payload: any) => {
+    const p = Object.assign({ ok: !(payload && payload.error) }, payload || {});
+    return ipcRenderer.send('cuckoo-switch-share-result', p);
+  },
   getPluginWebScripts: () => {
     return ipcRenderer.invoke('get-plugin-web-scripts');
   },
@@ -242,6 +247,10 @@ let electronAPI: any = {
   },
   replaceProvider: (providerId: any) => {
     return ipcRenderer.invoke('replace-provider', { providerId });
+  },
+  // 上下文耗尽：请求主进程自动在新会话续接（保留当前项目目录；pendingText=未及发送的工具结果）
+  contextExhaustedContinue: (payload: any) => {
+    return ipcRenderer.invoke('context-exhausted-continue', payload || {});
   },
 };
 

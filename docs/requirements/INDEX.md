@@ -25,9 +25,11 @@
 | 019 | feature | [飞书同步（手机收发对话）](./019-feishu-sync.md) | doing | feat/019-feishu-sync | 2026-09-30 |
 | 020 | feature | [插件市场（GitHub topic 自动发现与安装）](./020-plugin-market.md) | review | feat/020-plugin-market | 2026-10-02 |
 | 021 | feature | [窗口组（多账号限流轮换）](./021-window-groups.md) | done | feat/021-window-groups | 2026-10-05 |
-| 022 | fix | [危险命令检测增强（前缀/通配符/长选项）](./022-dangerous-cmd-bypass.md) | done | fix/022-dangerous-cmd-bypass | 2026-10-06 |
 | 022 | feature | [DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）](./022-dsh-plugin-compat.md) | in_progress | direct-on-master（直接 master 提交） | 2026-10-08 |
+| 023 | fix | [ChatGPT 初始化填入失败 + 工具结果发送失败（含上下文耗尽自动续接）](./023-chatgpt-input-send.md) | done | fix/023-chatgpt-input-send | 2026-10-13 |
 | 023 | fix | [edit 编辑混合换行符文件时保留未编辑区域](./023-edit-preserve-eol.md) | done | fix/023-edit-preserve-eol | 2026-10-06 |
 | 024 | feature | [记忆系统 + 工作快照](./024-memory-snapshot.md) | draft | feat/024-memory-snapshot | 2026-10-06 |
+| 024 | fix | [窗口组转移复用 IDB 重写 + 上下文耗尽续接补发工具结果](./024-switch-idb-context-resume.md) | done | fix/024-switch-idb-context-resume | 2026-10-14 |
+| 025 | fix | [危险命令检测增强（前缀/通配符/长选项）](./025-dangerous-cmd-bypass.md) | review | fix/022-dangerous-cmd-bypass | 2026-10-14 |
 
-共 24 个需求。
+共 26 个需求。

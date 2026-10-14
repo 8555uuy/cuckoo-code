@@ -19,6 +19,9 @@ const chatgpt = {
   },
 
   // 查找可见的聊天输入框（ChatGPT 用 ProseMirror contenteditable）
+  // ⚠️ 页面可能同时存在**多个** .ProseMirror（如首页有隐藏的模板编辑器），
+  //    querySelector 只返回第一个匹配 → 可能命中隐藏元素 → insertText 静默失败。
+  //    故用 querySelectorAll 遍历，返回第一个**可见**的。
   findInput() {
     const selectors = [
       'div[contenteditable="true"].ProseMirror',
@@ -29,8 +32,10 @@ const chatgpt = {
     ];
     for (const sel of selectors) {
       try {
-        const el = document.querySelector(sel);
-        if (this.isElementVisible(el)) return el;
+        const els = document.querySelectorAll(sel);
+        for (let i = 0; i < els.length; i++) {
+          if (this.isElementVisible(els[i])) return els[i];
+        }
       } catch (_) {}
     }
     return null;
@@ -57,6 +62,8 @@ const chatgpt = {
   // "粘贴的文件"附件（出现 .txt 卡片），文本区却为空 → 发送空内容。
   // 改用 execCommand('insertText') 直接写文本节点，与真实打字等价。
   fillInput(input: any, text: string) {
+    // ChatGPT 的 ProseMirror：合成 ClipboardEvent('paste') 会被识别为附件，故用 execCommand('insertText')。
+    // 写完读回校验（去空白长度 ≥ 期望的 90%）——编辑器可能拒收，不能无条件返回 true。
     try {
       input.focus();
       // 清空现有内容
@@ -70,38 +77,83 @@ const chatgpt = {
           document.execCommand('delete', false, undefined);
         }
       } catch (_) {}
-      // 分段插入（长文本 execCommand 可能失败）
+      // 分段插入（长文本 execCommand 单次可能失败）
       const CHUNK = 5000;
       for (let i = 0; i < text.length; i += CHUNK) {
-        const chunk = text.slice(i, i + CHUNK);
-        const ok = document.execCommand('insertText', false, chunk);
-        if (!ok && i === 0) return false; // 首次就失败 → 回退 paste 逻辑
+        document.execCommand('insertText', false, text.slice(i, i + CHUNK));
       }
       // 触发一次 input 让框架感知
       try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
+      // 读回校验
+      const probe = text.replace(/\s+/g, '');
+      const written = String(input.innerText || input.textContent || '').replace(/\s+/g, '');
+      if (!written || written.length < probe.length * 0.9) {
+        console.warn('[Cuckoo Code][chatgpt.fillInput] 写入校验失败：期望 ' + probe.length + ' 字，实际 ' + written.length + ' 字');
+        return false;
+      }
       return true;
     } catch (_) {
       return false;
     }
   },
 
-  // 触发发送：ChatGPT 的 ProseMirror 输入框只认**真实键盘事件**（合成 KeyboardEvent
-  // 无效，站点免疫），且发送按钮在输入框为空时不存在（选择器不稳定）。
-  // 故走主进程 sendInputEvent 派发真实级 Enter（isTrusted=true），与人工按键等价。
+  // 触发发送。ChatGPT 的 ProseMirror 免疫合成 KeyboardEvent；
+  // 且**主进程 sendInputEvent 的键盘事件依赖页面有焦点**——用户焦点在壳窗口/别的窗口时
+  // （document.hasFocus() === false），Enter 会送不到页面 → 消息发不出去。
+  // 故优先用**真实鼠标点击发送按钮**（sendInputEvent 鼠标事件不受焦点影响），
+  // 点击后校验输入框是否被清空（发送成功的标志），失败再回退 Enter / DOM click。
   async triggerSend(input: any) {
-    try {
-      if (input && typeof input.focus === 'function') {
-        try { input.focus(); } catch (_) {}
+    const api = (window as any).electronAPI;
+    // 重新查找**最新的**输入框与发送按钮（3 秒发送延迟期间，React 可能替换 DOM，
+    // 旧引用会脱离文档 → 点击后校验读成空 → 误判成功）。
+    const findInput = () => {
+      const sels = ['div[contenteditable="true"].ProseMirror', 'div[role="textbox"]', 'div.ProseMirror', 'div[contenteditable="true"]', 'textarea'];
+      for (const s of sels) { const els = document.querySelectorAll(s); for (let i = 0; i < els.length; i++) { const e: any = els[i]; if (e.offsetWidth > 0 && e.offsetHeight > 0) return e; } }
+      return null;
+    };
+    const lenOf = (el: any) => String((el && (el.innerText || el.value || el.textContent)) || '').replace(/\s+/g, '').length;
+
+    // 发送：循环 10 次（每次 ~600ms，共约 6 秒），每次用最新 DOM，交替尝试 点击 / Enter。
+    // ⚠️ 实测：填入后 ProseMirror 处理需要时间，按钮可能短暂不存在/禁用；且 Enter 依赖页面焦点。
+    //    故必须「等按钮就绪 + 多方式兜底 + 长重试」，不能一次失败就放弃。
+    const canSim = api && typeof api.simulateMouse === 'function';
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const curInput = findInput() || input;
+      const btn = this.findSendButton ? this.findSendButton() : null;
+      // A) 有按钮 → 真实鼠标点击
+      if (btn && canSim) {
+        try {
+          if (curInput && typeof curInput.focus === 'function') { try { curInput.focus(); } catch (_) {} }
+          const rect = btn.getBoundingClientRect();
+          const x = Math.round(rect.left + rect.width / 2);
+          const y = Math.round(rect.top + rect.height / 2);
+          await api.simulateMouse('click', x, y);
+          await new Promise((res) => setTimeout(res, 400));
+          const remaining = lenOf(findInput());
+          console.log('[Cuckoo Code][chatgpt.triggerSend] 点击#' + (attempt + 1) + ' @(' + x + ',' + y + ') 后输入框剩余=' + remaining);
+          if (remaining <= 2) return true;
+        } catch (err: any) {
+          console.warn('[Cuckoo Code][chatgpt.triggerSend] 鼠标点击失败:', err && err.message);
+        }
+      } else {
+        // B) 没按钮 → 尝试 Enter（先聚焦输入框）
+        try {
+          if (curInput && typeof curInput.focus === 'function') { try { curInput.focus(); } catch (_) {} }
+          if (api && typeof api.sendEnterToChat === 'function') {
+            await api.sendEnterToChat();
+            await new Promise((res) => setTimeout(res, 400));
+            const remaining = lenOf(findInput());
+            console.log('[Cuckoo Code][chatgpt.triggerSend] 第' + (attempt + 1) + '次无按钮→Enter 后剩余=' + remaining);
+            if (remaining <= 2) return true;
+          }
+        } catch (_) { /* ignore */ }
       }
-      const api = (window as any).electronAPI;
-      if (api && typeof api.sendEnterToChat === 'function') {
-        const ok = await api.sendEnterToChat();
-        if (ok) return true;
-      }
-    } catch (_) { /* 回退到按钮点击 */ }
-    // 回退：发送按钮（有内容时才出现）
-    const btn = this.findSendButton ? this.findSendButton() : null;
-    if (btn) { (btn as any).click(); return true; }
+      await new Promise((res) => setTimeout(res, 200));
+    }
+
+    // 最后兜底：DOM click
+    const btn2 = this.findSendButton ? this.findSendButton() : null;
+    if (btn2) { (btn2 as any).click(); return true; }
     return false;
   },
 

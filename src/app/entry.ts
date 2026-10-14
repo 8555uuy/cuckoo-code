@@ -20,6 +20,8 @@ const { app, BrowserWindow, WebContentsView, Menu, dialog, screen, nativeTheme, 
 // ========== 关闭确认 ==========
 /** 已确认关闭的窗口 id（确认后再次触发 close 时直接放行，避免重复弹框） */
 const closeConfirmed = new Set<number>();
+/** 应用退出中（菜单退出 / 自动更新重启）——退出是明确意图，跳过逐窗口关闭确认 */
+let isQuitting = false;
 
 // ========== 持久化会话配置 ==========
 const SESSION_DIR = process.env.CUCKOO_SESSION_DIR || 'cuckoo-ai-pro-session';
@@ -64,7 +66,7 @@ import { addMemory, removeMemory, listMemories } from '../infra/memories.js';
 import { createSnapshot, listSnapshots, restoreSnapshot } from './snapshots.js';
 import { pushUrlState } from './ipc/shell.js';
 import { pushHarnessState, stopGeneration } from './ipc/harness.js';
-import { injectWindowGroupDeps, requestShareFromWindow } from './ipc/window-groups.js';
+import { injectWindowGroupDeps, requestSwitchShare } from './ipc/window-groups.js';
 import { initProject } from '../session/project-context.js';
 import * as windowGroups from './window-groups.js';
 
@@ -564,6 +566,8 @@ function createWindow(profile: any) {
   // 关闭前记录窗口大小/位置（用 getNormalBounds 取"还原后"尺寸；closed 时窗口已销毁取不到）
   mainWindow.on('close', (e: any) => {
     if (profileData.isSubagent) return; // 子代理窗口：不记录、不弹框
+    // 应用退出中（菜单退出 / 更新重启）：退出是明确意图，不弹框（否则逐窗口弹框会阻塞退出/更新安装）
+    if (isQuitting) return;
     // 未确认关闭 且 非程序主动关闭 → 弹框确认
     if (!closeConfirmed.has(mainWindow.id) && !(mainWindow as any).__programmaticClose) {
       e.preventDefault();
@@ -610,6 +614,23 @@ function createWindow(profile: any) {
     windowState.removeWindow(mainWindow.id);
     // 释放该窗口持有的 MCP 连接引用 + 清理自动连记录
     try { mcpClient.forgetWindow(mainWindow.id); } catch (_) {}
+    // 【修复渲染进程泄漏】本窗为「壳 BrowserWindow + AI 页 WebContentsView(+懒加载 harnessView)」双层结构。
+    //   win.close() 只销毁壳窗口的 webContents；挂在 contentView 上的子 view 独立持有渲染进程，
+    //   不会被连带销毁 → 每关一个窗口留下一个孤儿渲染进程（实测 120 任务 = 120 孤儿 + 275MB）。
+    //   收口：显式 removeChildView（从壳摘除）+ webContents.close()（真正释放渲染进程）。
+    //   次序：先摘除（须壳未销毁）再 close；异常吞掉，不阻断后续清理。
+    try {
+      if (!mainWindow.isDestroyed() && mainWindow.contentView) {
+        if (view) mainWindow.contentView.removeChildView(view);
+        if (harnessView) mainWindow.contentView.removeChildView(harnessView);
+      }
+    } catch (_) { /* ignore */ }
+    for (const v of [view, harnessView]) {
+      try {
+        const wc = v && v.webContents;
+        if (wc && !wc.isDestroyed()) wc.close();
+      } catch (_) { /* ignore */ }
+    }
   });
 
   return mainWindow.id;
@@ -891,8 +912,8 @@ async function runSwitchForGroup(groupId: string, fromProfileId: string): Promis
     // 3) 停掉当前窗口的生成 + 工具调用
     try { await stopGeneration(cur); } catch (_) { /* ignore */ }
 
-    // 4) 请求源窗口分享当前对话（全量）
-    const share = await requestShareFromWindow(curWindowId);
+    // 4) 请求源窗口准备转移分享（清 IDB + 刷新 + 等重写 → 全量分享；复用压缩的重写逻辑）
+    const share = await requestSwitchShare(curWindowId);
     if (!share || !share.ok || !share.shareId) {
       try { cur.view.webContents.send('harness-resume-retry'); } catch (_) { /* ignore */ }
       return { success: false, error: (share && share.error) || '分享失败' };
@@ -1337,6 +1358,8 @@ app.on('window-all-closed', () => {
 // 退出前刷新所有 session 数据 + 断开所有 MCP 连接
 let quitFlushed = false;
 app.on('before-quit', (event: any) => {
+  // 应用退出中：置位，让各窗口的 close 处理跳过"确认关闭"弹框（菜单退出 / 自动更新重启）
+  isQuitting = true;
   if (quitFlushed) return;
   event.preventDefault();
   quitFlushed = true;

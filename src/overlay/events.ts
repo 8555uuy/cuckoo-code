@@ -7,7 +7,7 @@ import { state } from './state.js';
 import { hideOverlay, showOverlay, renderHistory, commandHistory, showToast, hideFirstTimeDialog } from './panel.js';
 import { handleInitProject, renderSessions } from './session-list.js';
 import { sendToChat } from './chat-input.js';
-import { runCompaction, checkPendingCompact, checkPendingInit } from '../session/compaction.js';
+import { runCompaction, checkPendingCompact, checkPendingInit, checkPendingSwitch } from '../session/compaction.js';
 import { renderWindowList, openWindowManager, closeWindowManager, handleGenerateDoc } from './panels/window-manager.js';
 import { loadMcpConfigToJson, renderMcpList, openMcpManager, closeMcpManager, handleMcpSave } from './panels/mcp-manager.js';
 import { openSettings, closeSettings, resetSettings, saveSettings } from './panels/settings.js';
@@ -586,7 +586,11 @@ function bindEvents() {
 
   // 压缩流程：先检查是否处于"段2"（刷新后等 IDB 重建），否则检查"段3"（分享页初始化）
   checkPendingCompact().then((handled) => {
-    if (!handled) checkPendingInit();
+    if (handled) return;
+    // 窗口组转移：刷新后完成分享并回执主进程
+    checkPendingSwitch().then((handled2) => {
+      if (!handled2) checkPendingInit();
+    });
   });
 
   // 键盘快捷键
