@@ -210,6 +210,21 @@ function renderPluginMarket(): void {
       if (it) await installPluginFromMarket(it, (btn as any).dataset.upgrade === '1');
     });
   });
+
+  // 开源链接：用系统浏览器打开（壳页面里 target=_blank 默认打不开）
+  listEl.querySelectorAll('.ck-plugin-disclaimer-link').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const url = (a as any).getAttribute('href');
+      const apiAny: any = api as any;
+      try {
+        if (apiAny && typeof apiAny.openExternal === 'function') { apiAny.openExternal(url); return; }
+        if (apiAny && typeof apiAny.openUrl === 'function') { apiAny.openUrl(url); return; }
+      } catch (_) { /* fallback */ }
+      try { window.open(url, '_blank'); } catch (_) { /* ignore */ }
+    });
+  });
 }
 
 function marketCardHtml(it: any): string {
@@ -242,6 +257,19 @@ function marketCardHtml(it: any): string {
     req = '<div class="ck-plugin-req err">读不到 plugin.json：' + escapeHtml(remote.error) + '</div>';
   }
 
+  // AI 网关：加免责声明 + 开源链接（默认绑 0.0.0.0 + 默认密码 admin 有风险）
+  const isGateway = /ai-gateway/i.test(String(it.id || ''));
+  const disclaimer = isGateway
+    ? '<div class="ck-plugin-disclaimer">' +
+        '<div class="ck-plugin-disclaimer-title">⚠️ 免责声明</div>' +
+        '<div class="ck-plugin-disclaimer-body">本插件为开源工具，按“原样”提供，不附带任何担保。' +
+        '默认绑定 <code>0.0.0.0</code>（局域网可访问）、管理密码 <code>admin</code>，' +
+        '请务必修改密码或改为仅本机访问（<code>127.0.0.1</code>）。' +
+        '使用本插件产生的一切后果由你自行承担。</div>' +
+        '<a class="ck-plugin-disclaimer-link" href="https://github.com/8555uuy/cuckoo-plugin-ai-gateway" target="_blank" rel="noopener">查看开源仓库 →</a>' +
+      '</div>'
+    : '';
+
   return '<div class="ck-plugin-item" data-repo="' + escapeAttr(it.id) + '">' +
     '<div class="ck-plugin-head">' +
       '<span class="ck-plugin-name" title="' + escapeAttr(it.id) + '">' + escapeHtml(it.id) + '</span>' +
@@ -256,6 +284,7 @@ function marketCardHtml(it: any): string {
       (it.pushedAt || it.updatedAt || '').slice(0, 10),
     ]) +
     req +
+    disclaimer +
   '</div>';
 }
 

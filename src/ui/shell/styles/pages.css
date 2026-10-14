@@ -132,6 +132,24 @@
     font-size: 13px; font-weight: 600; color: var(--ck-text);
     flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* AI 网关免责声明 */
+  .ck-plugin-disclaimer {
+    margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+    background: rgba(251, 191, 36, .08); border: 1px solid rgba(251, 191, 36, .28);
+    font-size: 12px; line-height: 1.6;
+  }
+  .ck-plugin-disclaimer-title { font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+  .ck-plugin-disclaimer-body { color: var(--ck-text-dim); }
+  .ck-plugin-disclaimer-body code {
+    background: var(--ck-surface); padding: 1px 4px; border-radius: 3px;
+    font-size: 11.5px; color: var(--ck-text);
+  }
+  .ck-plugin-disclaimer-link {
+    display: inline-block; margin-top: 8px; color: var(--ck-primary);
+    font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .ck-plugin-disclaimer-link:hover { text-decoration: underline; }
+
   /* 已安装 / 有更新 徽标 */
   .ck-plugin-badge {
     font-size: 10px; padding: 1px 6px; border-radius: 4px;

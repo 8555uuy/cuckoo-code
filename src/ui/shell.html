@@ -1121,6 +1121,24 @@
     font-size: 13px; font-weight: 600; color: var(--ck-text);
     flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* AI 网关免责声明 */
+  .ck-plugin-disclaimer {
+    margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+    background: rgba(251, 191, 36, .08); border: 1px solid rgba(251, 191, 36, .28);
+    font-size: 12px; line-height: 1.6;
+  }
+  .ck-plugin-disclaimer-title { font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+  .ck-plugin-disclaimer-body { color: var(--ck-text-dim); }
+  .ck-plugin-disclaimer-body code {
+    background: var(--ck-surface); padding: 1px 4px; border-radius: 3px;
+    font-size: 11.5px; color: var(--ck-text);
+  }
+  .ck-plugin-disclaimer-link {
+    display: inline-block; margin-top: 8px; color: var(--ck-primary);
+    font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .ck-plugin-disclaimer-link:hover { text-decoration: underline; }
+
   /* 已安装 / 有更新 徽标 */
   .ck-plugin-badge {
     font-size: 10px; padding: 1px 6px; border-radius: 4px;
@@ -4734,6 +4752,29 @@
         if (it) await installPluginFromMarket(it, btn.dataset.upgrade === "1");
       });
     });
+    listEl2.querySelectorAll(".ck-plugin-disclaimer-link").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = a.getAttribute("href");
+        const apiAny = api;
+        try {
+          if (apiAny && typeof apiAny.openExternal === "function") {
+            apiAny.openExternal(url);
+            return;
+          }
+          if (apiAny && typeof apiAny.openUrl === "function") {
+            apiAny.openUrl(url);
+            return;
+          }
+        } catch (_) {
+        }
+        try {
+          window.open(url, "_blank");
+        } catch (_) {
+        }
+      });
+    });
   }
   function marketCardHtml(it) {
     const state = pluginUpdateState(it);
@@ -4757,12 +4798,14 @@
     } else if (remote && remote.error) {
       req = '<div class="ck-plugin-req err">\u8BFB\u4E0D\u5230 plugin.json\uFF1A' + escapeHtml(remote.error) + "</div>";
     }
+    const isGateway = /ai-gateway/i.test(String(it.id || ""));
+    const disclaimer = isGateway ? '<div class="ck-plugin-disclaimer"><div class="ck-plugin-disclaimer-title">\u26A0\uFE0F \u514D\u8D23\u58F0\u660E</div><div class="ck-plugin-disclaimer-body">\u672C\u63D2\u4EF6\u4E3A\u5F00\u6E90\u5DE5\u5177\uFF0C\u6309\u201C\u539F\u6837\u201D\u63D0\u4F9B\uFF0C\u4E0D\u9644\u5E26\u4EFB\u4F55\u62C5\u4FDD\u3002\u9ED8\u8BA4\u7ED1\u5B9A <code>0.0.0.0</code>\uFF08\u5C40\u57DF\u7F51\u53EF\u8BBF\u95EE\uFF09\u3001\u7BA1\u7406\u5BC6\u7801 <code>admin</code>\uFF0C\u8BF7\u52A1\u5FC5\u4FEE\u6539\u5BC6\u7801\u6216\u6539\u4E3A\u4EC5\u672C\u673A\u8BBF\u95EE\uFF08<code>127.0.0.1</code>\uFF09\u3002\u4F7F\u7528\u672C\u63D2\u4EF6\u4EA7\u751F\u7684\u4E00\u5207\u540E\u679C\u7531\u4F60\u81EA\u884C\u627F\u62C5\u3002</div><a class="ck-plugin-disclaimer-link" href="https://github.com/8555uuy/cuckoo-plugin-ai-gateway" target="_blank" rel="noopener">\u67E5\u770B\u5F00\u6E90\u4ED3\u5E93 \u2192</a></div>' : "";
     return '<div class="ck-plugin-item" data-repo="' + escapeAttr(it.id) + '"><div class="ck-plugin-head"><span class="ck-plugin-name" title="' + escapeAttr(it.id) + '">' + escapeHtml(it.id) + "</span>" + badges + '<div class="ck-plugin-actions">' + action + '</div></div><div class="ck-plugin-desc">' + escapeHtml(it.description || "\uFF08\u65E0\u7B80\u4ECB\uFF09") + "</div>" + pluginMetaHtml([
       it.language ? escapeHtml(it.language) : "",
       it.stars ? "\u2605 " + it.stars : "",
       it.license ? escapeHtml(it.license) : "",
       (it.pushedAt || it.updatedAt || "").slice(0, 10)
-    ]) + req + "</div>";
+    ]) + req + disclaimer + "</div>";
   }
   async function loadPluginMarket(force) {
     const listEl2 = document.getElementById("plugin-market-list");
