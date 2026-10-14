@@ -9,7 +9,7 @@
  */
 import { createElement, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ckAlert, ckConfirm } from '../shared.js';
-import { useSlot, specLabel } from '../use-slot.js';
+import { useSlot, specLabel, renderPluginElement } from '../use-slot.js';
 import { SlotErrorBoundary } from '../components/slot-error-boundary.js';
 import { useHideAiView } from '../use-hide-ai-view.js';
 import { Select } from '../components/select.js';
@@ -238,10 +238,11 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     const key = active.slice('plugin:'.length);
     const item = pluginSections.find((s: any) => (s.pluginId + ':' + s.id) === key);
     if (item && item.Component) {
-      const C = item.Component;
-      const props: any = { close: closePluginSection, t: item.t || ((k: string) => k), wide: true };
-      content = createElement('div', { className: 'ck-set-plugin-content' },
-        createElement(SlotErrorBoundary, { label: '插件设置' }, createElement(C, props)));
+      // 合并：插件注入的 props（spec.inject）+ 壳提供的（close/t/wide）+ renderSlot
+      const el = renderPluginElement(item, { close: closePluginSection, wide: true });
+      // key：按分类 id，切换时强制重建错误边界（否则残留 err 状态 → 切回不显示）
+      content = createElement('div', { className: 'ck-set-plugin-content', key: 'plugin:' + key },
+        createElement(SlotErrorBoundary, { key: 'eb:' + key, label: '插件设置' }, el));
     } else {
       content = createElement('div', { className: 'ck-list-empty' }, '插件设置不可用');
     }

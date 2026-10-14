@@ -124,4 +124,11 @@ export interface ShellAPI {
   listFeishuChats?: () => Promise<any>;
   getFeishuBinding?: () => Promise<any>;
   bindFeishuChat?: (chatId: string, chatName: string) => Promise<any>;
+  // ===== DSH 插件插槽 / 本地 HTTP 服务 =====
+  listPluginSlots?: () => Promise<any>;
+  onPluginSlotRegister?: (cb: (m: any) => void) => void;
+  onPluginSlotUnregister?: (cb: (m: any) => void) => void;
+  slotRegister?: (spec: any) => Promise<any>;
+  /** 插件本地 HTTP 服务端口（壳页面 fetch /api/* 用） */
+  webServerInfo?: () => Promise<any>;
 }

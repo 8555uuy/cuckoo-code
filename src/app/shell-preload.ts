@@ -85,6 +85,8 @@ const shellAPI = {
   onPluginSlotRegister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-register', (_e: any, m: any) => cb(m)); },
   onPluginSlotUnregister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-unregister', (_e: any, m: any) => cb(m)); },
   listPluginSlots: () => ipcRenderer.invoke('plugin-slot-list'),
+  // 插件本地 HTTP 服务端口（壳页面 fetch /api/* 需要）
+  webServerInfo: () => ipcRenderer.invoke('plugin-webserver-info'),
   // 插件配置
   pluginConfigGet: (pluginId: string) => ipcRenderer.invoke('plugin-config-get', { pluginId }),
   pluginConfigSet: (pluginId: string, values: any) => ipcRenderer.invoke('plugin-config-set', { pluginId, values }),

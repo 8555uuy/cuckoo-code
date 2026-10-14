@@ -1,7 +1,7 @@
 /**
  * 订阅 DSH 插槽（本地 client 注册 + 主进程 host 注册）的 React Hook。
  */
-import { useState, useEffect } from 'react';
+import { createElement, useState, useEffect } from 'react';
 import { api } from './shared.js';
 import { subscribeSlots, getSlotItems } from './dsh-client-runtime.js';
 
@@ -14,6 +14,8 @@ export interface SlotEntry {
   Component?: any;
   t?: (k: string) => string;
   order?: number;
+  /** DSH 依赖注入面（spec.inject 的解析结果） */
+  injectedProps?: any;
 }
 
 /** 订阅某个插槽下的所有项（client 组件 + host 文字） */
@@ -26,7 +28,7 @@ export function useSlot(slotName: string): SlotEntry[] {
 
     const localItems = (): SlotEntry[] => getSlotItems(slotName).map((s: any) => ({
       kind: 'client' as const, key: 'c:' + s.key, id: s.id, pluginId: s.pluginId,
-      spec: s.spec, Component: s.Component, t: s.t,
+      spec: s.spec, Component: s.Component, t: s.t, injectedProps: s.injectedProps,
     }));
 
     const refreshLocal = () => {
@@ -75,4 +77,40 @@ export function specLabel(spec: any, fallback: string): string {
     return v;
   };
   return String(pick(spec.label) || pick(spec.text) || pick(spec.title) || fallback);
+}
+
+/**
+ * 渲染一个插件组件，注入 DSH standardProps：
+ * - renderSlot(slotName, props)：渲染子插槽（DSH 的插槽嵌套机制）
+ * - t / injectedProps / close ...
+ */
+export function renderPluginElement(item: SlotEntry, extra?: any): any {
+  const C = item && item.Component;
+  if (!C) return null;
+
+  /** DSH renderSlot：渲染某子插槽下的所有组件（递归，带 renderSlot） */
+  const renderSlot = (slotName: string, slotProps?: any): any => {
+    if (!slotName) return null;
+    const items = getSlotItems(slotName);
+    if (!items.length) return null;
+    return createElement('div', { 'data-render-slot': slotName, style: { display: 'contents' } },
+      ...items.map((it, i) => {
+        const IC = it.Component;
+        if (!IC) return null;
+        return createElement(IC, {
+          key: it.key || (slotName + ':' + i),
+          ...(it.injectedProps || {}),
+          ...(slotProps || {}),
+          renderSlot,
+          t: it.t || ((k: string) => k),
+        });
+      }));
+  };
+
+  return createElement(C, {
+    ...(item.injectedProps || {}),
+    ...(extra || {}),
+    renderSlot,
+    t: item.t || ((k: string) => k),
+  });
 }

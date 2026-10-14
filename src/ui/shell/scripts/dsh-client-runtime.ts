@@ -22,6 +22,8 @@ export interface SlotItem {
   Component: any;
   /** i18n 翻译函数（来自 spec.locale） */
   t?: (k: string) => string;
+  /** DSH 依赖注入面：spec.inject（函数 → 返回值；数组 → 从服务表取）*/
+  injectedProps?: any;
 }
 
 const slotTable = new Map<string, SlotItem[]>();
@@ -66,21 +68,44 @@ function makePlaceholderIcon(): any {
   };
 }
 
-/** DSH primitives 包 shim：IconXxx → 占位图标组件；其他 → 空组件（不崩） */
+/** DSH primitives 包 shim：IconXxx → 占位图标组件；其他 → 空组件（不崩）
+ *
+ * 关键：DSH 插件用 `__toESM(require(...))` 包装——它靠 `Object.getOwnPropertyNames`
+ * 遍历属性来复制。纯 Proxy 没 `ownKeys` trap → 遍历为空 → 复制后什么都有没有
+ * → dsh-market 的 `missingPrimitives` 检查不过 → 它直接 return（什么都不注册）。
+ * 所以这里【预填】必需组件名，并补 ownKeys/getOwnPropertyDescriptor/has trap。
+ */
 function makePrimitivesShim(): any {
   const cache: Record<string, any> = {};
-  return new Proxy({}, {
+  const shimObj: any = new Proxy({}, {
     get(_t, prop) {
       if (prop === 'then') return undefined;
-      if (prop === '__esModule') return false;
-      if (prop === 'default') return cache.__default || (cache.__default = {});
+      if (prop === '__esModule') return true;
+      if (prop === Symbol.toStringTag) return 'Module';
+      if (prop === 'default') return shimObj;
       const name = String(prop);
-      if (cache[name]) return cache[name];
+      if (name in cache) return cache[name];
       const val = name.startsWith('Icon') ? makePlaceholderIcon() : (function Empty() { return null; });
       cache[name] = val;
       return val;
     },
+    /** 让 __toESM 的 Object.getOwnPropertyNames 能"看到"预填的组件 */
+    ownKeys() { return Object.keys(cache); },
+    getOwnPropertyDescriptor(_t, prop) {
+      const name = String(prop);
+      if (name in cache) return { enumerable: true, configurable: true, value: cache[name] };
+      return undefined;
+    },
+    has(_t, prop) {
+      const name = String(prop);
+      if (name in cache) return true;
+      return typeof prop === 'string' && !name.startsWith('__');
+    },
   });
+  // 预填 DSH 插件【必需】的 primitives（dsh-market 检查这 4 个）
+  const REQUIRED = ['Menu', 'DisclosureRow', 'Tooltip', 'Toast'];
+  for (const n of REQUIRED) cache[n] = function Empty() { return null; };
+  return shimObj;
 }
 
 /** 最小 store 引擎（DSH @deepseek-ai/dsh-client-store 的简化实现） */
@@ -273,9 +298,56 @@ function makeConfigForms(): any {
   };
 }
 
+/** 主题服务（对齐 DSH ctx.theme）：getTheme/list/setTheme/subscribe */
+function makeTheme(emit: (evt: string, ...a: any[]) => void): any {
+  const themes = [
+    { id: 'light', colorScheme: 'light', tokens: {} },
+    { id: 'dark', colorScheme: 'dark', tokens: {} },
+    { id: 'system', colorScheme: 'light', tokens: {} },
+  ];
+  let snapshot: any = { preference: 'system', active: { id: 'light', colorScheme: 'light', tokens: {} }, themes, revision: 0 };
+  // 从主进程拉真主题
+  try {
+    const api = (window as any).shellAPI;
+    if (api && typeof api.themeGet === 'function') {
+      api.themeGet().then((r: any) => {
+        if (r && r.success && r.snapshot) {
+          snapshot = r.snapshot;
+          emit('theme/change', snapshot);
+        }
+      }).catch(() => {});
+    }
+  } catch (_) {}
+  const subs = new Set<(s: any) => void>();
+  return {
+    getTheme: () => snapshot,
+    getSnapshot: () => snapshot,
+    list: () => snapshot.themes || themes,
+    subscribe(cb: (s: any) => void) { if (typeof cb === 'function') subs.add(cb); return () => { subs.delete(cb); }; },
+    setTheme(id: string) {
+      try {
+        const api = (window as any).shellAPI;
+        if (api && typeof api.themeSet === 'function') {
+          api.themeSet(id).then((r: any) => {
+            if (r && r.success && r.snapshot) { snapshot = r.snapshot; for (const f of [...subs]) { try { f(snapshot); } catch (_) {} } emit('theme/change', snapshot); }
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    },
+    register() { return () => {}; },
+  };
+}
+
 /** 服务表（按名取） */
 function makeServices(): Record<string, any> {
   const locale = makeLocale();
+  // 事件总线（真实现，供 ctx.on/emit 用）
+  const evBus = new Map<string, Set<Function>>();
+  const emit = (evt: string, ...args: any[]) => {
+    const set = evBus.get(evt);
+    if (set) for (const fn of [...set]) { try { fn(...args); } catch (e) { console.error('[dsh-client] 事件回调失败 ' + evt, e); } }
+  };
+  const theme = makeTheme(emit);
   return {
     slots: null, // 每插件独立，稍后填
     sessions: makeSessions(),
@@ -286,10 +358,13 @@ function makeServices(): Record<string, any> {
     'remote.session': makeRemote().session,
     uiWorkspace: makeUiWorkspace(),
     locale,
+    theme,
     configForms: makeConfigForms(),
     forms: makeConfigForms(),
     tools: makeStub('tools'),
     store: makeStub('store'),
+    __evBus: evBus,
+    __emit: emit,
   };
 }
 
@@ -316,8 +391,24 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
           if (typeof bound === 'function') t = (k: string) => { try { const v = bound(k); return (v === undefined || v === null) ? String(k) : String(v); } catch (_) { return String(k); } };
         }
       } catch (_) {}
+      // DSH 依赖注入面：spec.inject
+      //   函数 → 调它拿 props（如 dsh-usage 的 face() → { store, poll, settings }）
+      //   数组 → 从服务表按名取
+      let injectedProps: any = undefined;
+      try {
+        const inj = s.inject;
+        if (typeof inj === 'function') {
+          injectedProps = inj() || {};
+        } else if (Array.isArray(inj)) {
+          injectedProps = {};
+          for (const nm of inj) {
+            if (typeof nm === 'string' && services[nm]) injectedProps[nm] = services[nm];
+          }
+        }
+      } catch (e) { console.error('[dsh-client] spec.inject 解析失败 ' + id, e); }
+
       const list = (slotTable.get(slotName) || []).filter((x) => x.key !== key);
-      list.push({ key, pluginId, slot: slotName, id, order: typeof s.order === 'number' ? s.order : 100, spec: s, Component, t });
+      list.push({ key, pluginId, slot: slotName, id, order: typeof s.order === 'number' ? s.order : 100, spec: s, Component, t, injectedProps });
       slotTable.set(slotName, list);
       notify();
       try {
@@ -344,10 +435,19 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
       try { const c = fn(); const d = typeof c === 'function' ? c : () => {}; effects.push(d); return d; }
       catch (e) { console.error('[dsh-client] effect 失败 ' + pluginId, e); return () => {}; }
     },
-    on() { return () => {}; },
-    once() { return () => {}; },
-    off() {},
-    emit() {},
+    on(evt: string, fn: any) {
+      const bus = services.__evBus as Map<string, Set<Function>>;
+      if (!bus || typeof fn !== 'function') return () => {};
+      if (!bus.has(evt)) bus.set(evt, new Set());
+      bus.get(evt)!.add(fn);
+      return () => { const s = bus.get(evt); if (s) s.delete(fn); };
+    },
+    once(evt: string, fn: any) {
+      const off = (ctx as any).on(evt, (...args: any[]) => { off(); fn(...args); });
+      return off;
+    },
+    off(evt: string, fn: any) { const s = (services.__evBus as any)?.get(evt); if (s) s.delete(fn); },
+    emit(evt: string, ...args: any[]) { const f = services.__emit; if (typeof f === 'function') f(evt, ...args); },
     // cordis：依赖就绪后回调（简化：立即执行）
     inject(_names: any, cb: any) {
       if (typeof cb !== 'function') return () => {};
@@ -385,6 +485,38 @@ function applyClient(pluginId: string, mod: any): void {
   }
 }
 
+/** 拦截 fetch：把 /api/* 请求重写到插件本地 HTTP 服务 */
+let httpBaseCache: string | null = null;
+function installFetchInterceptor(): void {
+  const w = window as any;
+  if (w.__ckFetchPatched) return;
+  w.__ckFetchPatched = true;
+  const origFetch = w.fetch.bind(w);
+  const isPluginApi = (u: string) => /(^|\/)api\/[\w.-]+\//.test(u) || /^file:.*\/api\//.test(u);
+  w.fetch = async (input: any, init?: any) => {
+    try {
+      let url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
+      if (isPluginApi(url)) {
+        if (httpBaseCache === null) {
+          try {
+            const api = (window as any).shellAPI;
+            const r = api && typeof api.webServerInfo === 'function' ? await api.webServerInfo() : null;
+            httpBaseCache = (r && r.success && r.base) ? r.base : '';
+          } catch (_) { httpBaseCache = ''; }
+        }
+        if (httpBaseCache) {
+          const m = url.match(/\/api\/(.*)$/);
+          if (m) {
+            const rewritten = httpBaseCache + '/api/' + m[1];
+            input = rewritten;
+          }
+        }
+      }
+    } catch (e) { console.error('[dsh-client] fetch 重写失败', e); }
+    return origFetch(input, init);
+  };
+}
+
 /** 全局 __ModuleLoader__（DSH client 入口会调它） */
 function installModuleLoader(): void {
   const w = window as any;
@@ -412,6 +544,7 @@ function installModuleLoader(): void {
 
 /** 加载所有已启用插件的 client 源码并执行（幂等） */
 export async function loadDshClients(): Promise<void> {
+  installFetchInterceptor();
   installModuleLoader();
   const api = (window as any).shellAPI;
   if (!api || typeof api.cuckooPluginClientSources !== 'function') return;
