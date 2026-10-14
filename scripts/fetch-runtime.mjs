@@ -69,6 +69,7 @@ function installedMarker(platform) {
   return path.join(RUNTIME_DIR, platform, '.installed.json');
 }
 
+/** uv/node 是否已就位（不因 pnpm 缺失而重装） */
 function isUpToDate(platform) {
   try {
     const marker = JSON.parse(fs.readFileSync(installedMarker(platform), 'utf-8'));
@@ -76,6 +77,42 @@ function isUpToDate(platform) {
   } catch {
     return false;
   }
+}
+
+/** pnpm 目录（跨平台共享，纯 JS） */
+const PNPM_DIR = path.join(RUNTIME_DIR, 'pnpm');
+
+/** pnpm 已就位且版本一致？ */
+function isPnpmUpToDate() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(PNPM_DIR, 'package.json'), 'utf-8'));
+    return pkg.version === VERSIONS.pnpm;
+  } catch {
+    return false;
+  }
+}
+
+/** 下载 pnpm（tarball → 解压 → 拷进 resources/runtime/pnpm/） */
+function fetchPnpm() {
+  if (isPnpmUpToDate()) {
+    console.log('[runtime] pnpm ' + VERSIONS.pnpm + ' 已就位，跳过');
+    return;
+  }
+  console.log('[runtime] 准备 pnpm ' + VERSIONS.pnpm + '...');
+  const assetName = 'pnpm-' + VERSIONS.pnpm + '.tgz';
+  const url = 'https://registry.npmmirror.com/pnpm/-/' + assetName;
+  const archive = path.join(TMP_DIR, assetName);
+  download(url, archive);
+  const extractDir = path.join(TMP_DIR, 'pnpm');
+  extract(archive, extractDir);
+  // npm tarball 解压后是 package/ 子目录
+  const inner = fs.readdirSync(extractDir).map((n) => path.join(extractDir, n))
+    .find((p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } });
+  const srcDir = inner || extractDir;
+  fs.rmSync(PNPM_DIR, { recursive: true, force: true });
+  fs.mkdirSync(PNPM_DIR, { recursive: true });
+  copyDir(srcDir, PNPM_DIR);
+  console.log('[runtime] pnpm 就位 → ' + PNPM_DIR);
 }
 
 /** 把 srcDir 下的所有文件复制到 destDir */
@@ -103,52 +140,51 @@ function chmodExec(dir) {
 
 function main() {
   const platform = currentPlatform();
-  if (isUpToDate(platform)) {
-    console.log('[runtime] ' + platform + ' 已是最新（uv ' + VERSIONS.uv + ', node ' + VERSIONS.node + '），跳过');
-    return;
-  }
-
-  console.log('[runtime] 准备 ' + platform + ' 运行时...');
   fs.rmSync(TMP_DIR, { recursive: true, force: true });
   fs.mkdirSync(TMP_DIR, { recursive: true });
 
-  const binDir = path.join(RUNTIME_DIR, platform, 'bin');
-  fs.rmSync(binDir, { recursive: true, force: true });
-  fs.mkdirSync(binDir, { recursive: true });
+  // ---- uv + node（按平台；已就位则跳过）----
+  if (isUpToDate(platform)) {
+    console.log('[runtime] ' + platform + ' uv/node 已是最新（uv ' + VERSIONS.uv + ', node ' + VERSIONS.node + '），跳过');
+  } else {
+    console.log('[runtime] 准备 ' + platform + ' 运行时...');
+    const binDir = path.join(RUNTIME_DIR, platform, 'bin');
+    fs.rmSync(binDir, { recursive: true, force: true });
+    fs.mkdirSync(binDir, { recursive: true });
 
-  // ---- uv ----
-  const uvAssetName = uvAsset(platform);
-  const uvUrl = 'https://github.com/astral-sh/uv/releases/download/' + VERSIONS.uv + '/' + uvAssetName;
-  const uvArchive = path.join(TMP_DIR, uvAssetName);
-  download(uvUrl, uvArchive);
-  const uvExtract = path.join(TMP_DIR, 'uv');
-  extract(uvArchive, uvExtract);
-  // uv 解压后直接是 uv / uv.exe（可能有子目录，递归找）
-  copyDir(uvExtract, binDir);
+    // uv
+    const uvAssetName = uvAsset(platform);
+    const uvUrl = 'https://github.com/astral-sh/uv/releases/download/' + VERSIONS.uv + '/' + uvAssetName;
+    const uvArchive = path.join(TMP_DIR, uvAssetName);
+    download(uvUrl, uvArchive);
+    const uvExtract = path.join(TMP_DIR, 'uv');
+    extract(uvArchive, uvExtract);
+    copyDir(uvExtract, binDir);
 
-  // ---- node ----
-  const nodeAssetName = nodeAsset(platform);
-  const nodeUrl = 'https://nodejs.org/dist/' + VERSIONS.node + '/' + nodeAssetName;
-  const nodeArchive = path.join(TMP_DIR, nodeAssetName);
-  download(nodeUrl, nodeArchive);
-  const nodeExtract = path.join(TMP_DIR, 'node');
-  extract(nodeArchive, nodeExtract);
-  // node 解压后是 node-vX.Y.Z-<platform>/ 子目录
-  const nodeInner = fs.readdirSync(nodeExtract).map(n => path.join(nodeExtract, n)).find(p => fs.statSync(p).isDirectory());
-  copyDir(nodeInner || nodeExtract, binDir);
+    // node
+    const nodeAssetName = nodeAsset(platform);
+    const nodeUrl = 'https://nodejs.org/dist/' + VERSIONS.node + '/' + nodeAssetName;
+    const nodeArchive = path.join(TMP_DIR, nodeAssetName);
+    download(nodeUrl, nodeArchive);
+    const nodeExtract = path.join(TMP_DIR, 'node');
+    extract(nodeArchive, nodeExtract);
+    const nodeInner = fs.readdirSync(nodeExtract).map(n => path.join(nodeExtract, n)).find(p => fs.statSync(p).isDirectory());
+    copyDir(nodeInner || nodeExtract, binDir);
 
-  chmodExec(binDir);
+    chmodExec(binDir);
 
-  // 标记已安装
-  fs.writeFileSync(installedMarker(platform), JSON.stringify({
-    uv: VERSIONS.uv, node: VERSIONS.node, installedAt: new Date().toISOString(),
-  }, null, 2));
+    fs.writeFileSync(installedMarker(platform), JSON.stringify({
+      uv: VERSIONS.uv, node: VERSIONS.node, installedAt: new Date().toISOString(),
+    }, null, 2));
 
-  // 清理临时
+    console.log('[runtime] 完成 → ' + binDir);
+    console.log('[runtime] 内容: ' + fs.readdirSync(binDir).join(', '));
+  }
+
+  // ---- pnpm（跨平台共享，纯 JS）----
+  fetchPnpm();
+
   fs.rmSync(TMP_DIR, { recursive: true, force: true });
-
-  console.log('[runtime] 完成 → ' + binDir);
-  console.log('[runtime] 内容: ' + fs.readdirSync(binDir).join(', '));
 }
 
 main();

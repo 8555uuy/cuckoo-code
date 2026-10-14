@@ -11,6 +11,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
+import * as dshPrimitives from './dsh-primitives/index.js';
 
 export interface SlotItem {
   key: string;
@@ -156,7 +157,7 @@ const moduleTable: Record<string, any> = {
   'react-dom/client': ReactDOMClient,
   'react/jsx-runtime': jsxRuntime,
   'react/jsx-dev-runtime': jsxRuntime,
-  '@deepseek-ai/dsh-client-ui-primitives': makePrimitivesShim(),
+  '@deepseek-ai/dsh-client-ui-primitives': dshPrimitives,
   '@deepseek-ai/dsh-client-store': makeStoreEngine(),
   '@deepseek-ai/dsh-client-runtime/client': makeStoreEngine(),
   '@deepseek-ai/dsh-client-runtime': makeStoreEngine(),
@@ -194,14 +195,16 @@ function makeLocale(): any {
     return key;
   };
   const localeSubs = new Set<(l: string) => void>();
+  // ⚠️ getSnapshot 必须返回稳定引用（useSyncExternalStore 要求）——否则无限重渲染
+  let localeSnapshot: any = { current: lang, active: lang };
   const api: any = {
     register(ns: string, dict: any) { dicts[ns] = dict; return () => { delete dicts[ns]; }; },
     bind(ns: string) { return (key: string) => lookup(ns, key); },
     t,
     // 订阅语言变化（组件常用：locale.subscribe(() => ...)）
     subscribe(cb: any) { if (typeof cb === 'function') localeSubs.add(cb); return () => { localeSubs.delete(cb); }; },
-    getSnapshot() { return { current: lang }; },
-    setLocale(next: string) { lang = next; for (const fn of [...localeSubs]) { try { fn(next); } catch (_) {} } },
+    getSnapshot() { return localeSnapshot; },
+    setLocale(next: string) { lang = next; localeSnapshot = { current: lang, active: lang }; for (const fn of [...localeSubs]) { try { fn(next); } catch (_) {} } },
     get current() { return lang; },
   };
   return api;
@@ -492,7 +495,22 @@ function installFetchInterceptor(): void {
   if (w.__ckFetchPatched) return;
   w.__ckFetchPatched = true;
   const origFetch = w.fetch.bind(w);
-  const isPluginApi = (u: string) => /(^|\/)api\/[\w.-]+\//.test(u) || /^file:.*\/api\//.test(u);
+  // 判断"该走插件 HTTP 服务"的 URL：
+  //   - /api/*（Cuckoo 旧约定）
+  //   - /dsh-*/*（dsh 插件路由，如 /dsh-market/status）
+  //   - /plugin*/*（插件路由）
+  //   - file:// 下的相对根路径（fetch('/xxx') 在 file:// 页面上会解析成 file:///C:/.../xxx）
+  // 判断"该走插件 HTTP 服务"的 URL——**路径任意位置**含 API 标记即可：
+  //   /dsh-market/xxx
+  //   /C:/d/.../src/ui/dsh-market/xxx  （file:// 页面 + new URL 后的形态）
+  //   /api/xxx
+  //   /plugin* /xxx
+  const API_MARKERS = ['/dsh-market/', '/api/', '/plugin'];
+  const isPluginApi = (u: string) => {
+    if (!u) return false;
+    for (const mk of API_MARKERS) { if (u.indexOf(mk) >= 0) return true; }
+    return false;
+  };
   w.fetch = async (input: any, init?: any) => {
     try {
       let url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
@@ -505,11 +523,22 @@ function installFetchInterceptor(): void {
           } catch (_) { httpBaseCache = ''; }
         }
         if (httpBaseCache) {
-          const m = url.match(/\/api\/(.*)$/);
-          if (m) {
-            const rewritten = httpBaseCache + '/api/' + m[1];
-            input = rewritten;
+          // 从任意形态的 URL 里提取"API 路径"：
+          //   /dsh-market/xxx | file:///C:/dsh-market/xxx | http://.../dsh-market/xxx
+          //   → /dsh-market/xxx
+          let raw = url;
+          if (raw.startsWith('file:')) {
+            const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
+            if (m) raw = '/' + m[1];
           }
+          // 找 API 标记（从第一个匹配处切）
+          let pathname = '';
+          for (const mk of API_MARKERS) {
+            const idx = raw.indexOf(mk);
+            if (idx >= 0) { pathname = raw.slice(idx); break; }
+          }
+          if (!pathname) pathname = raw.startsWith('/') ? raw : '/' + raw;
+          input = httpBaseCache + pathname;
         }
       }
     } catch (e) { console.error('[dsh-client] fetch 重写失败', e); }
