@@ -6,11 +6,16 @@
  * 依赖方向：本模块在 plugins 层（纯 node + esbuild + 工具注册表）。
  */
 import { Tool } from '../../tools/core/Tool.js';
-import { installCuckooPlugin } from './installer.js';
 import { loadCuckooPlugin } from './loader.js';
 import type { CuckooHost } from './loader.js';
-import { listCuckooPluginDirs, getCuckooPluginDir, isValidPluginId } from './paths.js';
-import { isCuckooPluginEnabled, setCuckooPluginEnabled, clearCuckooPluginState } from './state.js';
+import { getCuckooPluginsDir, isValidPluginId } from './paths.js';
+import {
+  installToProfile,
+  uninstallFromProfile,
+  listEnabledPlugins,
+  listProfilePluginEntries,
+  setPluginEnabledInProfile,
+} from '../profile/index.js';
 
 /**
  * 从 JSON Schema 生成 JS 调用签名（供提示词），展开嵌套结构——
@@ -83,35 +88,37 @@ async function loadPluginFromDir(dir: string, registry: any, host?: CuckooHost):
   return { pluginName, tools: names };
 }
 
-/** 安装（npm 下载）+ 加载 + 注册 */
+/** 安装（pnpm 装进 profile）+ 加载 + 注册工具 */
 async function installAndLoad(pkgName: string, registry: any, host?: CuckooHost): Promise<{ id: string; pluginName: string; tools: string[] }> {
-  const { id, dir } = await installCuckooPlugin(pkgName);
-  const r = await loadPluginFromDir(dir, registry, host);
-  setCuckooPluginEnabled(id, true);
-  return { id, pluginName: r.pluginName, tools: r.tools };
+  const r = await installToProfile(pkgName);
+  if (!r.ok) throw new Error(r.error || '安装失败');
+  if (!r.pluginDir) throw new Error('安装成功但未找到插件目录');
+  const lr = await loadPluginFromDir(r.pluginDir, registry, host);
+  return { id: r.id || '', pluginName: lr.pluginName, tools: lr.tools };
 }
 
-/** 启动时加载所有"已启用"的插件 */
+/** 启动时加载 profile 里所有"已启用"的插件 */
 async function loadEnabledPlugins(registry: any, host?: CuckooHost): Promise<{ loaded: string[]; failed: { id: string; error: string }[] }> {
   const loaded: string[] = [];
   const failed: { id: string; error: string }[] = [];
-  for (const dir of listCuckooPluginDirs()) {
-    const id = dir.split(/[\\/]/).pop() || '';
-    if (!isValidPluginId(id) || !isCuckooPluginEnabled(id)) continue;
+  for (const entry of listEnabledPlugins()) {
     try {
-      const r = await loadPluginFromDir(dir, registry, host);
-      loaded.push(id + '(' + r.pluginName + '):' + r.tools.join(','));
+      const r = await loadPluginFromDir(entry.dir, registry, host);
+      loaded.push(entry.id + '(' + r.pluginName + '):' + r.tools.join(','));
     } catch (err: any) {
-      failed.push({ id, error: err && err.message ? err.message : String(err) });
+      failed.push({ id: entry.id, error: err && err.message ? err.message : String(err) });
     }
   }
   return { loaded, failed };
 }
 
-/** 卸载插件（清状态；工具暂不动态移除，重启生效） */
-function uninstallCuckooPlugin(id: string): boolean {
-  clearCuckooPluginState(id);
-  return true;
+/** 卸载插件（从 profile 移除；工具暂不动态移除，重启生效） */
+async function uninstallCuckooPlugin(id: string): Promise<boolean> {
+  const entries = listProfilePluginEntries();
+  const hit = entries.find((e) => e.id === id);
+  if (!hit) return false;
+  const r = await uninstallFromProfile(hit.name);
+  return r.ok;
 }
 
 export { installAndLoad, loadEnabledPlugins, loadPluginFromDir, uninstallCuckooPlugin, loadedPluginTools, DshPluginTool };

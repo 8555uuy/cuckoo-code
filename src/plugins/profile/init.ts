@@ -39,8 +39,15 @@ export function ensureProfile(name: string = DEFAULT_PROFILE): string {
       '',
       '# hoisted：扁平 node_modules（Cuckoo 的加载逻辑按目录找插件，不用 pnpm 的软链）',
       'nodeLinker: hoisted',
-      '# 自动装 peer 依赖（插件常声明 peer）',
-      'autoInstallPeers: true',
+      '# ⚠️ 不自动装 peer：DSH 插件的 peer 是 @deepseek-ai/*（宿主提供，npm 上没有）',
+      '#    装它会 404 / 版本匹配失败（对齐 DSH 的配置）',
+      'autoInstallPeers: false',
+      '',
+      '# 需要构建的包（原生模块，对齐 DSH）',
+      'allowBuilds:',
+      '  cloudflared: true',
+      '  cpu-features: true',
+      '  ssh2: true',
       '',
     ].join(String.fromCharCode(10));
     fs.writeFileSync(getProfileWorkspacePath(dir), yaml, 'utf-8');

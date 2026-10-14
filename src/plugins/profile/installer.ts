@@ -24,8 +24,14 @@ import { runPnpm, isPnpmAvailable } from './pnpm.js';
 
 export interface ProfileInstallResult {
   ok: boolean;
+  /** 插件 id（包名转 kebab） */
   id?: string;
+  /** 裸包名（含 scope，如 @scope/name） */
+  name?: string;
+  /** profile 目录 */
   dir?: string;
+  /** 插件包目录（真正装好的地方） */
+  pluginDir?: string;
   error?: string;
 }
 
@@ -63,7 +69,8 @@ export async function installToProfile(pkgName: string, profileName: string = DE
     const manifest = readProfileManifest(dir, profileName);
     const updated = addDependency(manifest, bareName, installedVersion ? '^' + installedVersion : 'latest');
     writeProfileManifest(dir, updated);
-    return { ok: true, id, dir };
+    const pluginDir = path.join(getProfileModulesDir(dir), bareName);
+    return { ok: true, id, name: bareName, dir, pluginDir };
   } catch (e: any) {
     return { ok: false, error: e && e.message ? e.message : String(e) };
   }
@@ -97,7 +104,7 @@ export async function uninstallFromProfile(pkgName: string, profileName: string 
     }
     const manifest = readProfileManifest(dir, profileName);
     writeProfileManifest(dir, removeDependency(manifest, bare));
-    return { ok: true, dir };
+    return { ok: true, name: bare, dir };
   } catch (e: any) {
     return { ok: false, error: e && e.message ? e.message : String(e) };
   }

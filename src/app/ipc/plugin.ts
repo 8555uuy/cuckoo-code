@@ -35,13 +35,11 @@ import {
 } from '../../plugins/cuckoo-plugins/index.js';
 import { resolveClientEntry } from '../../plugins/cuckoo-plugins/loader.js';
 import {
-  listCuckooPluginDirs,
-  getCuckooPluginsDir,
-} from '../../plugins/cuckoo-plugins/paths.js';
-import {
-  isCuckooPluginEnabled,
-  setCuckooPluginEnabled,
-} from '../../plugins/cuckoo-plugins/state.js';
+  getProfileDir,
+  ensureProfile,
+  listProfilePluginEntries,
+  setPluginEnabledInProfile,
+} from '../../plugins/profile/index.js';
 import { registry as toolRegistry } from '../../tools/index.js';
 import * as windowState from '../window.js';
 import * as mcpClient from '../../mcp/client.js';
@@ -490,14 +488,13 @@ function registerPluginIpc(): void {
   // 列表：已安装的 Cuckoo 插件（~/.cuckoo/cuckoo-plugins/）
   ipcMain.handle('cuckoo-plugin-list', async () => {
     try {
-      const plugins = listCuckooPluginDirs().map((dir) => {
-        const id = dir.split(/[\\/]/).pop() || '';
-        let name = id, version = '', description = '';
+      const plugins = listProfilePluginEntries().map((entry) => {
+        let name = entry.name, version = '', description = '';
         try {
-          const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
-          name = pkg.name || id; version = pkg.version || ''; description = pkg.description || '';
+          const pkg = JSON.parse(fs.readFileSync(path.join(entry.dir, 'package.json'), 'utf-8'));
+          name = pkg.name || entry.name; version = pkg.version || ''; description = pkg.description || '';
         } catch (_) { /* ignore */ }
-        return { id, name, version, description, enabled: isCuckooPluginEnabled(id) };
+        return { id: entry.id, name, version, description, enabled: entry.enabled };
       });
       return { success: true, plugins };
     } catch (err: any) {
@@ -516,24 +513,26 @@ function registerPluginIpc(): void {
     }
   });
 
-  // 卸载（清状态；重启生效）
+  // 卸载（从 profile 移除；重启生效）
   ipcMain.handle('cuckoo-plugin-uninstall', async (_event: any, { id }: any = {}) => {
     try {
-      uninstallCuckooPlugin(id);
+      const ok = await uninstallCuckooPlugin(id);
+      if (!ok) return { success: false, error: '未找到插件: ' + id };
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err && err.message ? err.message : String(err) };
     }
   });
 
-  // 启用/禁用（重启生效；启用时若工具未注册则立即注册）
+  // 启用/禁用（写 cordis.patch.yml；重启生效；启用时若工具未注册则立即注册）
   ipcMain.handle('cuckoo-plugin-toggle', async (_event: any, { id, enabled }: any = {}) => {
     try {
-      const ok = setCuckooPluginEnabled(id, !!enabled);
-      if (!ok) return { success: false, error: '插件 id 非法' };
+      if (!id || typeof id !== 'string') return { success: false, error: '缺少插件 id' };
+      setPluginEnabledInProfile(id, !!enabled);
       if (enabled) {
         // 尝试立即加载（工具已注册会覆盖告警，无碍）
-        try { await loadPluginFromDir(getCuckooPluginsDir() + '/' + id, toolRegistry); } catch (_) { /* 已加载或失败，重启兜底 */ }
+        const entry = listProfilePluginEntries().find((e) => e.id === id);
+        if (entry) { try { await loadPluginFromDir(entry.dir, toolRegistry); } catch (_) { /* 已加载或失败，重启兜底 */ } }
       }
       return { success: true };
     } catch (err: any) {
@@ -541,10 +540,10 @@ function registerPluginIpc(): void {
     }
   });
 
-  // 打开 Cuckoo 插件目录
+  // 打开 Cuckoo 插件目录（profile 目录）
   ipcMain.handle('cuckoo-plugin-open-dir', async () => {
     try {
-      const dir = getCuckooPluginsDir();
+      const dir = ensureProfile();
       fs.mkdirSync(dir, { recursive: true });
       const err = await shell.openPath(dir);
       return err ? { success: false, error: err } : { success: true };
@@ -612,21 +611,20 @@ function registerPluginIpc(): void {
   ipcMain.handle('plugin-slot-list', async () => ({ success: true, slots: listPluginSlots() }));
 
   // ===== DSH 插件 client 入口源码（壳页面加载执行）=====
-  // 返回已启用的 Cuckoo 插件（~/.cuckoo/cuckoo-plugins/）的 ./client 源码。
+  // 返回已启用的 profile 插件的 ./client 源码。
   // 壳页面用最小 DSH 运行时（window.__ModuleLoader__ + React require）执行它。
   ipcMain.handle('cuckoo-plugin-client-sources', async () => {
     try {
       const out: Array<{ pluginId: string; pkgName: string; source: string }> = [];
-      for (const dir of listCuckooPluginDirs()) {
-        const id = path.basename(dir);
-        try { if (!isCuckooPluginEnabled(id)) continue; } catch (_) { continue; }
+      for (const entry of listProfilePluginEntries()) {
+        if (!entry.enabled) continue;
         try {
-          const c = resolveClientEntry(dir);
+          const c = resolveClientEntry(entry.dir);
           if (!c) continue;
           const source = fs.readFileSync(c.file, 'utf-8');
-          out.push({ pluginId: id, pkgName: c.pkgName, source });
+          out.push({ pluginId: entry.id, pkgName: c.pkgName, source });
         } catch (err: any) {
-          console.error('[plugin-client] 读取失败:', dir, err && err.message);
+          console.error('[plugin-client] 读取失败:', entry.dir, err && err.message);
         }
       }
       return { success: true, clients: out };

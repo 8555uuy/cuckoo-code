@@ -9,3 +9,4 @@ export * from './patch.js';
 export * from './init.js';
 export * from './pnpm.js';
 export * from './installer.js';
+export * from './loader.js';
