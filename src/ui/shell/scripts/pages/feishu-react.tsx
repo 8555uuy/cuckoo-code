@@ -13,7 +13,7 @@ interface FeishuCfg { appId?: string; appSecret?: string; hasSecret?: boolean; e
 interface Chat { chatId: string; name: string; }
 interface Binding { chatId?: string; chatName?: string; }
 
-/** 开关行 */
+/** 开关行（多个开关并列时用紧凑样式） */
 function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return createElement('div', { className: 'ck-set-field ck-set-toggle' },
     createElement('span', { className: 'ck-set-key' }, label),

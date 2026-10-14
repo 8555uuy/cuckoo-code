@@ -172,7 +172,7 @@
   .ck-set-key { font-size: 12px; color: var(--ck-text-2); }
   .ck-set-input {
     width: 100%; min-height: 32px;
-    background: var(--ck-surface); border: 1px solid transparent;
+    background: var(--ck-bg); border: 1px solid var(--ck-border);
     border-radius: 9px; padding: 7px 10px; color: var(--ck-text);
     font-size: 12.5px; font-family: inherit;
   }
@@ -182,7 +182,7 @@
   body[data-ck-dark] select.ck-set-input { color-scheme: dark; }
   select.ck-set-input option { background: var(--ck-bg); color: var(--ck-text); }
   .ck-set-textarea {
-    width: 100%; background: var(--ck-surface); border: 1px solid transparent;
+    width: 100%; background: var(--ck-bg); border: 1px solid var(--ck-border);
     border-radius: 9px; padding: 8px 10px; color: var(--ck-text);
     font-size: 12.5px; font-family: inherit; resize: vertical; line-height: 1.5;
   }
@@ -874,8 +874,8 @@
     background: rgba(0, 0, 0, .45);
   }
   .ck-settings-dialog {
-    width: 880px; max-width: 92vw;
-    height: 640px; max-height: 86vh;
+    width: 1000px; max-width: 92vw;
+    height: 720px; max-height: 88vh;
     display: flex; flex-direction: column;
     background: var(--ck-bg); color: var(--ck-text);
     border-radius: 12px; overflow: hidden;
@@ -897,6 +897,131 @@
     flex-shrink: 0; display: flex; align-items: center; gap: 10px;
     padding: 12px 18px; border-top: 1px solid var(--ck-border);
   }
-  .ck-settings-dialog .ck-set-nav { width: 180px; padding: 10px; }
-  .ck-settings-dialog .ck-set-nav-item { padding: 8px 12px; font-size: 13px; }
-  .ck-settings-dialog .ck-set-content { padding: 18px 22px; }
+  .ck-settings-dialog .ck-set-nav { width: 200px; padding: 10px 12px; }
+  .ck-settings-dialog .ck-set-nav-item { padding: 10px 14px; font-size: 13.5px; }
+  .ck-settings-dialog .ck-set-content { padding: 18px 28px 20px; }
+
+  /* ===== 设置开关卡（WorkBuddy 风格：标题+描述+大开关） ===== */
+  .ck-switch-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px;
+    background: var(--ck-surface);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .ck-switch-card:hover { background: var(--ck-hover-bg); }
+  .ck-switch-text { flex: 1; min-width: 0; }
+  .ck-switch-label { font-size: 13px; font-weight: 600; color: var(--ck-text); }
+  .ck-switch-desc { font-size: 11.5px; color: var(--ck-text-dim); margin-top: 3px; line-height: 1.5; }
+  .ck-switch.ck-switch-lg { width: 44px; height: 26px; }
+  .ck-switch.ck-switch-lg .ck-switch-track { border-radius: 13px; }
+  .ck-switch.ck-switch-lg .ck-switch-track::before { width: 20px; height: 20px; left: 3px; top: 3px; }
+  .ck-switch.ck-switch-lg input:checked + .ck-switch-track::before { transform: translateX(18px); }
+
+
+  /* ===== 设置页：卡片扁平化（去边框/背景/内边距，只留字段间距） ===== */
+  .ck-set-content .ck-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    gap: 12px;
+  }
+
+
+  /* ===== 设置页：右侧内容区顶部标题（像 WorkBuddy 的"账户管理"） ===== */
+  .ck-set-page-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ck-text);
+    margin: 0 0 16px;
+    line-height: 1.3;
+  }
+
+
+  /* 顶栏：✕ 悬浮右上（内容区从顶部开始，不留白） */
+  .ck-settings-head {
+    position: absolute; top: 4px; right: 8px;
+    padding: 0; border: none; z-index: 2;
+  }
+  .ck-settings-close { padding: 4px 8px; font-size: 15px; }
+  .ck-settings-dialog { position: relative; }
+  .ck-set-layout { padding-top: 0; }
+
+
+  /* ===== 设置项卡片化（对齐 WorkBuddy：每项浅灰底圆角） ===== */
+  .ck-set-content .ck-set-field {
+    background: var(--ck-surface);
+    border-radius: 10px;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  /* 卡片内的输入框改成透明白底，与卡片区分 */
+  .ck-set-content .ck-set-field .ck-set-input,
+  .ck-set-content .ck-set-field .ck-set-textarea {
+    background: var(--ck-bg);
+    border: 1px solid var(--ck-border);
+  }
+
+
+  /* ===== 自定义下拉（替代原生 select） ===== */
+  .ck-select { position: relative; width: 100%; }
+  .ck-select-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    min-height: 34px; padding: 7px 12px;
+    background: var(--ck-bg);
+    border: 1px solid var(--ck-border);
+    border-radius: 9px;
+    font-size: 12.5px; color: var(--ck-text); font-family: inherit;
+    cursor: pointer; transition: border-color .12s, box-shadow .12s;
+    user-select: none;
+  }
+  .ck-select-trigger:hover { border-color: var(--ck-border-strong); }
+  .ck-select.open .ck-select-trigger { border-color: var(--ck-primary); box-shadow: 0 0 0 3px var(--ck-primary-soft); }
+  .ck-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ck-select-placeholder { color: var(--ck-text-dim); }
+  .ck-select-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+    background: var(--ck-bg);
+    border: 1px solid var(--ck-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+    padding: 4px;
+    max-height: 260px; overflow-y: auto;
+  }
+  .ck-select-option {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 12px; border-radius: 7px;
+    font-size: 12.5px; color: var(--ck-text); cursor: pointer;
+    transition: background .1s;
+  }
+  .ck-select-option:hover { background: var(--ck-hover-bg); }
+  .ck-select-option.active { color: var(--ck-primary); font-weight: 600; }
+  .ck-select-check { display: inline-flex; color: var(--ck-primary); }
+
+
+  /* ===== 设置行（左标题+描述，右控件，对齐 WorkBuddy） ===== */
+  .ck-set-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--ck-surface);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .ck-set-row-text { flex: 1; min-width: 0; }
+  .ck-set-row-label { font-size: 13px; font-weight: 600; color: var(--ck-text); }
+  .ck-set-row-desc { font-size: 11.5px; color: var(--ck-text-dim); margin-top: 3px; line-height: 1.5; }
+  .ck-set-row-control { flex-shrink: 0; width: 180px; }
+
+
+  /* ===== 设置行补充：小输入框 / 纵向行 ===== */
+  .ck-set-input-sm { width: 90px; min-height: 30px; padding: 5px 8px; font-size: 12.5px; text-align: center; }
+  .ck-set-row-control .ck-set-inline { justify-content: flex-end; }
+  .ck-set-row-col {
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--ck-surface);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .ck-set-row-col .ck-set-row-label { font-size: 13px; font-weight: 600; color: var(--ck-text); }
+
