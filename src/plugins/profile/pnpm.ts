@@ -36,6 +36,25 @@ export function isPnpmAvailable(): boolean {
   return !!(bundledNode() && bundledPnpm());
 }
 
+/** DSH 的 packageManager invocation 格式：{ command, args, env } */
+export interface PnpmInvocation {
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+}
+
+/** 取 pnpm 的 invocation（供 DSH 插件的 profileContext.packageManager 用） */
+export function getPnpmInvocation(): PnpmInvocation | null {
+  const node = bundledNode();
+  const pnpm = bundledPnpm();
+  if (!node || !pnpm) return null;
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) { if (typeof v === 'string') env[k] = v; }
+  env.PATH = node.binDir + (process.platform === 'win32' ? ';' : ':') + (env.PATH || '');
+  if (process.platform === 'win32') env.Path = env.PATH;
+  return { command: node.cmd, args: [pnpm], env };
+}
+
 export interface PnpmResult {
   code: number;
   stdout: string;

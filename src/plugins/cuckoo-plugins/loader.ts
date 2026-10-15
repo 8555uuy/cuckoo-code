@@ -18,6 +18,8 @@ import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
 import { createC8Services } from '../dsh-compat/c8-services.js';
+import { getProfileDir, getProfilePatchPath, ensureProfile, DEFAULT_PROFILE, listProfilePluginEntries } from '../profile/index.js';
+import { getPnpmInvocation } from '../profile/pnpm.js';
 
 const require = createRequire(import.meta.url);
 
@@ -194,18 +196,18 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     // 这里把常用服务同时挂成属性，避免走 Proxy stub（静默失败）
     get webServer() { return (ctx as any).get ? (ctx as any).get('webServer') : undefined; },
     get loader() {
-      // dsh-market 调 host.loader.entries() —— 返回 Cuckoo 已装插件清单
+      // dsh-market 调 host.loader.entries() —— 返回 profile 里已装的插件清单
       return {
         entries: () => {
           try {
-            const dir = path.join(require('node:os').homedir(), '.cuckoo', 'cuckoo-plugins');
-            const out: any[] = [];
-            for (const name of (require('node:fs').readdirSync(dir) || [])) out.push({ id: name });
-            return out;
+            return listProfilePluginEntries().map((e: any) => ({ id: e.id, name: e.name, dir: e.dir, enabled: e.enabled }));
           } catch (_) { return []; }
         },
       };
     },
+    // dsh-market 的 /status 用 host.version + host.directory
+    version: 'cuckoo-0.8.13',
+    directory: (() => { try { return ensureProfile(DEFAULT_PROFILE); } catch (_) { return ''; } })(),
     logger: {
       warn: (...a: any[]) => dbg('warn @' + pluginName + ': ' + a.map(String).join(' ')),
       info: (...a: any[]) => dbg('info @' + pluginName + ': ' + a.map(String).join(' ')),
@@ -316,6 +318,29 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
             return [{ id: dir, path: dir, name }];
           },
         };
+      }
+      // ===== profileContext：DSH profile 上下文（对齐 DSH 的 ProfileContext）=====
+      // dsh-market 用它拿"profile 目录"（装插件的位置）+ packageManager（pnpm 命令）
+      if (key === 'profileContext') {
+        try {
+          const profileDir = ensureProfile(DEFAULT_PROFILE);
+          const home = require('node:os').homedir();
+          return {
+            name: DEFAULT_PROFILE,
+            dir: profileDir,
+            patchPath: getProfilePatchPath(profileDir),
+            installAnchor: profileDir,
+            cwd: process.cwd(),
+            home,
+            packageManager: getPnpmInvocation(),
+            startedBundles: [],
+            overlays: [],
+            telemetryDisabledEnv: undefined,
+          };
+        } catch (e: any) {
+          dbg('profileContext 构造失败 @' + pluginName + ': ' + (e && e.message ? e.message : String(e)));
+          return undefined;
+        }
       }
       // sessionProjectionCache：DSH 内部缓存，暂不提供
       if (key === 'sessionProjectionCache') return undefined;
