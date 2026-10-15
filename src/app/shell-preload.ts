@@ -87,6 +87,8 @@ const shellAPI = {
   listPluginSlots: () => ipcRenderer.invoke('plugin-slot-list'),
   // 插件本地 HTTP 服务端口（壳页面 fetch /api/* 需要）
   webServerInfo: () => ipcRenderer.invoke('plugin-webserver-info'),
+  // 壳页面令牌（fetch 时带 X-Cuckoo-Shell 头，让插件的同源检查放行）
+  getShellToken: () => ipcRenderer.invoke('shell-token'),
   // 插件配置
   pluginConfigGet: (pluginId: string) => ipcRenderer.invoke('plugin-config-get', { pluginId }),
   pluginConfigSet: (pluginId: string, values: any) => ipcRenderer.invoke('plugin-config-set', { pluginId, values }),

@@ -18,6 +18,7 @@ import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
 import { createC8Services } from '../dsh-compat/c8-services.js';
+import { CHILD_PROCESS_SHIM_CODE } from '../dsh-compat/cp-shim-code.js';
 import { getProfileDir, getProfilePatchPath, ensureProfile, DEFAULT_PROFILE, listProfilePluginEntries } from '../profile/index.js';
 import { getPnpmInvocation } from '../profile/pnpm.js';
 
@@ -93,6 +94,16 @@ const STUB_MODULE_CODE = [
   "module.exports = __makeStub('@deepseek-ai/stub');",
 ].join('\n');
 
+/**
+ * DSH CLI 兼容 shim（child_process）—— CJS 源码
+ *
+ * 作用：插件 spawn/exec "dsh" 命令时截住它，翻译成 pnpm（在 profile 目录跑）。
+ * 环境（profileDir/pnpm 路径/env）通过 globalThis.__CUCKOO_DSH__ 注入。
+ *
+ * ⚠️ 必须【具名导出】（spawn/spawnSync/exec/execSync）——插件用
+ *    import { spawn } from 'node:child_process'（具名导入）。
+ */
+
 /** 用 esbuild 打包插件：把 @deepseek-ai/* 映射到我们的 shim */
 async function bundlePlugin(entryFile: string): Promise<string> {
   const esbuild = require(path.join(process.cwd(), 'node_modules', 'esbuild', 'lib', 'main.js'));
@@ -112,6 +123,13 @@ async function bundlePlugin(entryFile: string): Promise<string> {
         // 其他（含 schemastery）→ 万能空接口（CJS 虚拟模块，支持 default import）
         build.onResolve({ filter: /^@deepseek-ai\// }, (args: any) => ({ path: args.path, namespace: 'dsh-stub' }));
         build.onLoad({ filter: /.*/, namespace: 'dsh-stub' }, () => ({ contents: STUB_MODULE_CODE, loader: 'js' }));
+        // node:child_process → 我们的 shim（拦截 dsh 命令 → 翻译成 pnpm）
+        // ⚠️ shim 自身要 real 模块（否则递归）——用 namespace 标记
+        build.onResolve({ filter: /^(node:)?child_process$/ }, (args: any) => {
+          if (args.namespace === 'ck-dsh-cp') return { external: true };  // shim 内部 → 真模块
+          return { path: 'child_process', namespace: 'ck-dsh-cp' };
+        });
+        build.onLoad({ filter: /.*/, namespace: 'ck-dsh-cp' }, () => ({ contents: CHILD_PROCESS_SHIM_CODE, loader: 'js' }));
       },
     }],
   });
@@ -409,6 +427,21 @@ async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{
   try { runtime.session.attachStorage(new PluginStorage(path.basename(pluginDir))); } catch (_) { /* ignore */ }
   setDshSession(runtime.session);
   const code = await bundlePlugin(entry);
+  // 注入 DSH CLI 兼容环境（child-process-shim 用：把 spawn('dsh') 翻译成 pnpm）
+  try {
+    const profileDir = ensureProfile(DEFAULT_PROFILE);
+    const inv = getPnpmInvocation();
+    if (inv) {
+      (globalThis as any).__CUCKOO_DSH__ = {
+        profileDir,
+        pnpmCommand: inv.command,
+        pnpmArgs: inv.args,
+        env: inv.env,
+      };
+    }
+  } catch (e: any) {
+    dbg('注入 __CUCKOO_DSH__ 失败: ' + (e && e.message ? e.message : String(e)));
+  }
   const moduleObj: any = { exports: {} };
   const fn = new Function('module', 'exports', 'require', code + '\n;return module.exports;');
   const mod = fn(moduleObj, moduleObj.exports, require);

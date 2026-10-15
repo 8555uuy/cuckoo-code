@@ -37,6 +37,21 @@ interface DynamicRoute {
 const routes: ServeRoute[] = [];
 const dynamicRoutes: DynamicRoute[] = [];
 
+/**
+ * 壳页面令牌（方案 B）：
+ * 壳页面是 file:// 协议，fetch 到 http://127.0.0.1 时浏览器标 "Sec-Fetch-Site: cross-site"
+ * → 插件（如 dsh-market）的同源检查会拒绝（误判为"外部网页"）。
+ *
+ * 解法：主进程启动时生成随机令牌，只存内存；
+ *  - 壳页面通过 IPC 拿到令牌，fetch 时带 X-Cuckoo-Shell 头
+ *  - 本服务器见到正确令牌 → 删掉 sec-fetch-site/origin 头再转发（模拟同源）
+ *  - 外部网页拿不到令牌（浏览器禁止跨站自定义头）→ 照旧被插件拒绝
+ */
+const SHELL_TOKEN = require('node:crypto').randomBytes(24).toString('hex');
+
+/** 暴露给 preload（壳页面取令牌用） */
+function getShellToken(): string { return SHELL_TOKEN; }
+
 /** 注册一个动态路由（返回 disposer）。插件宿主侧在主进程执行，handler 直接挂进 http server。 */
 function registerDynamicRoute(pluginId: string, spec: { kind?: string; path: string; handler: (req: any, res: any) => any }): () => void {
   const kind = spec && spec.kind === 'prefix' ? 'prefix' : 'exact';
@@ -76,6 +91,14 @@ function ensureServer(): Promise<number> {
     server = http.createServer((req, res) => {
       try {
         const url = new URL(req.url || '/', 'http://127.0.0.1');
+        // 方案 B：壳页面带的令牌 → 删掉"跨站"标记（模拟同源，让插件放行）
+        if (req.headers['x-cuckoo-shell'] === SHELL_TOKEN) {
+          delete req.headers['sec-fetch-site'];
+          delete req.headers['sec-fetch-mode'];
+          delete req.headers['sec-fetch-dest'];
+          delete req.headers.origin;
+          delete req.headers.referer;
+        }
         // 1) 动态路由优先（插件注册的 HTTP 处理器）
         const dyn = dynamicRoutes.find((r) => r.kind === 'exact' ? url.pathname === r.path : url.pathname.startsWith(r.path));
         if (dyn) {
@@ -141,6 +164,9 @@ function registerWebServerIpc(): void {
       return { success: false, error: err && err.message ? err.message : String(err) };
     }
   });
+
+  // 取壳页面令牌（壳页面 fetch 时带 X-Cuckoo-Shell 头）
+  ipcMain.handle('shell-token', async () => ({ token: SHELL_TOKEN }));
 
   // 取服务端口/基础 URL
   ipcMain.handle('plugin-webserver-info', async () => {

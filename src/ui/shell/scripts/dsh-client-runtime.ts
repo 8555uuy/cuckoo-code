@@ -490,6 +490,7 @@ function applyClient(pluginId: string, mod: any): void {
 
 /** 拦截 fetch：把 /api/* 请求重写到插件本地 HTTP 服务 */
 let httpBaseCache: string | null = null;
+let shellTokenCache: string | null = null;
 function installFetchInterceptor(): void {
   const w = window as any;
   if (w.__ckFetchPatched) return;
@@ -522,16 +523,21 @@ function installFetchInterceptor(): void {
             httpBaseCache = (r && r.success && r.base) ? r.base : '';
           } catch (_) { httpBaseCache = ''; }
         }
+        // 取壳令牌（只取一次）
+        if (shellTokenCache === null) {
+          try {
+            const api = (window as any).shellAPI;
+            const r = api && typeof api.getShellToken === 'function' ? await api.getShellToken() : null;
+            shellTokenCache = (r && r.token) ? r.token : '';
+          } catch (_) { shellTokenCache = ''; }
+        }
         if (httpBaseCache) {
-          // 从任意形态的 URL 里提取"API 路径"：
-          //   /dsh-market/xxx | file:///C:/dsh-market/xxx | http://.../dsh-market/xxx
-          //   → /dsh-market/xxx
+          // 从任意形态的 URL 里提取"API 路径"
           let raw = url;
           if (raw.startsWith('file:')) {
             const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
             if (m) raw = '/' + m[1];
           }
-          // 找 API 标记（从第一个匹配处切）
           let pathname = '';
           for (const mk of API_MARKERS) {
             const idx = raw.indexOf(mk);
@@ -539,6 +545,12 @@ function installFetchInterceptor(): void {
           }
           if (!pathname) pathname = raw.startsWith('/') ? raw : '/' + raw;
           input = httpBaseCache + pathname;
+          // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）
+          if (shellTokenCache) {
+            const headers = new Headers(init && init.headers ? init.headers : undefined);
+            headers.set('X-Cuckoo-Shell', shellTokenCache);
+            init = Object.assign({}, init || {}, { headers });
+          }
         }
       }
     } catch (e) { console.error('[dsh-client] fetch 重写失败', e); }

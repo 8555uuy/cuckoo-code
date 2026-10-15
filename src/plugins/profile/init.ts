@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { getProfileDir, getProfileManifestPath, getProfilePatchPath, getProfileWorkspacePath, getProfileLocalDir, DEFAULT_PROFILE } from './paths.js';
+import { getProfileDir, getProfileManifestPath, getProfilePatchPath, getProfileWorkspacePath, getProfileLocalDir, getUserDir, DEFAULT_PROFILE } from './paths.js';
 import { defaultManifest, readProfileManifest, writeProfileManifest } from './manifest.js';
 import { writeProfilePatch, readProfilePatch } from './patch.js';
 
@@ -42,6 +42,8 @@ export function ensureProfile(name: string = DEFAULT_PROFILE): string {
       '# ⚠️ 不自动装 peer：DSH 插件的 peer 是 @deepseek-ai/*（宿主提供，npm 上没有）',
       '#    装它会 404 / 版本匹配失败（对齐 DSH 的配置）',
       'autoInstallPeers: false',
+      '# store 固定在 ~/.cuckoo/pnpm-store（避免环境变量变化导致 store 不一致）',
+      'storeDir: ' + JSON.stringify(path.join(getUserDir(), 'pnpm-store')),
       '',
       '# 需要构建的包（原生模块，对齐 DSH）',
       'allowBuilds:',

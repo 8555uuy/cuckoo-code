@@ -28984,6 +28984,7 @@
     }
   }
   var httpBaseCache = null;
+  var shellTokenCache = null;
   function installFetchInterceptor() {
     const w = window;
     if (w.__ckFetchPatched) return;
@@ -29010,6 +29011,15 @@
               httpBaseCache = "";
             }
           }
+          if (shellTokenCache === null) {
+            try {
+              const api2 = window.shellAPI;
+              const r = api2 && typeof api2.getShellToken === "function" ? await api2.getShellToken() : null;
+              shellTokenCache = r && r.token ? r.token : "";
+            } catch (_) {
+              shellTokenCache = "";
+            }
+          }
           if (httpBaseCache) {
             let raw = url;
             if (raw.startsWith("file:")) {
@@ -29026,6 +29036,11 @@
             }
             if (!pathname) pathname = raw.startsWith("/") ? raw : "/" + raw;
             input2 = httpBaseCache + pathname;
+            if (shellTokenCache) {
+              const headers = new Headers(init && init.headers ? init.headers : void 0);
+              headers.set("X-Cuckoo-Shell", shellTokenCache);
+              init = Object.assign({}, init || {}, { headers });
+            }
           }
         }
       } catch (e) {

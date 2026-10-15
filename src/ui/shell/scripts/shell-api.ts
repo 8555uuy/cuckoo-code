@@ -139,4 +139,6 @@ export interface ShellAPI {
   slotRegister?: (spec: any) => Promise<any>;
   /** 插件本地 HTTP 服务端口（壳页面 fetch /api/* 用） */
   webServerInfo?: () => Promise<any>;
+  /** 壳页面令牌（fetch 时带 X-Cuckoo-Shell 头） */
+  getShellToken?: () => Promise<any>;
 }
