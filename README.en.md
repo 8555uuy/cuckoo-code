@@ -334,6 +334,8 @@ This project is licensed under the GNU General Public License v3.0. See the LICE
   - **Status-bar output speed (TPS)**: shows model output speed — exact server-side token count on DeepSeek, estimated on ChatGPT/Claude (PR #33)
   - **Provider-customizable tool-result format**: new optional `transformToolResult` hook lets plugins customize the text format before tool results are sent back (PR #34)
   - **Dangerous-command detection hardening**: fixes bypass via wrapper prefixes (`sudo`/`env`/`nohup` etc.), wildcard roots (`rm -rf /*`), and long options (`--recursive --force`, `--no-preserve-root`) (PR #38)
+  - **edit preserves EOL of unedited regions**: editing a mixed line-ending file no longer normalizes the whole file to its dominant format; only matched ranges are rewritten, preserving unedited regions byte-for-byte and eliminating diff noise (PR #39)
+  - **User memory system**: cross-session/cross-project long-term memory (remember/forgetMemory tools + inline [记忆]xxx marker auto-capture + system-prompt injection + sidebar management), protecting ~/.cuckoo/ user data from file tools (PR #40)
 - [@ZiJiangel](https://github.com/ZiJiangel):
   - **Feishu Markdown card**: AI replies pushed to Feishu now render Markdown (including tables) via interactive cards (PR #35)
   - **Executable plugin system + theme system**: executable plugin runtime (function / object / class plugin forms, 5 event dispatches, service provide/inject, reversible effects, assets, tool registration), theme system `ctx.theme` (main-process authoritative + IPC proxy + `--ck-*` tokens + custom title bar + persistence), UI primitives (overlay / shell mount / slot / addStyle) (PR #36)

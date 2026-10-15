@@ -17,6 +17,7 @@ import { registerPluginIpc } from './plugin.js';
 import { registerWebServerIpc } from './webserver.js';
 import { registerThemeIpc } from './theme.js';
 import { registerWindowGroupsIpc, onSwitchShareResult } from './window-groups.js';
+import { registerMemoryIpc } from './memory.js';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -40,6 +41,7 @@ function registerIpcHandlers(): void {
   registerWebServerIpc();
   registerThemeIpc();
   registerWindowGroupsIpc();
+  registerMemoryIpc();
 }
 
 export { registerIpcHandlers };

@@ -384,6 +384,8 @@ cuckoo-code/
   - **状态栏输出速度（TPS）**：显示模型输出速度，DeepSeek 用服务端精确 token，ChatGPT/Claude 估算（PR #33）
   - **provider 自定义工具结果格式**：新增 `transformToolResult` 可选钩子，插件可在工具结果回传前自定义文本格式（PR #34）
   - **危险命令检测增强**：修复前缀修饰词（`sudo`/`env`/`nohup` 等）、通配符根目录（`rm -rf /*`）、长选项（`--recursive --force`、`--no-preserve-root`）绕过（PR #38）
+  - **edit 保留未编辑区域换行符**：编辑混合换行符文件时不再全文规整成主导格式，只改写命中区间、逐字节保留未编辑区域行尾，消除 diff 噪音（PR #39）
+  - **用户记忆系统**：跨会话/跨项目的长期记忆（remember/forgetMemory 工具 + 正文 [记忆]xxx 标记自动捕获 + 系统提示词注入 + 侧边栏管理），并保护 ~/.cuckoo/ 用户数据不被文件工具误改（PR #40）
 - [@ZiJiangel](https://github.com/ZiJiangel)：
   - **飞书 Markdown 卡片**：飞书推送 AI 回复改用交互卡片渲染 Markdown（含表格）（PR #35）
   - **可执行插件系统 + 主题系统**：引入可执行插件运行时（函数/对象/类三种插件形态、5 种事件派发、服务 provide/inject、可逆副作用、资源、工具注册），主题系统 `ctx.theme`（主进程权威 + IPC 代理 + `--ck-*` token + 自绘标题栏 + 持久化），UI 原子能力（overlay / shell 挂载 / slot 槽位 / addStyle 注入 CSS）（PR #36）

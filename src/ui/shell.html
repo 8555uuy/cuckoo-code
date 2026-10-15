@@ -1632,6 +1632,9 @@
           <button class="ck-ab-item" data-tab="snippets" title="提示词">
             <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           </button>
+          <button class="ck-ab-item" data-tab="memories" title="记忆">
+            <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><path d="M9 21h6"/></svg>
+          </button>
           <button class="ck-ab-item" data-tab="skills" title="技能">
             <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           </button>
@@ -1963,6 +1966,29 @@
               </div>
             </div>
 
+            <!-- ===== 记忆 ===== -->
+            <div class="ck-tab" data-panel="memories">
+              <div class="ck-actions">
+                <button class="ck-btn ck-btn-anim" id="mem-add">
+                  <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span>新建记忆</span>
+                </button>
+                <button class="ck-icon-btn" id="mem-refresh" title="刷新">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                </button>
+              </div>
+              <div class="ck-actions" style="margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                  <input type="checkbox" id="mem-enabled" />
+                  <span>启用记忆功能（关闭后不注入提示词、不捕获标记、不可调用）</span>
+                </label>
+              </div>
+              <p class="ck-about-tip">记忆会随系统提示词发给模型，让 AI 了解你的习惯（跨项目保留）。</p>
+              <div class="ck-list" id="mem-list">
+                <div class="ck-list-empty">加载中…</div>
+              </div>
+            </div>
+
             <!-- ===== 技能 ===== -->
             <div class="ck-tab" data-panel="skills">
               <div class="ck-actions">
@@ -2207,7 +2233,13 @@
                 <div class="ck-about-ver">版本 <span id="about-version">—</span></div>
               </div>
 
-              <p class="ck-about-tip">本版本为<strong>插件改造版</strong>（plugin-ui-ext），已禁用原版在线更新，以免被覆盖丢失插件系统。</p>
+              <div class="ck-actions">
+                <button class="ck-btn ck-btn-anim" id="about-check-update">
+                  <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                  <span>检查更新</span>
+                </button>
+              </div>
+              <p class="ck-about-tip">更新需能连接 GitHub；如无法连接，请加下方 QQ 群自行下载。</p>
 
               <div class="ck-about-group">
                 <div class="ck-about-group-title">开源地址</div>
