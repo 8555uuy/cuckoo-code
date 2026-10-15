@@ -7,6 +7,7 @@
  * 状态见 docs/dsh-primitives-compat.md。
  */
 import { createElement, forwardRef, useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 // ===== 内部工具 =====
 function cx(...a: (string | undefined | null | false)[]): string { return a.filter(Boolean).join(' '); }
@@ -138,18 +139,21 @@ export function Modal(props: any) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
   if (!open) return null;
-  return createElement('div', {
-    className: cx('ck-dp-modal-mask', className),
+  const node = createElement('div', {
+    className: 'ck-dp-modal-mask',
     onClick: (e: any) => { if (e.target === e.currentTarget && typeof onClose === 'function') onClose(); },
     ...rest,
   },
-    createElement('div', { className: 'ck-dp-modal', onClick: (e: any) => e.stopPropagation() },
+    // className 加在对话框本体（对齐 DSH：.dialog 接 className，mask 是独立层）
+    createElement('div', { className: cx('ck-dp-modal', className), onClick: (e: any) => e.stopPropagation() },
       createElement('div', { className: 'ck-dp-modal-head' },
         createElement('span', { className: 'ck-dp-modal-title' }, title),
         createElement('button', { className: 'ck-dp-modal-close', title: closeLabel || '关闭', onClick: onClose }, '✕')),
       description ? createElement('div', { className: 'ck-dp-modal-desc' }, description) : null,
       createElement('div', { className: 'ck-dp-modal-body' }, children),
       footer ? createElement('div', { className: 'ck-dp-modal-foot' }, footer) : null));
+  // 用 Portal 挂到 body——避免被祖先的 transform/overflow 约束（否则 position:fixed 会相对祖先定位）
+  return typeof document !== 'undefined' ? createPortal(node, document.body) : node;
 }
 
 /** Menu / MenuSurface / MenuGroup / MenuItemButton（下拉菜单族） */
@@ -158,7 +162,7 @@ export function Menu(props: any) {
   if (!open) return null;
   const all = [...(Array.isArray(items) ? items : []), ...(Array.isArray(footer) ? footer : [])];
   const sel = selectedIds || (selectedId !== undefined ? [selectedId] : []);
-  return createElement('div', { className: cx('ck-dp-menu-mask', className), onClick: (e: any) => { if (e.target === e.currentTarget && typeof onClose === 'function') onClose(); }, ...rest },
+  const node = createElement('div', { className: cx('ck-dp-menu-mask', className), onClick: (e: any) => { if (e.target === e.currentTarget && typeof onClose === 'function') onClose(); }, ...rest },
     createElement('div', { className: cx('ck-dp-menu', 'ck-dp-menu-' + (align || 'start'), 'ck-dp-menu-' + (side || 'bottom')) },
       anchor != null ? createElement('div', { className: 'ck-dp-menu-anchor' }, anchor) : null,
       ...all.map((it: any, i: number) => {
@@ -175,6 +179,7 @@ export function Menu(props: any) {
           it && it.icon != null ? createElement('span', { className: 'ck-dp-menu-icon' }, it.icon) : null,
           createElement('span', { className: 'ck-dp-menu-text' }, it && it.label));
       })));
+  return typeof document !== 'undefined' ? createPortal(node, document.body) : node;
 }
 export function MenuSurface(props: any) { return Menu(props); }
 export function MenuGroup(props: any) { return Menu(props); }

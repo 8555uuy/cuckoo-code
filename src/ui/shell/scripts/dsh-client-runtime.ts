@@ -375,8 +375,15 @@ function makeServices(): Record<string, any> {
 function makeCtx(pluginId: string, services: Record<string, any>): any {
   const effects: Array<() => void> = [];
   const slots = {
-    inject(_name: string, cb: () => any) {
-      try { const d = cb(); return typeof d === 'function' ? d : () => {}; } catch (_) { return () => {}; }
+    inject(name: string, cb: () => any) {
+      try {
+        const d = cb();
+        return typeof d === 'function' ? d : () => {};
+      } catch (e: any) {
+        console.error('[dsh-slot] inject(' + name + ') 回调失败 @' + pluginId + ': ' + (e && e.message ? e.message : String(e)));
+        if (e && e.stack) console.error(String(e.stack).slice(0, 600));
+        return () => {};
+      }
     },
     register(spec: any, Component: any) {
       const s = spec || {};

@@ -24895,7 +24895,7 @@
             return root2;
           }
           var ReactVersion = "18.3.1";
-          function createPortal2(children, containerInfo, implementation) {
+          function createPortal3(children, containerInfo, implementation) {
             var key = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
             {
               checkKeyStringCoercion(key);
@@ -25752,7 +25752,7 @@
             if (!isValidContainer(container)) {
               throw new Error("Target container is not a DOM element.");
             }
-            return createPortal2(children, container, null, key);
+            return createPortal3(children, container, null, key);
           }
           function renderSubtreeIntoContainer(parentComponent, element, containerNode, callback) {
             return unstable_renderSubtreeIntoContainer(parentComponent, element, containerNode, callback);
@@ -27473,7 +27473,7 @@
   // src/ui/shell/scripts/shell-frame.tsx
   var import_react9 = __toESM(require_react(), 1);
   var import_client = __toESM(require_client(), 1);
-  var import_react_dom = __toESM(require_react_dom(), 1);
+  var import_react_dom2 = __toESM(require_react_dom(), 1);
 
   // src/ui/shell/scripts/pages/settings-react.tsx
   var import_react8 = __toESM(require_react(), 1);
@@ -27965,6 +27965,7 @@
 
   // src/ui/shell/scripts/dsh-primitives/components.tsx
   var import_react2 = __toESM(require_react(), 1);
+  var import_react_dom = __toESM(require_react_dom(), 1);
   function cx(...a) {
     return a.filter(Boolean).join(" ");
   }
@@ -28112,18 +28113,19 @@
       return () => document.removeEventListener("keydown", onKey);
     }, [open, onClose]);
     if (!open) return null;
-    return (0, import_react2.createElement)(
+    const node = (0, import_react2.createElement)(
       "div",
       {
-        className: cx("ck-dp-modal-mask", className),
+        className: "ck-dp-modal-mask",
         onClick: (e) => {
           if (e.target === e.currentTarget && typeof onClose === "function") onClose();
         },
         ...rest
       },
+      // className 加在对话框本体（对齐 DSH：.dialog 接 className，mask 是独立层）
       (0, import_react2.createElement)(
         "div",
-        { className: "ck-dp-modal", onClick: (e) => e.stopPropagation() },
+        { className: cx("ck-dp-modal", className), onClick: (e) => e.stopPropagation() },
         (0, import_react2.createElement)(
           "div",
           { className: "ck-dp-modal-head" },
@@ -28135,13 +28137,14 @@
         footer ? (0, import_react2.createElement)("div", { className: "ck-dp-modal-foot" }, footer) : null
       )
     );
+    return typeof document !== "undefined" ? (0, import_react_dom.createPortal)(node, document.body) : node;
   }
   function Menu(props) {
     const { open, anchor, items, footer, selectedId, selectedIds, onSelect, onClose, align, side, className, ...rest } = props || {};
     if (!open) return null;
     const all = [...Array.isArray(items) ? items : [], ...Array.isArray(footer) ? footer : []];
     const sel = selectedIds || (selectedId !== void 0 ? [selectedId] : []);
-    return (0, import_react2.createElement)(
+    const node = (0, import_react2.createElement)(
       "div",
       { className: cx("ck-dp-menu-mask", className), onClick: (e) => {
         if (e.target === e.currentTarget && typeof onClose === "function") onClose();
@@ -28172,6 +28175,7 @@
         })
       )
     );
+    return typeof document !== "undefined" ? (0, import_react_dom.createPortal)(node, document.body) : node;
   }
   function MenuSurface(props) {
     return Menu(props);
@@ -28817,12 +28821,14 @@
   function makeCtx(pluginId, services) {
     const effects = [];
     const slots = {
-      inject(_name, cb) {
+      inject(name, cb) {
         try {
           const d = cb();
           return typeof d === "function" ? d : () => {
           };
-        } catch (_) {
+        } catch (e) {
+          console.error("[dsh-slot] inject(" + name + ") \u56DE\u8C03\u5931\u8D25 @" + pluginId + ": " + (e && e.message ? e.message : String(e)));
+          if (e && e.stack) console.error(String(e.stack).slice(0, 600));
           return () => {
           };
         }
@@ -29796,7 +29802,7 @@
         )
       ),
       // 设置模态（Portal 挂到 body，全窗遮罩 + 居中对话框）
-      settingsOpen ? (0, import_react_dom.createPortal)(
+      settingsOpen ? (0, import_react_dom2.createPortal)(
         (0, import_react9.createElement)(SettingsModal, { onClose: () => setSettingsOpen(false) }),
         document.body
       ) : null
