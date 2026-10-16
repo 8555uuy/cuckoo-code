@@ -260,11 +260,28 @@ function registerPluginIpc(): void {
       return { ok: true, value: { changed: true, application: "applied", stage: "remove", target: pkgName } };
     } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
   });
-  ipcMain.handle("plugin-manager-install-bundle", async (_e: any, { spec }: any = {}) => {
+  ipcMain.handle("plugin-manager-install-bundle", async (_e: any, { spec, opts }: any = {}) => {
     try {
-      const r = await installToProfile(String(spec || ""));
-      if (!r.ok) return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
-      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'install' }); } catch (_) {}
+      const pkgName = String(spec || "");
+      const requestId = (opts && opts.requestId) ? String(opts.requestId) : undefined;
+      const jobId = 'job-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
+      const send = (ch: string, d: any) => { try { if (mw && mw.webContents) mw.webContents.send(ch, d); } catch (_) {} };
+      // 1) install-state: installing
+      send('plugin-manager-install-state', { requestId, phase: 'installing' });
+      // 2) 流式输出 → install-log
+      const onData = (text: string) => {
+        send('plugin-manager-install-log', { requestId, jobId, argv: ['pnpm', 'add', pkgName], cwd: '', stream: 'stdout', text });
+      };
+      const r = await installToProfile(pkgName, undefined as any, onData);
+      // 3) 最终 log（exitCode）
+      send('plugin-manager-install-log', { requestId, jobId, argv: ['pnpm', 'add', pkgName], cwd: '', stream: 'stdout', text: '', exitCode: r.ok ? 0 : 1 });
+      if (!r.ok) {
+        send('plugin-manager-install-state', { requestId, phase: 'applying' });
+        return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
+      }
+      send('plugin-manager-install-state', { requestId, phase: 'applying' });
+      send('plugin-manager-changed', { reason: 'install' });
       return { ok: true, value: { changed: true, application: "restart-required", stage: "install", target: r.name, bundle: r.name } };
     } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
   });

@@ -45,7 +45,7 @@ export function packageNameToId(pkgName: string): string {
  * 安装一个 npm 包到 profile。
  * @param pkgName 包名（可带版本，如 dshmarket 或 dshmarket@1.66.14）
  */
-export async function installToProfile(pkgName: string, profileName: string = DEFAULT_PROFILE): Promise<ProfileInstallResult> {
+export async function installToProfile(pkgName: string, profileName: string = DEFAULT_PROFILE, onData?: (s: string) => void): Promise<ProfileInstallResult> {
   const raw = String(pkgName || '').trim();
   if (!raw) return { ok: false, error: '包名不能为空' };
   // 校验包名（宽松：允许 @scope/name@version）
@@ -60,7 +60,7 @@ export async function installToProfile(pkgName: string, profileName: string = DE
   const dir = ensureProfile(profileName);
   try {
     // 1. 先跑 pnpm add（用 --dir 指定 profile；-w 因为它是 workspace root）
-    const res = await runPnpm(['add', raw, '-w'], dir);
+    const res = await runPnpm(['add', raw, '-w'], dir, onData ? { onData } : undefined);
     if (res.code !== 0) {
       return { ok: false, error: 'pnpm add 失败: ' + (res.stderr || res.stdout).slice(-500) };
     }

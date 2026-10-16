@@ -362,7 +362,7 @@ function makeRemote(): any {
       setBundleEnabled: (name: string, enabled: boolean) => call('pluginManagerSetEnabled', name, enabled),
       setPluginEnabled: (entryId: string, enabled: boolean) => call('pluginManagerSetEnabled', entryId, enabled),
       removeBundle: (name: string) => call('pluginManagerRemoveBundle', name),
-      installBundle: (spec: string, _opts?: any) => call('pluginManagerInstallBundle', spec),
+      installBundle: (spec: string, opts?: any) => call('pluginManagerInstallBundle', spec, opts),
       inspect: (spec: string, _signal?: any) => call('pluginManagerInspect', spec),
       cancelInstall: (_requestId: string) => call('pluginManagerCancelInstall'),
     },

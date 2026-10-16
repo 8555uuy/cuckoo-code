@@ -28979,7 +28979,7 @@
         setBundleEnabled: (name, enabled) => call("pluginManagerSetEnabled", name, enabled),
         setPluginEnabled: (entryId, enabled) => call("pluginManagerSetEnabled", entryId, enabled),
         removeBundle: (name) => call("pluginManagerRemoveBundle", name),
-        installBundle: (spec, _opts) => call("pluginManagerInstallBundle", spec),
+        installBundle: (spec, opts) => call("pluginManagerInstallBundle", spec, opts),
         inspect: (spec, _signal) => call("pluginManagerInspect", spec),
         cancelInstall: (_requestId) => call("pluginManagerCancelInstall")
       },
