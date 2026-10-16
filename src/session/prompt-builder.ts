@@ -18,7 +18,6 @@ import type { PluginScanRoots } from '../plugins/roots.js';
 import { buildMemorySection } from '../infra/memories.js';
 // DSH 插件注册的提示词段（C4）
 import { getPromptSections as getDshPromptSections } from '../plugins/dsh-compat/prompt-sections.js';
-import { buildMemorySection } from '../infra/memories.js';
 
 // 提示词模板目录（D20：锚定应用根，与 dist 结构解耦）
 const PROMPT_DIR = resolveSrc('prompt');
