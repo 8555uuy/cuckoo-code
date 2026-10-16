@@ -57,6 +57,13 @@ if (RENDERER_LOG_DIR) {
 }
 
 import { registerIpcHandlers } from './ipc/index.js';
+import { installCapture } from './ipc/registry.js';
+
+// ⚠️ 必须在任何 ipcMain.handle 之前安装捕获器（永久生效）：
+// 手机端壳页桥要靠它把 IPC handler 抓进 registry，否则报"未注册的通道"。
+// 注意：本文件后面（registerIpcHandlers 之后）还注册了 list-profiles 等，
+// 所以捕获器必须永久生效，不能注册完就撤。
+installCapture();
 import { buildChromeUserAgent, buildClientHintsHeaders } from '../infra/user-agent.js';
 import { initFeishu } from './ipc/feishu.js';
 import { injectSubagentDeps, runAgent as runAgentImpl, runGatewayQuery as runGatewayQueryImpl } from './subagent.js';

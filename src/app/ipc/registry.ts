@@ -63,4 +63,4 @@ async function invokeIpc(channel: string, args?: any): Promise<any> {
   return await fn(fakeEvent, args);
 }
 
-export { captureHandlers, invokeIpc, listChannels };
+export { captureHandlers, installCapture, invokeIpc, listChannels };
