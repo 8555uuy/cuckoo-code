@@ -114,6 +114,14 @@ export function HomePage() {
     if (spec && spec.command && typeof anyApi.commandInvoke === 'function') anyApi.commandInvoke(spec.command).catch(() => {});
   }, []);
 
+  // P3：DSH sidebar.panellist 项点击 → 切到 main 面板（按 id 匹配）
+  const selectPanel = useCallback((id: string) => {
+    try {
+      const fn = (window as any).__cuckooSelectPanel;
+      if (typeof fn === 'function') fn(id);
+    } catch (_) {}
+  }, []);
+
   const renderItem = (m: any) => {
     const label = specLabel(m.spec, m.id);
     const C = m.Component;
@@ -127,13 +135,18 @@ export function HomePage() {
     props.t = t;
     // 组件自带的文字（若 spec 没有 label/text/title，则不显示额外文字）
     const showLabel = !!(m.spec && (m.spec.label || m.spec.text || m.spec.title));
+    // DSH 语义：sidebar.panellist 项有 id → 点击切 main 面板
+    const hasCommand = !!(m.spec && m.spec.command);
+    const panelId = m.id;
+    const onClick = hasCommand ? (() => invokeCommand(m.spec)) : (() => selectPanel(panelId));
     // 有组件 → 用 div 包（避免 <button> 嵌 <button>）；无组件 → 用 button
     if (C) {
       return createElement('div', {
         key: m.key,
         className: 'ck-btn ck-btn-anim',
         title: (m.spec && m.spec.title) ? String(m.spec.title) : label,
-        style: { flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default' },
+        onClick,
+        style: { flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' },
       },
         createElement('span', { style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } },
           createElement(SlotErrorBoundary, null, createElement(C, props))),
@@ -144,7 +157,7 @@ export function HomePage() {
       key: m.key,
       className: 'ck-btn ck-btn-anim',
       title: (m.spec && m.spec.title) ? String(m.spec.title) : label,
-      onClick: () => invokeCommand(m.spec),
+      onClick,
       style: { flex: '0 0 auto' },
     }, createElement('span', null, label));
   };

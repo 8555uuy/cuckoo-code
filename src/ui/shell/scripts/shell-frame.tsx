@@ -6,11 +6,12 @@
  *
  * 复用现有 CSS class（.ck-activitybar / .ck-panel / .ck-panel-body / .ck-ab-item）。
  */
-import { createElement, useState, useMemo } from 'react';
+import { createElement, useState, useMemo, useEffect, Component, useCallback, useSyncExternalStore, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { api } from './shared.js';
 import { SettingsModal } from './pages/settings-react.js';
+import { subscribeSlots, getSlotItems } from './dsh-client-runtime.js';
 
 const SIDEBAR_COLLAPSED = 46;
 const MIN_WIDTH = 320;
@@ -72,6 +73,75 @@ const PAGES: Record<string, () => any> = {};
 /** 注册页面组件 */
 export function registerPage(id: string, comp: () => any): void { PAGES[id] = comp; }
 
+/** 包装 DSH main 插槽组件：造它要的 hooks（usePluginManager / useConfigLedger / renderSlot） */
+function MainSlotPage({ item }: { item: any }) {
+  const C = item.Component;
+  const face = item.injectedProps || {};
+  const t = item.t || ((k: string) => k);
+  const pmStore = face && face.hooks ? face.hooks.pluginManager : undefined;
+  const clStore = face && face.hooks ? face.hooks.configLedger : undefined;
+  // usePluginManager(selector) → 用 useSyncExternalStore 桥接快照 store
+  const usePluginManager = useCallback((selector: any) => {
+    return useSyncExternalStore(
+      (cb: any) => (pmStore && typeof pmStore.subscribe === 'function') ? pmStore.subscribe(cb) : () => {},
+      () => {
+        const s = pmStore ? pmStore.getSnapshot() : { status: 'idle', packages: [], busy: [], notice: null, install: {}, confirm: null, highlight: null };
+        return selector ? selector(s) : s;
+      },
+    );
+  }, [pmStore]);
+  const useConfigLedger = useCallback((selector: any) => {
+    return useSyncExternalStore(
+      (cb: any) => (clStore && typeof clStore.subscribe === 'function') ? clStore.subscribe(cb) : () => {},
+      () => {
+        const s = clStore ? clStore.getSnapshot() : { items: [], bundles: new Set(), rows: new Set() };
+        return selector ? selector(s) : s;
+      },
+    );
+  }, [clStore]);
+  // P5：renderSlot 真渲染子插槽
+  // 签名：renderSlot(slotName, ownerProps?, opts?) → ReactNode
+  //   opts.only     → list 类型：只渲染指定 id
+  //   opts.entryKey → keyed 类型：选择 key
+  //   opts.fallback → 空时回退
+  const renderSlot = useCallback((slotName: string, ownerProps?: any, opts?: any) => {
+    try {
+      const items = getSlotItems(slotName);
+      let filtered = items;
+      if (opts && opts.only !== undefined) filtered = items.filter((it: any) => it.id === opts.only);
+      else if (opts && opts.entryKey !== undefined) filtered = items.filter((it: any) => it.id === opts.entryKey || (it.spec && it.spec.key === opts.entryKey));
+      if (!filtered.length) return (opts && opts.fallback) || null;
+      return createElement(Fragment, null, ...filtered.map((it: any, i: number) => {
+        const C = it.Component;
+        if (!C) return null;
+        const p = Object.assign({}, ownerProps || {}, it.injectedProps || {});
+        p.t = it.t || ((k: string) => k);
+        return createElement(C, { key: it.key || ('slot-' + i), ...p });
+      }));
+    } catch (e) {
+      console.error('[dsh-slot] renderSlot(' + slotName + ') 失败', e);
+      return null;
+    }
+  }, []);
+  const props: any = { ...face, usePluginManager, useConfigLedger, renderSlot, t };
+  return createElement(C, props);
+}
+
+/** 错误边界：Page 组件崩溃不影响整个侧栏 */
+class PageErrorBoundary extends Component<{ children?: any }, { err: string | null }> {
+  constructor(props: any) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(e: any) { return { err: (e && e.message) ? e.message : String(e) }; }
+  componentDidCatch(e: any) { console.error('[dsh-page] Page 崩溃', e); }
+  render() {
+    if (this.state.err) {
+      return createElement('div', { style: { padding: 16, color: '#e55' } },
+        createElement('div', { style: { fontWeight: 700, marginBottom: 8 } }, '⚠ 页面组件崩溃'),
+        createElement('div', { style: { fontSize: 12, color: '#888', whiteSpace: 'pre-wrap' } }, this.state.err));
+    }
+    return (this as any).props.children;
+  }
+}
+
 /** 图标 */
 function Icon({ icon }: { icon: TabDef['icon'] }) {
   if (typeof icon === 'object' && 'text' in icon) return createElement('span', { className: 'ck-ab-text' }, icon.text);
@@ -86,9 +156,54 @@ function AbButton({ tab, active, onClick }: { tab: TabDef; active: boolean; onCl
 /** 主框架 */
 function ShellFrame() {
   const [activeTab, setActiveTab] = useState('home');
+  // DSH main 插槽面板 id（独立于 activeTab——侧栏不切，只在 .viewport 显示）
+  const [mainPanelId, setMainPanelId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // P3：DSH main 插槽注册的组件（按 key 匹配 activeTab）
+  const [mainSlotItems, setMainSlotItems] = useState<any[]>([]);
+  useEffect(() => {
+    const refresh = () => setMainSlotItems(getSlotItems('main'));
+    refresh();
+    return subscribeSlots(refresh);
+  }, []);
+  // 桥接：dsh-client-runtime 的 ctx.layout.selectPanel(id) → setActiveTab
+  useEffect(() => {
+    (window as any).__cuckooSelectPanel = (id: string | null) => {
+      if (id) {
+        const sidebar = document.getElementById('ck-sidebar');
+        if (sidebar && sidebar.classList.contains('ck-collapsed')) expandSidebar();
+      }
+      setMainPanelId(id);
+    };
+    return () => { try { delete (window as any).__cuckooSelectPanel; } catch (_) {} };
+  }, []);
+  // DSH main 插槽组件（按 id === mainPanelId 匹配）
+  const mainSlotItem = useMemo(() => mainSlotItems.find((m: any) => m.id === mainPanelId), [mainSlotItems, mainPanelId]);
+  const isMainSlotActive = !!(mainSlotItem && mainSlotItem.Component);
+  // 常规页面（侧栏里渲染）
   const Page = useMemo(() => PAGES[activeTab], [activeTab]);
+  // DSH main 插槽激活时：隐藏 AI view（让 .viewport 露出来）
+  useEffect(() => {
+    const anyApi = api as any;
+    if (isMainSlotActive) {
+      if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {});
+    } else {
+      if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {});
+    }
+  }, [isMainSlotActive]);
+  // DSH main 插槽内容 → Portal 到 .viewport（和 AI 网页同位置）
+  const viewportEl = useMemo(() => document.querySelector('.viewport'), []);
+  const mainOverlay = (isMainSlotActive && viewportEl)
+    ? createPortal(
+        createElement('div', {
+          style: { position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--ck-bg, #fff)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start' },
+        },
+          createElement(PageErrorBoundary, null, createElement(MainSlotPage, { item: mainSlotItem }))),
+        viewportEl as Element)
+    : null;
   const onTabClick = (id: string) => {
+    // 活动栏 tab → 关闭 DSH 主面板（回 AI view）+ 切侧栏页
+    setMainPanelId(null);
     const sidebar = document.getElementById('ck-sidebar');
     const collapsed = !!(sidebar && sidebar.classList.contains('ck-collapsed'));
     // 收起态 → 展开并切页
@@ -116,9 +231,13 @@ function ShellFrame() {
     ),
     createElement('div', { className: 'ck-panel' },
       createElement('div', { className: 'ck-panel-body' },
-        Page ? createElement(Page) : createElement('div', { style: { padding: 12, color: '#888' } }, '页面「' + activeTab + '」尚未重写'),
+        Page
+          ? createElement(PageErrorBoundary, null, createElement(Page))
+          : createElement('div', { style: { padding: 12, color: '#888' } }, '页面「' + activeTab + '」尚未重写'),
       ),
     ),
+    // DSH main 插槽内容（Portal 到 .viewport）
+    mainOverlay,
     // 设置模态（Portal 挂到 body，全窗遮罩 + 居中对话框）
     settingsOpen ? createPortal(
       createElement(SettingsModal, { onClose: () => setSettingsOpen(false) }),

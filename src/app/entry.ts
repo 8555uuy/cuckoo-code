@@ -312,11 +312,16 @@ function createWindow(profile: any) {
     const [cw, ch] = mainWindow.getContentSize();
     const w = (mainWindow as any).__ckShellWidth || cw;
     const h = (mainWindow as any).__ckShellHeight || ch;
-    view.setBounds({
-      x: sbw, y: tbh,
-      width: Math.max(0, w - sbw),
-      height: Math.max(0, h - tbh - STATUS_HEIGHT),
-    });
+    // AI view 可见性（P3：点"插件"等主面板时，隐藏 AI view 让壳页面主区域露出来）
+    if ((mainWindow as any).__ckAiViewVisible === false) {
+      view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+    } else {
+      view.setBounds({
+        x: sbw, y: tbh,
+        width: Math.max(0, w - sbw),
+        height: Math.max(0, h - tbh - STATUS_HEIGHT),
+      });
+    }
     // overlay（独立 BrowserWindow）覆盖整个"网页区域" —— 用屏幕坐标
     const ov = (mainWindow as any).__ckOverlayView;
     if (ov && !ov.isDestroyed()) {
@@ -342,6 +347,11 @@ function createWindow(profile: any) {
     }
   };
   (mainWindow as any).__ckLayout = layoutView;
+  /** 设置 AI view 可见性（P3 主面板切换用） */
+  (mainWindow as any).__ckSetAiViewVisible = (visible: boolean) => {
+    (mainWindow as any).__ckAiViewVisible = !!visible;
+    layoutView();
+  };
   layoutView();
   mainWindow.on('resize', layoutView);
   mainWindow.on('move', layoutView);

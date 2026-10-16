@@ -82,6 +82,12 @@ const shellAPI = {
   commandInvoke: (commandId: string) => ipcRenderer.invoke('plugin-command-invoke', { commandId }),
   commandList: () => ipcRenderer.invoke('plugin-command-list'),
   // 通用槽位
+  // P2：DSH remote.$on 事件（plugin-manager/changed 等）
+  onRemoteEvent: (cb: (evt: string, data: any) => void) => {
+    ipcRenderer.on('plugin-manager-changed', (_e: any, d: any) => cb('plugin-manager/changed', d));
+    ipcRenderer.on('plugin-manager-install-log', (_e: any, d: any) => cb('plugin-manager/install-log', d));
+    ipcRenderer.on('plugin-manager-install-state', (_e: any, d: any) => cb('plugin-manager/install-state', d));
+  },
   onPluginSlotRegister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-register', (_e: any, m: any) => cb(m)); },
   onPluginSlotUnregister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-unregister', (_e: any, m: any) => cb(m)); },
   listPluginSlots: () => ipcRenderer.invoke('plugin-slot-list'),
@@ -183,6 +189,15 @@ const shellAPI = {
   cuckooPluginUninstall: (id: string) => ipcRenderer.invoke('cuckoo-plugin-uninstall', { id }),
   cuckooPluginToggle: (id: string, enabled: boolean) => ipcRenderer.invoke('cuckoo-plugin-toggle', { id, enabled }),
   cuckooPluginOpenDir: () => ipcRenderer.invoke('cuckoo-plugin-open-dir'),
+  // DSH plugin-manager RPC（对齐 remote.pluginManager / remote.pluginInventory）
+  pluginManagerListBundles: () => ipcRenderer.invoke('plugin-manager-list-bundles'),
+  pluginManagerListPlugins: () => ipcRenderer.invoke('plugin-manager-list-plugins'),
+  pluginManagerSetEnabled: (id: string, enabled: boolean) => ipcRenderer.invoke('plugin-manager-set-enabled', { id, enabled }),
+  pluginManagerRemoveBundle: (name: string) => ipcRenderer.invoke('plugin-manager-remove-bundle', { name }),
+  pluginManagerInstallBundle: (spec: string) => ipcRenderer.invoke('plugin-manager-install-bundle', { spec }),
+  pluginManagerInspect: (spec: string) => ipcRenderer.invoke('plugin-manager-inspect', { spec }),
+  pluginManagerCancelInstall: () => ipcRenderer.invoke('plugin-manager-cancel-install'),
+  pluginInventoryList: () => ipcRenderer.invoke('plugin-inventory-list'),
   // ========== 关于 ==========
   getAppInfo: () => ipcRenderer.invoke('get-app-info'),
   checkUpdate: () => ipcRenderer.invoke('check-update'),

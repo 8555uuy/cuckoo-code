@@ -69,24 +69,28 @@ export function DisclosureRow(props: any) {
     open ? createElement('div', { className: 'ck-dp-disc-body' }, children) : null);
 }
 
-/** Switch：开关（checked 受控；onCheckedChange） */
+/** Switch：开关（checked 受控；onChange / onCheckedChange 都支持） */
 export function Switch(props: any) {
-  const { checked, onCheckedChange, className, disabled, ...rest } = props || {};
+  const { checked, onCheckedChange, onChange, className, disabled, label, title, ...rest } = props || {};
+  // DSH 用 onChange，我们兼容两者
+  const handler = typeof onChange === 'function' ? onChange : onCheckedChange;
   return createElement('button', {
     type: 'button', role: 'switch', 'aria-checked': !!checked, disabled,
+    'aria-label': label, title,
     className: cx('ck-dp-switch', checked && 'on', disabled && 'disabled', className),
-    onClick: () => { if (!disabled && typeof onCheckedChange === 'function') onCheckedChange(!checked); },
+    onClick: () => { if (!disabled && typeof handler === 'function') handler(!checked); },
     ...rest,
   }, createElement('span', { className: 'ck-dp-switch-thumb' }));
 }
 
-/** Checkbox：复选框 */
+/** Checkbox：复选框（onChange / onCheckedChange 都支持） */
 export function Checkbox(props: any) {
-  const { checked, onCheckedChange, className, disabled, ...rest } = props || {};
+  const { checked, onCheckedChange, onChange, className, disabled, ...rest } = props || {};
+  const handler = typeof onChange === 'function' ? onChange : onCheckedChange;
   return createElement('button', {
     type: 'button', role: 'checkbox', 'aria-checked': !!checked, disabled,
     className: cx('ck-dp-checkbox', checked && 'on', disabled && 'disabled', className),
-    onClick: () => { if (!disabled && typeof onCheckedChange === 'function') onCheckedChange(!checked); },
+    onClick: () => { if (!disabled && typeof handler === 'function') handler(!checked); },
     ...rest,
   }, checked ? createElement('span', { className: 'ck-dp-checkbox-mark' }, '✓') : null);
 }
@@ -110,15 +114,25 @@ export function SegmentedControl(props: any) {
 /** SegmentedTabs：分段 Tab（同 SegmentedControl，名字不同） */
 export const SegmentedTabs = SegmentedControl;
 
-/** Toast：轻提示（text + onDone） */
+/** Toast：轻提示（text + onDone；holdMs 可调） */
 export function Toast(props: any) {
-  const { text, icon, onDone, className, ...rest } = props || {};
+  const { text, icon, onDone, holdMs, className, style, ...rest } = props || {};
   useEffect(() => {
     if (typeof onDone !== 'function') return;
-    const t = setTimeout(() => { try { onDone(); } catch (_) {} }, 2400);
+    const t = setTimeout(() => { try { onDone(); } catch (_) {} }, typeof holdMs === 'number' ? holdMs : 2400);
     return () => clearTimeout(t);
-  }, [onDone]);
-  return createElement('div', { className: cx('ck-dp-toast', className), ...rest },
+  }, [onDone, holdMs]);
+  // 内联样式：防外部规则把 inline-flex/width 覆盖（DSH 的 CSS 有 display:flex 规则）
+  const inlineStyle = Object.assign({
+    display: 'inline-flex',
+    width: 'fit-content',
+    maxWidth: 'min(560px, 80vw)',
+    position: 'fixed',
+    left: '50%',
+    bottom: '44px',
+    transform: 'translateX(-50%)',
+  }, style || {});
+  return createElement('div', { className: cx('ck-dp-toast', className), style: inlineStyle, ...rest },
     icon != null ? createElement('span', { className: 'ck-dp-toast-icon' }, icon) : null,
     createElement('span', null, text));
 }

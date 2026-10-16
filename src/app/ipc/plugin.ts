@@ -39,6 +39,9 @@ import {
   ensureProfile,
   listProfilePluginEntries,
   setPluginEnabledInProfile,
+  listProfilePlugins,
+  installToProfile,
+  uninstallFromProfile,
 } from '../../plugins/profile/index.js';
 import { registry as toolRegistry } from '../../tools/index.js';
 import * as windowState from '../window.js';
@@ -146,6 +149,84 @@ function buildInstalledMap(): Record<string, { id: string; name: string; version
 }
 
 function registerPluginIpc(): void {
+  // ===== P1：DSH plugin-manager RPC（对齐 remote.pluginManager / remote.pluginInventory）=====
+  /** 把 profile 的插件列表 + patch 状态合成 BundleInfo[]（DSH 契约） */
+  function buildBundleInfos(): any[] {
+    const declared = listProfilePlugins();
+    const entries = listProfilePluginEntries();
+    const entryByName = new Map<string, any>();
+    for (const e of entries) entryByName.set(e.name, e);
+    return declared.map((p: any) => {
+      const e = entryByName.get(p.name);
+      let version: string | undefined;
+      let description: string | undefined;
+      try {
+        if (p.dir) {
+          const pkg = JSON.parse(fs.readFileSync(path.join(p.dir, "package.json"), "utf-8"));
+          version = pkg.version;
+          description = pkg.description;
+        }
+      } catch (_) {}
+      return {
+        name: p.name, version, description,
+        enabled: e ? !!e.enabled : false,
+        installed: !!p.installed,
+        optional: false, removable: true,
+        rows: [], overrides: [],
+      };
+    });
+  }
+  /** 把 profile 条目合成 PluginInfo[]（DSH 契约） */
+  function buildPluginInfos(): any[] {
+    return listProfilePluginEntries().map((e: any) => ({
+      entryId: e.id, moduleName: e.name,
+      enabled: !!e.enabled, fiberPhase: e.enabled ? "active" : null,
+    }));
+  }
+  ipcMain.handle("plugin-manager-list-bundles", async () => {
+    try { return { ok: true, value: buildBundleInfos() }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+  ipcMain.handle("plugin-manager-list-plugins", async () => {
+    try { return { ok: true, value: buildPluginInfos() }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+  ipcMain.handle("plugin-manager-set-enabled", async (_e: any, { id, enabled }: any = {}) => {
+    try {
+      setPluginEnabledInProfile(String(id || ""), !!enabled);
+      // P2：广播 plugin-manager/changed（reason: bundle）
+      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'bundle' }); } catch (_) {}
+      return { ok: true, value: { changed: true, application: "restart-required" } };
+    }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+  ipcMain.handle("plugin-manager-remove-bundle", async (_e: any, { name }: any = {}) => {
+    try {
+      const r = await uninstallFromProfile(String(name || ""));
+      if (!r.ok) return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
+      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'remove' }); } catch (_) {}
+      return { ok: true, value: { changed: true, application: "restart-required", stage: "remove", target: name } };
+    } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+  ipcMain.handle("plugin-manager-install-bundle", async (_e: any, { spec }: any = {}) => {
+    try {
+      const r = await installToProfile(String(spec || ""));
+      if (!r.ok) return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
+      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'install' }); } catch (_) {}
+      return { ok: true, value: { changed: true, application: "restart-required", stage: "install", target: r.name, bundle: r.name } };
+    } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+  ipcMain.handle("plugin-manager-inspect", async (_e: any, { spec }: any = {}) => {
+    const s = String(spec || "").trim();
+    if (!s) return { ok: true, value: { status: "refused", problem: "invalid-spec", reason: "包名不能为空" } };
+    return { ok: true, value: { status: "accepted", kind: "registry", name: s.replace(/@[\w.^~-]+$/, ""), bundle: null, registry: null } };
+  });
+  ipcMain.handle("plugin-manager-cancel-install", async () => ({ ok: true, value: { status: "not-running" } }));
+  ipcMain.handle("plugin-inventory-list", async () => {
+    try { return { ok: true, value: { managementAvailable: true, entries: buildPluginInfos() } }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+  });
+
   // ===== 网页注入脚本：已启用插件的 scripts/*.js（供 bridge 注入 AI 页面主世界） =====
   ipcMain.handle('get-plugin-web-scripts', async () => {
     try {

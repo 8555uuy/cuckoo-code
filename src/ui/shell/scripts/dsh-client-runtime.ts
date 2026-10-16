@@ -12,6 +12,7 @@ import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import * as dshPrimitives from './dsh-primitives/index.js';
+import * as dshClientStore from './dsh-client-store/index.js';
 
 export interface SlotItem {
   key: string;
@@ -29,8 +30,53 @@ export interface SlotItem {
 
 const slotTable = new Map<string, SlotItem[]>();
 const listeners = new Set<() => void>();
+/** 每槽的订阅者（slots.subscribe 用） */
+const slotListeners = new Map<string, Set<() => void>>();
+/** 每槽的版本号（每次变化 +1，slots.getVersion 用） */
+const slotVersions = new Map<string, number>();
+/** 每槽的声明（slots.spec 用） */
+const slotSpecs = new Map<string, any>();
 
 function notify(): void { for (const cb of listeners) { try { cb(); } catch (_) {} } }
+
+/** 某槽变化：bump 版本 + 通知该槽订阅者 */
+function notifySlot(slotName: string): void {
+  slotVersions.set(slotName, (slotVersions.get(slotName) || 0) + 1);
+  const subs = slotListeners.get(slotName);
+  if (subs) for (const cb of [...subs]) { try { cb(); } catch (_) {} }
+  notify();
+}
+
+/** DSH 条目格式：{ options, ... }（entries 返回它）*/
+function toEntry(it: SlotItem): any {
+  return {
+    options: { id: it.id, key: it.key, order: it.order, ...(it.spec || {}) },
+    id: it.id,
+    order: it.order,
+    spec: it.spec,
+    Component: it.Component,
+    t: it.t,
+    injectedProps: it.injectedProps,
+  };
+}
+
+/** 投影"胜出者"（entriesOfSlot）：按 kind 去重 */
+function entriesOfSlotImpl(slotName: string): any[] {
+  const all = (slotTable.get(slotName) || []).slice().sort((a, b) => (a.order || 100) - (b.order || 100));
+  const spec = slotSpecs.get(slotName);
+  const kind = spec && spec.kind;
+  if (kind === 'chain') return all.map(toEntry);
+  const heads: any[] = [];
+  const seen = new Set<string | undefined>();
+  for (const it of all) {
+    const cell = kind === 'keyed' ? (it as any).key2 : kind === 'list' ? it.id : undefined;
+    const cellKey = String(cell === undefined ? '' : cell);
+    if (seen.has(cellKey)) continue;
+    seen.add(cellKey);
+    heads.push(toEntry(it));
+  }
+  return heads;
+}
 
 /** 订阅插槽变化（React 页面用） */
 export function subscribeSlots(cb: () => void): () => void {
@@ -158,9 +204,9 @@ const moduleTable: Record<string, any> = {
   'react/jsx-runtime': jsxRuntime,
   'react/jsx-dev-runtime': jsxRuntime,
   '@deepseek-ai/dsh-client-ui-primitives': dshPrimitives,
-  '@deepseek-ai/dsh-client-store': makeStoreEngine(),
-  '@deepseek-ai/dsh-client-runtime/client': makeStoreEngine(),
-  '@deepseek-ai/dsh-client-runtime': makeStoreEngine(),
+  '@deepseek-ai/dsh-client-store': dshClientStore,
+  '@deepseek-ai/dsh-client-runtime/client': dshClientStore,
+  '@deepseek-ai/dsh-client-runtime': dshClientStore,
 };
 
 const loadedModules: Record<string, any> = {};
@@ -233,7 +279,14 @@ function makeWorkspaces(): any {
 function makeLayout(): any {
   const activePanelId = makeObservable(null);
   return {
-    selectPanel(id: string | null) { activePanelId.set(id); },
+    selectPanel(id: string | null) {
+      activePanelId.set(id);
+      // 桥接到壳框架（shell-frame 挂的全局回调）
+      try {
+        const fn = (window as any).__cuckooSelectPanel;
+        if (typeof fn === 'function') fn(id);
+      } catch (_) {}
+    },
     panelInfo: { getSnapshot: () => ({ activePanelId: activePanelId.getSnapshot() }), subscribe: activePanelId.subscribe },
   };
 }
@@ -243,15 +296,60 @@ function makeConnection(): any {
   return { api: makeStub('connection.api'), agentPresets: undefined };
 }
 
-/** 远端服务（最小） */
+/** 远端服务（最小 + pluginManager/pluginInventory） */
 function makeRemote(): any {
   const noop = () => () => {};
+  const api = () => (window as any).shellAPI;
+  // DSH 契约：返回 { ok, value } / { ok, error }
+  const call = async (fn: string, ...args: any[]) => {
+    try {
+      const a = api();
+      if (!a || typeof a[fn] !== 'function') return { ok: false, error: { code: 'operation-error', diagnostic: 'shellAPI.' + fn + ' 不存在' } };
+      return await a[fn](...args);
+    } catch (e: any) {
+      return { ok: false, error: { code: 'operation-error', diagnostic: e && e.message ? e.message : String(e) } };
+    }
+  };
+  // P2：事件总线（remote.$on 接真事件）
+  const remoteListeners = new Map<string, Set<(d: any) => void>>();
+  const initRemoteListener = () => {
+    try {
+      const a = api();
+      if (a && typeof a.onRemoteEvent === 'function' && !(window as any).__cuckooRemoteBound) {
+        (window as any).__cuckooRemoteBound = true;
+        a.onRemoteEvent((evt: string, data: any) => {
+          const set = remoteListeners.get(evt);
+          if (set) for (const fn of [...set]) { try { fn(data); } catch (e) { console.error('[remote.$on] ' + evt + ' 回调失败', e); } }
+        });
+      }
+    } catch (_) {}
+  };
   return {
-    $on: (_evt: string, _cb: any) => noop(),
+    $on: (evt: string, cb: any) => {
+      if (typeof cb !== 'function') return noop();
+      initRemoteListener();
+      if (!remoteListeners.has(evt)) remoteListeners.set(evt, new Set());
+      remoteListeners.get(evt)!.add(cb);
+      return () => { const s = remoteListeners.get(evt); if (s) s.delete(cb); };
+    },
     settings: { get: async () => undefined, set: async () => true },
     goals: { get: async () => null, edit: async () => ({ ok: false }), pause: async () => ({ ok: false }), resume: async () => ({ ok: false }), clear: async () => ({ ok: false }) },
     session: { modelCatalog: async () => ({ result: { value: { groups: [] } } }) },
     agentPresets: { list: async () => ({ result: { value: { presets: [] } } }) },
+    // ===== DSH plugin-manager RPC =====
+    pluginManager: {
+      listBundles: () => call('pluginManagerListBundles'),
+      listPlugins: () => call('pluginManagerListPlugins'),
+      setBundleEnabled: (name: string, enabled: boolean) => call('pluginManagerSetEnabled', name, enabled),
+      setPluginEnabled: (entryId: string, enabled: boolean) => call('pluginManagerSetEnabled', entryId, enabled),
+      removeBundle: (name: string) => call('pluginManagerRemoveBundle', name),
+      installBundle: (spec: string, _opts?: any) => call('pluginManagerInstallBundle', spec),
+      inspect: (spec: string, _signal?: any) => call('pluginManagerInspect', spec),
+      cancelInstall: (_requestId: string) => call('pluginManagerCancelInstall'),
+    },
+    pluginInventory: {
+      list: () => call('pluginInventoryList'),
+    },
   };
 }
 
@@ -298,6 +396,61 @@ function makeConfigForms(): any {
     open: () => {},
     getSnapshot: () => desc.getSnapshot(),
     subscribe: desc.subscribe,
+  };
+}
+
+/**
+ * settingsScope 服务（对齐 DSH @deepseek-ai/dsh-client-ui-settings）
+ *
+ * 契约（ui-settings/lib/client.js 的 SettingsScopeBinder）：
+ *  - bind({ namespace, decode? }) → SettingsScope
+ *      - getSnapshot(): { status, value, base, user, revision, writable, mode }
+ *      - subscribe(listener): disposer
+ *      - set(field, value): Promise<void>
+ *      - unset(field): Promise<void>
+ *  - describe() → 共享镜像 face（getSnapshot/subscribe/load/ensure/acceptView/namespace）
+ *
+ * ⚠️ Cuckoo 目前没有"宿主 settings 文档"的 wire 层，所以 scope 为内存态（status: 'unavailable'）。
+ *    这样插件能正常 apply（不崩），只是卡片显示"当前不可用"。
+ */
+function makeSettingsScope(): any {
+  // 共享镜像（所有 scope 派生自它）
+  const mirrorSubs = new Set<() => void>();
+  let mirrorSnapshot: any = { status: 'unavailable', view: undefined, error: null };
+  const mirror: any = {
+    getSnapshot: () => mirrorSnapshot,
+    subscribe(cb: () => void) { if (typeof cb === 'function') mirrorSubs.add(cb); return () => { mirrorSubs.delete(cb); }; },
+    load: async () => {},
+    ensure: async () => {},
+    acceptView: () => {},
+    namespace: (_ns: string) => undefined,
+  };
+  return {
+    /** 绑定一个命名空间 scope */
+    bind(spec: any): any {
+      const ns = spec && spec.namespace ? String(spec.namespace) : 'default';
+      const subs = new Set<() => void>();
+      const snap: any = {
+        status: 'unavailable',
+        value: undefined,
+        base: undefined,
+        user: undefined,
+        revision: undefined,
+        writable: false,
+        mode: 'memory',
+        namespace: ns,
+      };
+      return {
+        getSnapshot: () => snap,
+        subscribe(cb: () => void) { if (typeof cb === 'function') subs.add(cb); return () => { subs.delete(cb); }; },
+        async set(_field: string, _value: unknown) { /* no-op（无宿主 transport）*/ },
+        async unset(_field: string) { /* no-op */ },
+      };
+    },
+    /** 共享镜像 face */
+    describe: () => mirror,
+    getSnapshot: () => mirrorSnapshot,
+    subscribe: (cb: () => void) => mirror.subscribe(cb),
   };
 }
 
@@ -362,6 +515,7 @@ function makeServices(): Record<string, any> {
     uiWorkspace: makeUiWorkspace(),
     locale,
     theme,
+    settingsScope: makeSettingsScope(),
     configForms: makeConfigForms(),
     forms: makeConfigForms(),
     tools: makeStub('tools'),
@@ -378,6 +532,14 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
     inject(name: string, cb: () => any) {
       try {
         const d = cb();
+        // 支持 generator（function* + yield）：迭代它，收集 disposer
+        if (d && typeof d.next === 'function' && typeof d[Symbol.iterator] === 'function') {
+          const disposers: Array<() => void> = [];
+          for (const item of d) {
+            if (typeof item === 'function') disposers.push(item);
+          }
+          return () => { for (const fn of disposers) { try { fn(); } catch (_) {} } };
+        }
         return typeof d === 'function' ? d : () => {};
       } catch (e: any) {
         console.error('[dsh-slot] inject(' + name + ') 回调失败 @' + pluginId + ': ' + (e && e.message ? e.message : String(e)));
@@ -388,7 +550,8 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
     register(spec: any, Component: any) {
       const s = spec || {};
       const slotName = s.name || s.slot;
-      const id = s.id || slotName;
+      // DSH 的 key 字段（如 main 插槽的 key:'plugins'）也要作为 id
+      const id = s.id || s.key || slotName;
       if (!slotName) return () => {};
       const key = pluginId + ':' + slotName + ':' + id;
       // i18n：从 spec.locale 生成 t 函数（DSH 组件常用 ({ t }) => ...）
@@ -417,10 +580,19 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
         }
       } catch (e) { console.error('[dsh-client] spec.inject 解析失败 ' + id, e); }
 
+      // 记录插槽声明（第一次注册时）
+      if (!slotSpecs.has(slotName)) {
+        slotSpecs.set(slotName, {
+          name: slotName,
+          kind: s.kind || (s.children ? 'list' : 'single'),
+          scope: s.scope,
+          children: s.children,
+        });
+      }
       const list = (slotTable.get(slotName) || []).filter((x) => x.key !== key);
       list.push({ key, pluginId, slot: slotName, id, order: typeof s.order === 'number' ? s.order : 100, spec: s, Component, t, injectedProps });
       slotTable.set(slotName, list);
-      notify();
+      notifySlot(slotName);
       try {
         const api = (window as any).shellAPI;
         if (api && typeof api.slotRegister === 'function') {
@@ -430,10 +602,33 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
       return () => {
         const l = (slotTable.get(slotName) || []).filter((x) => x.key !== key);
         slotTable.set(slotName, l);
-        notify();
+        notifySlot(slotName);
       };
     },
     unregister() {},
+    /** 拿某槽的条目（DSH 契约：stable 引用）*/
+    entries(slotName: string) {
+      return (slotTable.get(slotName) || []).map(toEntry);
+    },
+    /** 投影"胜出者"（按 kind 去重）*/
+    entriesOfSlot(slotName: string) {
+      return entriesOfSlotImpl(slotName);
+    },
+    /** 插槽声明（codex-ui 判 typeof === "function"）*/
+    spec(slotName: string) {
+      return slotSpecs.get(slotName);
+    },
+    /** 订阅某槽变化（返回退订）*/
+    subscribe(slotName: string, fn: () => void) {
+      if (typeof fn !== 'function') return () => {};
+      if (!slotListeners.has(slotName)) slotListeners.set(slotName, new Set());
+      slotListeners.get(slotName)!.add(fn);
+      return () => { const s = slotListeners.get(slotName); if (s) s.delete(fn); };
+    },
+    /** 版本号（每次变化 +1）*/
+    getVersion(slotName: string) { return slotVersions.get(slotName) || 0; },
+    /** 拿所有已声明槽（调试用）*/
+    allSlots() { return [...slotSpecs.keys()]; },
   };
   services.slots = slots;
 
@@ -578,6 +773,8 @@ function installModuleLoader(): void {
         if (loadedModules[name]) return loadedModules[name];
         // primitives 包（Icon 组件）用"组件安全 shim"
         if (name.includes('ui-primitives')) return makePrimitivesShim();
+        // client-store 包（createSnapshotStore/defineStore）
+        if (name === '@deepseek-ai/dsh-client-store') return dshClientStore;
         // 其他 @deepseek-ai/*（服务/store 等）：万能 stub（可链式调用，不返回 null）
         return makeStub(name);
       };

@@ -1379,7 +1379,16 @@
   .ck-dp-seg-item { padding: 5px 12px; border: none; border-radius: 7px; background: transparent; color: var(--ck-text-2); font-size: 12.5px; font-family: inherit; cursor: pointer; transition: background .12s, color .12s; }
   .ck-dp-seg-item:hover { color: var(--ck-text); }
   .ck-dp-seg-item.active { background: var(--ck-bg); color: var(--ck-text); font-weight: 600; box-shadow: var(--ck-shadow-sm); }
-  .ck-dp-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 9600; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--ck-text); color: var(--ck-bg); border-radius: 9px; font-size: 12.5px; box-shadow: var(--ck-shadow-lg); }
+  .ck-dp-toast {
+    position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
+    z-index: 9600; display: inline-flex; align-items: center; gap: 8px;
+    width: fit-content; max-width: min(560px, 80vw);
+    padding: 10px 18px; background: var(--ck-text); color: var(--ck-bg);
+    border-radius: 10px; font-size: 13px; line-height: 1.5;
+    box-shadow: 0 6px 24px rgba(0,0,0,.22); align-self: center;
+    animation: ck-dp-toast-in .18s ease-out;
+  }
+  @keyframes ck-dp-toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
   .ck-dp-tip-wrap { display: inline-flex; }
   .ck-dp-modal-mask { position: fixed; inset: 0; z-index: 9400; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
   .ck-dp-modal { width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; background: var(--ck-bg); border: 1px solid var(--ck-border); border-radius: 12px; box-shadow: var(--ck-shadow-lg); overflow: hidden; }
@@ -2524,20 +2533,20 @@
           {
             Object.freeze(emptyObject);
           }
-          function Component3(props, context, updater) {
+          function Component4(props, context, updater) {
             this.props = props;
             this.context = context;
             this.refs = emptyObject;
             this.updater = updater || ReactNoopUpdateQueue;
           }
-          Component3.prototype.isReactComponent = {};
-          Component3.prototype.setState = function(partialState, callback) {
+          Component4.prototype.isReactComponent = {};
+          Component4.prototype.setState = function(partialState, callback) {
             if (typeof partialState !== "object" && typeof partialState !== "function" && partialState != null) {
               throw new Error("setState(...): takes an object of state variables to update or a function which returns an object of state variables.");
             }
             this.updater.enqueueSetState(this, partialState, callback, "setState");
           };
-          Component3.prototype.forceUpdate = function(callback) {
+          Component4.prototype.forceUpdate = function(callback) {
             this.updater.enqueueForceUpdate(this, callback, "forceUpdate");
           };
           {
@@ -2546,7 +2555,7 @@
               replaceState: ["replaceState", "Refactor your code to use setState instead (see https://github.com/facebook/react/issues/3236)."]
             };
             var defineDeprecationWarning = function(methodName, info) {
-              Object.defineProperty(Component3.prototype, methodName, {
+              Object.defineProperty(Component4.prototype, methodName, {
                 get: function() {
                   warn("%s(...) is deprecated in plain JavaScript React classes. %s", info[0], info[1]);
                   return void 0;
@@ -2561,7 +2570,7 @@
           }
           function ComponentDummy() {
           }
-          ComponentDummy.prototype = Component3.prototype;
+          ComponentDummy.prototype = Component4.prototype;
           function PureComponent(props, context, updater) {
             this.props = props;
             this.context = context;
@@ -2570,7 +2579,7 @@
           }
           var pureComponentPrototype = PureComponent.prototype = new ComponentDummy();
           pureComponentPrototype.constructor = PureComponent;
-          assign(pureComponentPrototype, Component3.prototype);
+          assign(pureComponentPrototype, Component4.prototype);
           pureComponentPrototype.isPureReactComponent = true;
           function createRef() {
             var refObject = {
@@ -3382,7 +3391,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect20(create, deps) {
+          function useEffect21(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -3394,7 +3403,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
-          function useCallback17(callback, deps) {
+          function useCallback18(callback, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
@@ -3424,7 +3433,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useId();
           }
-          function useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
+          function useSyncExternalStore2(subscribe, getSnapshot, getServerSnapshot) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
           }
@@ -3635,8 +3644,8 @@
               return describeNativeComponentFrame(fn, false);
             }
           }
-          function shouldConstruct(Component4) {
-            var prototype = Component4.prototype;
+          function shouldConstruct(Component5) {
+            var prototype = Component5.prototype;
             return !!(prototype && prototype.isReactComponent);
           }
           function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -4142,7 +4151,7 @@
             only: onlyChild
           };
           exports.Children = Children;
-          exports.Component = Component3;
+          exports.Component = Component4;
           exports.Fragment = REACT_FRAGMENT_TYPE;
           exports.Profiler = REACT_PROFILER_TYPE;
           exports.PureComponent = PureComponent;
@@ -4161,11 +4170,11 @@
           exports.memo = memo2;
           exports.startTransition = startTransition;
           exports.unstable_act = act;
-          exports.useCallback = useCallback17;
+          exports.useCallback = useCallback18;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect20;
+          exports.useEffect = useEffect21;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -4174,7 +4183,7 @@
           exports.useReducer = useReducer;
           exports.useRef = useRef7;
           exports.useState = useState20;
-          exports.useSyncExternalStore = useSyncExternalStore;
+          exports.useSyncExternalStore = useSyncExternalStore2;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
           if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop === "function") {
@@ -4720,7 +4729,7 @@
           var HostPortal = 4;
           var HostComponent = 5;
           var HostText = 6;
-          var Fragment = 7;
+          var Fragment2 = 7;
           var Mode = 8;
           var ContextConsumer = 9;
           var ContextProvider = 10;
@@ -5707,8 +5716,8 @@
               return describeNativeComponentFrame(fn, false);
             }
           }
-          function shouldConstruct(Component3) {
-            var prototype = Component3.prototype;
+          function shouldConstruct(Component4) {
+            var prototype = Component4.prototype;
             return !!(prototype && prototype.isReactComponent);
           }
           function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -5877,7 +5886,7 @@
                 return "DehydratedFragment";
               case ForwardRef:
                 return getWrappedName$1(type, type.render, "ForwardRef");
-              case Fragment:
+              case Fragment2:
                 return "Fragment";
               case HostComponent:
                 return type;
@@ -10684,7 +10693,7 @@
             return x === y && (x !== 0 || 1 / x === 1 / y) || x !== x && y !== y;
           }
           var objectIs = typeof Object.is === "function" ? Object.is : is;
-          function shallowEqual(objA, objB) {
+          function shallowEqual2(objA, objB) {
             if (objectIs(objA, objB)) {
               return true;
             }
@@ -10982,7 +10991,7 @@
               return;
             }
             var currentSelection = getSelection$1(activeElement$1);
-            if (!lastSelection || !shallowEqual(lastSelection, currentSelection)) {
+            if (!lastSelection || !shallowEqual2(lastSelection, currentSelection)) {
               lastSelection = currentSelection;
               var listeners2 = accumulateTwoPhaseListeners(activeElementInst$1, "onSelect");
               if (listeners2.length > 0) {
@@ -13171,9 +13180,9 @@
           var contextStackCursor = createCursor(emptyContextObject);
           var didPerformWorkStackCursor = createCursor(false);
           var previousContext = emptyContextObject;
-          function getUnmaskedContext(workInProgress2, Component3, didPushOwnContextIfProvider) {
+          function getUnmaskedContext(workInProgress2, Component4, didPushOwnContextIfProvider) {
             {
-              if (didPushOwnContextIfProvider && isContextProvider(Component3)) {
+              if (didPushOwnContextIfProvider && isContextProvider(Component4)) {
                 return previousContext;
               }
               return contextStackCursor.current;
@@ -13310,8 +13319,8 @@
                   case HostRoot:
                     return node.stateNode.context;
                   case ClassComponent: {
-                    var Component3 = node.type;
-                    if (isContextProvider(Component3)) {
+                    var Component4 = node.type;
+                    if (isContextProvider(Component4)) {
                       return node.stateNode.__reactInternalMemoizedMergedChildContext;
                     }
                     break;
@@ -14306,7 +14315,7 @@
               }
             }
             function updateFragment2(returnFiber, current2, fragment, lanes, key) {
-              if (current2 === null || current2.tag !== Fragment) {
+              if (current2 === null || current2.tag !== Fragment2) {
                 var created = createFiberFromFragment(fragment, returnFiber.mode, lanes, key);
                 created.return = returnFiber;
                 return created;
@@ -14709,7 +14718,7 @@
                 if (child.key === key) {
                   var elementType = element.type;
                   if (elementType === REACT_FRAGMENT_TYPE) {
-                    if (child.tag === Fragment) {
+                    if (child.tag === Fragment2) {
                       deleteRemainingChildren(returnFiber, child.sibling);
                       var existing = useFiber(child, element.props.children);
                       existing.return = returnFiber;
@@ -15765,7 +15774,7 @@
             }
             return true;
           }
-          function renderWithHooks(current2, workInProgress2, Component3, props, secondArg, nextRenderLanes) {
+          function renderWithHooks(current2, workInProgress2, Component4, props, secondArg, nextRenderLanes) {
             renderLanes = nextRenderLanes;
             currentlyRenderingFiber$1 = workInProgress2;
             {
@@ -15785,7 +15794,7 @@
                 ReactCurrentDispatcher$1.current = HooksDispatcherOnMountInDEV;
               }
             }
-            var children = Component3(props, secondArg);
+            var children = Component4(props, secondArg);
             if (didScheduleRenderPhaseUpdateDuringThisPass) {
               var numberOfReRenders = 0;
               do {
@@ -15805,7 +15814,7 @@
                   hookTypesUpdateIndexDev = -1;
                 }
                 ReactCurrentDispatcher$1.current = HooksDispatcherOnRerenderInDEV;
-                children = Component3(props, secondArg);
+                children = Component4(props, secondArg);
               } while (didScheduleRenderPhaseUpdateDuringThisPass);
             }
             ReactCurrentDispatcher$1.current = ContextOnlyDispatcher;
@@ -17604,10 +17613,10 @@
               child = child.sibling;
             }
           }
-          function resolveDefaultProps(Component3, baseProps) {
-            if (Component3 && Component3.defaultProps) {
+          function resolveDefaultProps(Component4, baseProps) {
+            if (Component4 && Component4.defaultProps) {
               var props = assign({}, baseProps);
-              var defaultProps = Component3.defaultProps;
+              var defaultProps = Component4.defaultProps;
               for (var propName in defaultProps) {
                 if (props[propName] === void 0) {
                   props[propName] = defaultProps[propName];
@@ -17775,7 +17784,7 @@
               return shouldUpdate;
             }
             if (ctor.prototype && ctor.prototype.isPureReactComponent) {
-              return !shallowEqual(oldProps, newProps) || !shallowEqual(oldState, newState);
+              return !shallowEqual2(oldProps, newProps) || !shallowEqual2(oldState, newState);
             }
             return true;
           }
@@ -18536,22 +18545,22 @@
             workInProgress2.child = reconcileChildFibers(workInProgress2, current2.child, null, renderLanes2);
             workInProgress2.child = reconcileChildFibers(workInProgress2, null, nextChildren, renderLanes2);
           }
-          function updateForwardRef(current2, workInProgress2, Component3, nextProps, renderLanes2) {
+          function updateForwardRef(current2, workInProgress2, Component4, nextProps, renderLanes2) {
             {
               if (workInProgress2.type !== workInProgress2.elementType) {
-                var innerPropTypes = Component3.propTypes;
+                var innerPropTypes = Component4.propTypes;
                 if (innerPropTypes) {
                   checkPropTypes(
                     innerPropTypes,
                     nextProps,
                     // Resolved props
                     "prop",
-                    getComponentNameFromType(Component3)
+                    getComponentNameFromType(Component4)
                   );
                 }
               }
             }
-            var render2 = Component3.render;
+            var render2 = Component4.render;
             var ref = workInProgress2.ref;
             var nextChildren;
             var hasId;
@@ -18589,11 +18598,11 @@
             reconcileChildren(current2, workInProgress2, nextChildren, renderLanes2);
             return workInProgress2.child;
           }
-          function updateMemoComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
+          function updateMemoComponent(current2, workInProgress2, Component4, nextProps, renderLanes2) {
             if (current2 === null) {
-              var type = Component3.type;
-              if (isSimpleFunctionComponent(type) && Component3.compare === null && // SimpleMemoComponent codepath doesn't resolve outer props either.
-              Component3.defaultProps === void 0) {
+              var type = Component4.type;
+              if (isSimpleFunctionComponent(type) && Component4.compare === null && // SimpleMemoComponent codepath doesn't resolve outer props either.
+              Component4.defaultProps === void 0) {
                 var resolvedType = type;
                 {
                   resolvedType = resolveFunctionForHotReloading(type);
@@ -18616,7 +18625,7 @@
                     getComponentNameFromType(type)
                   );
                 }
-                if (Component3.defaultProps !== void 0) {
+                if (Component4.defaultProps !== void 0) {
                   var componentName = getComponentNameFromType(type) || "Unknown";
                   if (!didWarnAboutDefaultPropsOnFunctionComponent[componentName]) {
                     error("%s: Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.", componentName);
@@ -18624,14 +18633,14 @@
                   }
                 }
               }
-              var child = createFiberFromTypeAndProps(Component3.type, null, nextProps, workInProgress2, workInProgress2.mode, renderLanes2);
+              var child = createFiberFromTypeAndProps(Component4.type, null, nextProps, workInProgress2, workInProgress2.mode, renderLanes2);
               child.ref = workInProgress2.ref;
               child.return = workInProgress2;
               workInProgress2.child = child;
               return child;
             }
             {
-              var _type = Component3.type;
+              var _type = Component4.type;
               var _innerPropTypes = _type.propTypes;
               if (_innerPropTypes) {
                 checkPropTypes(
@@ -18647,8 +18656,8 @@
             var hasScheduledUpdateOrContext = checkScheduledUpdateOrContext(current2, renderLanes2);
             if (!hasScheduledUpdateOrContext) {
               var prevProps = currentChild.memoizedProps;
-              var compare = Component3.compare;
-              compare = compare !== null ? compare : shallowEqual;
+              var compare = Component4.compare;
+              compare = compare !== null ? compare : shallowEqual2;
               if (compare(prevProps, nextProps) && current2.ref === workInProgress2.ref) {
                 return bailoutOnAlreadyFinishedWork(current2, workInProgress2, renderLanes2);
               }
@@ -18660,7 +18669,7 @@
             workInProgress2.child = newChild;
             return newChild;
           }
-          function updateSimpleMemoComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
+          function updateSimpleMemoComponent(current2, workInProgress2, Component4, nextProps, renderLanes2) {
             {
               if (workInProgress2.type !== workInProgress2.elementType) {
                 var outerMemoType = workInProgress2.elementType;
@@ -18688,7 +18697,7 @@
             }
             if (current2 !== null) {
               var prevProps = current2.memoizedProps;
-              if (shallowEqual(prevProps, nextProps) && current2.ref === workInProgress2.ref && // Prevent bailout if the implementation changed due to hot reload.
+              if (shallowEqual2(prevProps, nextProps) && current2.ref === workInProgress2.ref && // Prevent bailout if the implementation changed due to hot reload.
               workInProgress2.type === current2.type) {
                 didReceiveUpdate = false;
                 workInProgress2.pendingProps = nextProps = prevProps;
@@ -18700,7 +18709,7 @@
                 }
               }
             }
-            return updateFunctionComponent(current2, workInProgress2, Component3, nextProps, renderLanes2);
+            return updateFunctionComponent(current2, workInProgress2, Component4, nextProps, renderLanes2);
           }
           function updateOffscreenComponent(current2, workInProgress2, renderLanes2) {
             var nextProps = workInProgress2.pendingProps;
@@ -18790,24 +18799,24 @@
               }
             }
           }
-          function updateFunctionComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
+          function updateFunctionComponent(current2, workInProgress2, Component4, nextProps, renderLanes2) {
             {
               if (workInProgress2.type !== workInProgress2.elementType) {
-                var innerPropTypes = Component3.propTypes;
+                var innerPropTypes = Component4.propTypes;
                 if (innerPropTypes) {
                   checkPropTypes(
                     innerPropTypes,
                     nextProps,
                     // Resolved props
                     "prop",
-                    getComponentNameFromType(Component3)
+                    getComponentNameFromType(Component4)
                   );
                 }
               }
             }
             var context;
             {
-              var unmaskedContext = getUnmaskedContext(workInProgress2, Component3, true);
+              var unmaskedContext = getUnmaskedContext(workInProgress2, Component4, true);
               context = getMaskedContext(workInProgress2, unmaskedContext);
             }
             var nextChildren;
@@ -18819,12 +18828,12 @@
             {
               ReactCurrentOwner$1.current = workInProgress2;
               setIsRendering(true);
-              nextChildren = renderWithHooks(current2, workInProgress2, Component3, nextProps, context, renderLanes2);
+              nextChildren = renderWithHooks(current2, workInProgress2, Component4, nextProps, context, renderLanes2);
               hasId = checkDidRenderIdHook();
               if (workInProgress2.mode & StrictLegacyMode) {
                 setIsStrictModeForDevtools(true);
                 try {
-                  nextChildren = renderWithHooks(current2, workInProgress2, Component3, nextProps, context, renderLanes2);
+                  nextChildren = renderWithHooks(current2, workInProgress2, Component4, nextProps, context, renderLanes2);
                   hasId = checkDidRenderIdHook();
                 } finally {
                   setIsStrictModeForDevtools(false);
@@ -18846,7 +18855,7 @@
             reconcileChildren(current2, workInProgress2, nextChildren, renderLanes2);
             return workInProgress2.child;
           }
-          function updateClassComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
+          function updateClassComponent(current2, workInProgress2, Component4, nextProps, renderLanes2) {
             {
               switch (shouldError(workInProgress2)) {
                 case false: {
@@ -18869,20 +18878,20 @@
                 }
               }
               if (workInProgress2.type !== workInProgress2.elementType) {
-                var innerPropTypes = Component3.propTypes;
+                var innerPropTypes = Component4.propTypes;
                 if (innerPropTypes) {
                   checkPropTypes(
                     innerPropTypes,
                     nextProps,
                     // Resolved props
                     "prop",
-                    getComponentNameFromType(Component3)
+                    getComponentNameFromType(Component4)
                   );
                 }
               }
             }
             var hasContext;
-            if (isContextProvider(Component3)) {
+            if (isContextProvider(Component4)) {
               hasContext = true;
               pushContextProvider(workInProgress2);
             } else {
@@ -18893,15 +18902,15 @@
             var shouldUpdate;
             if (instance === null) {
               resetSuspendedCurrentOnMountInLegacyMode(current2, workInProgress2);
-              constructClassInstance(workInProgress2, Component3, nextProps);
-              mountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
+              constructClassInstance(workInProgress2, Component4, nextProps);
+              mountClassInstance(workInProgress2, Component4, nextProps, renderLanes2);
               shouldUpdate = true;
             } else if (current2 === null) {
-              shouldUpdate = resumeMountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
+              shouldUpdate = resumeMountClassInstance(workInProgress2, Component4, nextProps, renderLanes2);
             } else {
-              shouldUpdate = updateClassInstance(current2, workInProgress2, Component3, nextProps, renderLanes2);
+              shouldUpdate = updateClassInstance(current2, workInProgress2, Component4, nextProps, renderLanes2);
             }
-            var nextUnitOfWork = finishClassComponent(current2, workInProgress2, Component3, shouldUpdate, hasContext, renderLanes2);
+            var nextUnitOfWork = finishClassComponent(current2, workInProgress2, Component4, shouldUpdate, hasContext, renderLanes2);
             {
               var inst = workInProgress2.stateNode;
               if (shouldUpdate && inst.props !== nextProps) {
@@ -18913,19 +18922,19 @@
             }
             return nextUnitOfWork;
           }
-          function finishClassComponent(current2, workInProgress2, Component3, shouldUpdate, hasContext, renderLanes2) {
+          function finishClassComponent(current2, workInProgress2, Component4, shouldUpdate, hasContext, renderLanes2) {
             markRef(current2, workInProgress2);
             var didCaptureError = (workInProgress2.flags & DidCapture) !== NoFlags;
             if (!shouldUpdate && !didCaptureError) {
               if (hasContext) {
-                invalidateContextProvider(workInProgress2, Component3, false);
+                invalidateContextProvider(workInProgress2, Component4, false);
               }
               return bailoutOnAlreadyFinishedWork(current2, workInProgress2, renderLanes2);
             }
             var instance = workInProgress2.stateNode;
             ReactCurrentOwner$1.current = workInProgress2;
             var nextChildren;
-            if (didCaptureError && typeof Component3.getDerivedStateFromError !== "function") {
+            if (didCaptureError && typeof Component4.getDerivedStateFromError !== "function") {
               nextChildren = null;
               {
                 stopProfilerTimerIfRunning();
@@ -18959,7 +18968,7 @@
             }
             workInProgress2.memoizedState = instance.state;
             if (hasContext) {
-              invalidateContextProvider(workInProgress2, Component3, true);
+              invalidateContextProvider(workInProgress2, Component4, true);
             }
             return workInProgress2.child;
           }
@@ -19059,45 +19068,45 @@
             var lazyComponent = elementType;
             var payload = lazyComponent._payload;
             var init = lazyComponent._init;
-            var Component3 = init(payload);
-            workInProgress2.type = Component3;
-            var resolvedTag = workInProgress2.tag = resolveLazyComponentTag(Component3);
-            var resolvedProps = resolveDefaultProps(Component3, props);
+            var Component4 = init(payload);
+            workInProgress2.type = Component4;
+            var resolvedTag = workInProgress2.tag = resolveLazyComponentTag(Component4);
+            var resolvedProps = resolveDefaultProps(Component4, props);
             var child;
             switch (resolvedTag) {
               case FunctionComponent: {
                 {
-                  validateFunctionComponentInDev(workInProgress2, Component3);
-                  workInProgress2.type = Component3 = resolveFunctionForHotReloading(Component3);
+                  validateFunctionComponentInDev(workInProgress2, Component4);
+                  workInProgress2.type = Component4 = resolveFunctionForHotReloading(Component4);
                 }
-                child = updateFunctionComponent(null, workInProgress2, Component3, resolvedProps, renderLanes2);
+                child = updateFunctionComponent(null, workInProgress2, Component4, resolvedProps, renderLanes2);
                 return child;
               }
               case ClassComponent: {
                 {
-                  workInProgress2.type = Component3 = resolveClassForHotReloading(Component3);
+                  workInProgress2.type = Component4 = resolveClassForHotReloading(Component4);
                 }
-                child = updateClassComponent(null, workInProgress2, Component3, resolvedProps, renderLanes2);
+                child = updateClassComponent(null, workInProgress2, Component4, resolvedProps, renderLanes2);
                 return child;
               }
               case ForwardRef: {
                 {
-                  workInProgress2.type = Component3 = resolveForwardRefForHotReloading(Component3);
+                  workInProgress2.type = Component4 = resolveForwardRefForHotReloading(Component4);
                 }
-                child = updateForwardRef(null, workInProgress2, Component3, resolvedProps, renderLanes2);
+                child = updateForwardRef(null, workInProgress2, Component4, resolvedProps, renderLanes2);
                 return child;
               }
               case MemoComponent: {
                 {
                   if (workInProgress2.type !== workInProgress2.elementType) {
-                    var outerPropTypes = Component3.propTypes;
+                    var outerPropTypes = Component4.propTypes;
                     if (outerPropTypes) {
                       checkPropTypes(
                         outerPropTypes,
                         resolvedProps,
                         // Resolved for outer only
                         "prop",
-                        getComponentNameFromType(Component3)
+                        getComponentNameFromType(Component4)
                       );
                     }
                   }
@@ -19105,8 +19114,8 @@
                 child = updateMemoComponent(
                   null,
                   workInProgress2,
-                  Component3,
-                  resolveDefaultProps(Component3.type, resolvedProps),
+                  Component4,
+                  resolveDefaultProps(Component4.type, resolvedProps),
                   // The inner type can have defaults too
                   renderLanes2
                 );
@@ -19115,33 +19124,33 @@
             }
             var hint = "";
             {
-              if (Component3 !== null && typeof Component3 === "object" && Component3.$$typeof === REACT_LAZY_TYPE) {
+              if (Component4 !== null && typeof Component4 === "object" && Component4.$$typeof === REACT_LAZY_TYPE) {
                 hint = " Did you wrap a component in React.lazy() more than once?";
               }
             }
-            throw new Error("Element type is invalid. Received a promise that resolves to: " + Component3 + ". " + ("Lazy element type must resolve to a class or function." + hint));
+            throw new Error("Element type is invalid. Received a promise that resolves to: " + Component4 + ". " + ("Lazy element type must resolve to a class or function." + hint));
           }
-          function mountIncompleteClassComponent(_current, workInProgress2, Component3, nextProps, renderLanes2) {
+          function mountIncompleteClassComponent(_current, workInProgress2, Component4, nextProps, renderLanes2) {
             resetSuspendedCurrentOnMountInLegacyMode(_current, workInProgress2);
             workInProgress2.tag = ClassComponent;
             var hasContext;
-            if (isContextProvider(Component3)) {
+            if (isContextProvider(Component4)) {
               hasContext = true;
               pushContextProvider(workInProgress2);
             } else {
               hasContext = false;
             }
             prepareToReadContext(workInProgress2, renderLanes2);
-            constructClassInstance(workInProgress2, Component3, nextProps);
-            mountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
-            return finishClassComponent(null, workInProgress2, Component3, true, hasContext, renderLanes2);
+            constructClassInstance(workInProgress2, Component4, nextProps);
+            mountClassInstance(workInProgress2, Component4, nextProps, renderLanes2);
+            return finishClassComponent(null, workInProgress2, Component4, true, hasContext, renderLanes2);
           }
-          function mountIndeterminateComponent(_current, workInProgress2, Component3, renderLanes2) {
+          function mountIndeterminateComponent(_current, workInProgress2, Component4, renderLanes2) {
             resetSuspendedCurrentOnMountInLegacyMode(_current, workInProgress2);
             var props = workInProgress2.pendingProps;
             var context;
             {
-              var unmaskedContext = getUnmaskedContext(workInProgress2, Component3, false);
+              var unmaskedContext = getUnmaskedContext(workInProgress2, Component4, false);
               context = getMaskedContext(workInProgress2, unmaskedContext);
             }
             prepareToReadContext(workInProgress2, renderLanes2);
@@ -19151,8 +19160,8 @@
               markComponentRenderStarted(workInProgress2);
             }
             {
-              if (Component3.prototype && typeof Component3.prototype.render === "function") {
-                var componentName = getComponentNameFromType(Component3) || "Unknown";
+              if (Component4.prototype && typeof Component4.prototype.render === "function") {
+                var componentName = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutBadClass[componentName]) {
                   error("The <%s /> component appears to have a render method, but doesn't extend React.Component. This is likely to cause errors. Change %s to extend React.Component instead.", componentName, componentName);
                   didWarnAboutBadClass[componentName] = true;
@@ -19163,7 +19172,7 @@
               }
               setIsRendering(true);
               ReactCurrentOwner$1.current = workInProgress2;
-              value = renderWithHooks(null, workInProgress2, Component3, props, context, renderLanes2);
+              value = renderWithHooks(null, workInProgress2, Component4, props, context, renderLanes2);
               hasId = checkDidRenderIdHook();
               setIsRendering(false);
             }
@@ -19173,7 +19182,7 @@
             workInProgress2.flags |= PerformedWork;
             {
               if (typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0) {
-                var _componentName = getComponentNameFromType(Component3) || "Unknown";
+                var _componentName = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutModulePatternComponent[_componentName]) {
                   error("The <%s /> component appears to be a function component that returns a class instance. Change %s to a class that extends React.Component instead. If you can't use a class try assigning the prototype on the function as a workaround. `%s.prototype = React.Component.prototype`. Don't use an arrow function since it cannot be called with `new` by React.", _componentName, _componentName, _componentName);
                   didWarnAboutModulePatternComponent[_componentName] = true;
@@ -19186,7 +19195,7 @@
               typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0
             ) {
               {
-                var _componentName2 = getComponentNameFromType(Component3) || "Unknown";
+                var _componentName2 = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutModulePatternComponent[_componentName2]) {
                   error("The <%s /> component appears to be a function component that returns a class instance. Change %s to a class that extends React.Component instead. If you can't use a class try assigning the prototype on the function as a workaround. `%s.prototype = React.Component.prototype`. Don't use an arrow function since it cannot be called with `new` by React.", _componentName2, _componentName2, _componentName2);
                   didWarnAboutModulePatternComponent[_componentName2] = true;
@@ -19196,7 +19205,7 @@
               workInProgress2.memoizedState = null;
               workInProgress2.updateQueue = null;
               var hasContext = false;
-              if (isContextProvider(Component3)) {
+              if (isContextProvider(Component4)) {
                 hasContext = true;
                 pushContextProvider(workInProgress2);
               } else {
@@ -19205,15 +19214,15 @@
               workInProgress2.memoizedState = value.state !== null && value.state !== void 0 ? value.state : null;
               initializeUpdateQueue(workInProgress2);
               adoptClassInstance(workInProgress2, value);
-              mountClassInstance(workInProgress2, Component3, props, renderLanes2);
-              return finishClassComponent(null, workInProgress2, Component3, true, hasContext, renderLanes2);
+              mountClassInstance(workInProgress2, Component4, props, renderLanes2);
+              return finishClassComponent(null, workInProgress2, Component4, true, hasContext, renderLanes2);
             } else {
               workInProgress2.tag = FunctionComponent;
               {
                 if (workInProgress2.mode & StrictLegacyMode) {
                   setIsStrictModeForDevtools(true);
                   try {
-                    value = renderWithHooks(null, workInProgress2, Component3, props, context, renderLanes2);
+                    value = renderWithHooks(null, workInProgress2, Component4, props, context, renderLanes2);
                     hasId = checkDidRenderIdHook();
                   } finally {
                     setIsStrictModeForDevtools(false);
@@ -19225,16 +19234,16 @@
               }
               reconcileChildren(null, workInProgress2, value, renderLanes2);
               {
-                validateFunctionComponentInDev(workInProgress2, Component3);
+                validateFunctionComponentInDev(workInProgress2, Component4);
               }
               return workInProgress2.child;
             }
           }
-          function validateFunctionComponentInDev(workInProgress2, Component3) {
+          function validateFunctionComponentInDev(workInProgress2, Component4) {
             {
-              if (Component3) {
-                if (Component3.childContextTypes) {
-                  error("%s(...): childContextTypes cannot be defined on a function component.", Component3.displayName || Component3.name || "Component");
+              if (Component4) {
+                if (Component4.childContextTypes) {
+                  error("%s(...): childContextTypes cannot be defined on a function component.", Component4.displayName || Component4.name || "Component");
                 }
               }
               if (workInProgress2.ref !== null) {
@@ -19253,22 +19262,22 @@
                   error("Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s", info);
                 }
               }
-              if (Component3.defaultProps !== void 0) {
-                var componentName = getComponentNameFromType(Component3) || "Unknown";
+              if (Component4.defaultProps !== void 0) {
+                var componentName = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutDefaultPropsOnFunctionComponent[componentName]) {
                   error("%s: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.", componentName);
                   didWarnAboutDefaultPropsOnFunctionComponent[componentName] = true;
                 }
               }
-              if (typeof Component3.getDerivedStateFromProps === "function") {
-                var _componentName3 = getComponentNameFromType(Component3) || "Unknown";
+              if (typeof Component4.getDerivedStateFromProps === "function") {
+                var _componentName3 = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutGetDerivedStateOnFunctionComponent[_componentName3]) {
                   error("%s: Function components do not support getDerivedStateFromProps.", _componentName3);
                   didWarnAboutGetDerivedStateOnFunctionComponent[_componentName3] = true;
                 }
               }
-              if (typeof Component3.contextType === "object" && Component3.contextType !== null) {
-                var _componentName4 = getComponentNameFromType(Component3) || "Unknown";
+              if (typeof Component4.contextType === "object" && Component4.contextType !== null) {
+                var _componentName4 = getComponentNameFromType(Component4) || "Unknown";
                 if (!didWarnAboutContextTypeOnFunctionComponent[_componentName4]) {
                   error("%s: Function components do not support contextType.", _componentName4);
                   didWarnAboutContextTypeOnFunctionComponent[_componentName4] = true;
@@ -20030,8 +20039,8 @@
                 pushHostContext(workInProgress2);
                 break;
               case ClassComponent: {
-                var Component3 = workInProgress2.type;
-                if (isContextProvider(Component3)) {
+                var Component4 = workInProgress2.type;
+                if (isContextProvider(Component4)) {
                   pushContextProvider(workInProgress2);
                 }
                 break;
@@ -20158,10 +20167,10 @@
                 return mountLazyComponent(current2, workInProgress2, elementType, renderLanes2);
               }
               case FunctionComponent: {
-                var Component3 = workInProgress2.type;
+                var Component4 = workInProgress2.type;
                 var unresolvedProps = workInProgress2.pendingProps;
-                var resolvedProps = workInProgress2.elementType === Component3 ? unresolvedProps : resolveDefaultProps(Component3, unresolvedProps);
-                return updateFunctionComponent(current2, workInProgress2, Component3, resolvedProps, renderLanes2);
+                var resolvedProps = workInProgress2.elementType === Component4 ? unresolvedProps : resolveDefaultProps(Component4, unresolvedProps);
+                return updateFunctionComponent(current2, workInProgress2, Component4, resolvedProps, renderLanes2);
               }
               case ClassComponent: {
                 var _Component = workInProgress2.type;
@@ -20185,7 +20194,7 @@
                 var _resolvedProps2 = workInProgress2.elementType === type ? _unresolvedProps2 : resolveDefaultProps(type, _unresolvedProps2);
                 return updateForwardRef(current2, workInProgress2, type, _resolvedProps2, renderLanes2);
               }
-              case Fragment:
+              case Fragment2:
                 return updateFragment(current2, workInProgress2, renderLanes2);
               case Mode:
                 return updateMode(current2, workInProgress2, renderLanes2);
@@ -20457,7 +20466,7 @@
               case SimpleMemoComponent:
               case FunctionComponent:
               case ForwardRef:
-              case Fragment:
+              case Fragment2:
               case Mode:
               case Profiler:
               case ContextConsumer:
@@ -20465,8 +20474,8 @@
                 bubbleProperties(workInProgress2);
                 return null;
               case ClassComponent: {
-                var Component3 = workInProgress2.type;
-                if (isContextProvider(Component3)) {
+                var Component4 = workInProgress2.type;
+                if (isContextProvider(Component4)) {
                   popContext(workInProgress2);
                 }
                 bubbleProperties(workInProgress2);
@@ -20784,8 +20793,8 @@
             popTreeContext(workInProgress2);
             switch (workInProgress2.tag) {
               case ClassComponent: {
-                var Component3 = workInProgress2.type;
-                if (isContextProvider(Component3)) {
+                var Component4 = workInProgress2.type;
+                if (isContextProvider(Component4)) {
                   popContext(workInProgress2);
                 }
                 var flags = workInProgress2.flags;
@@ -24470,18 +24479,18 @@
           var createFiber = function(tag, pendingProps, key, mode) {
             return new FiberNode(tag, pendingProps, key, mode);
           };
-          function shouldConstruct$1(Component3) {
-            var prototype = Component3.prototype;
+          function shouldConstruct$1(Component4) {
+            var prototype = Component4.prototype;
             return !!(prototype && prototype.isReactComponent);
           }
           function isSimpleFunctionComponent(type) {
             return typeof type === "function" && !shouldConstruct$1(type) && type.defaultProps === void 0;
           }
-          function resolveLazyComponentTag(Component3) {
-            if (typeof Component3 === "function") {
-              return shouldConstruct$1(Component3) ? ClassComponent : FunctionComponent;
-            } else if (Component3 !== void 0 && Component3 !== null) {
-              var $$typeof = Component3.$$typeof;
+          function resolveLazyComponentTag(Component4) {
+            if (typeof Component4 === "function") {
+              return shouldConstruct$1(Component4) ? ClassComponent : FunctionComponent;
+            } else if (Component4 !== void 0 && Component4 !== null) {
+              var $$typeof = Component4.$$typeof;
               if ($$typeof === REACT_FORWARD_REF_TYPE) {
                 return ForwardRef;
               }
@@ -24718,7 +24727,7 @@
             return fiber;
           }
           function createFiberFromFragment(elements, mode, lanes, key) {
-            var fiber = createFiber(Fragment, elements, key, mode);
+            var fiber = createFiber(Fragment2, elements, key, mode);
             fiber.lanes = lanes;
             return fiber;
           }
@@ -24922,9 +24931,9 @@
             var fiber = get(parentComponent);
             var parentContext = findCurrentUnmaskedContext(fiber);
             if (fiber.tag === ClassComponent) {
-              var Component3 = fiber.type;
-              if (isContextProvider(Component3)) {
-                return processChildContext(fiber, Component3, parentContext);
+              var Component4 = fiber.type;
+              if (isContextProvider(Component4)) {
+                return processChildContext(fiber, Component4, parentContext);
               }
             }
             return parentContext;
@@ -26231,8 +26240,8 @@
               return describeNativeComponentFrame(fn, false);
             }
           }
-          function shouldConstruct(Component3) {
-            var prototype = Component3.prototype;
+          function shouldConstruct(Component4) {
+            var prototype = Component4.prototype;
             return !!(prototype && prototype.isReactComponent);
           }
           function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -27516,8 +27525,11 @@
     IconArchiveCheckOutlineRegular: () => IconArchiveCheckOutlineRegular,
     IconArchiveOffOutlineMedium: () => IconArchiveOffOutlineMedium,
     IconArchiveOffOutlineRegular: () => IconArchiveOffOutlineRegular,
+    IconArchiveOutline20: () => IconArchiveOutline20,
     IconArchiveOutlineMedium: () => IconArchiveOutlineMedium,
     IconArchiveOutlineRegular: () => IconArchiveOutlineRegular,
+    IconBellOff: () => IconBellOff,
+    IconBranchOutline16: () => IconBranchOutline16,
     IconBranchOutlineMedium: () => IconBranchOutlineMedium,
     IconBranchOutlineRegular: () => IconBranchOutlineRegular,
     IconBrowseOutlineMedium: () => IconBrowseOutlineMedium,
@@ -27526,38 +27538,52 @@
     IconCheckCircleFillRegular: () => IconCheckCircleFillRegular,
     IconCheckCircleOutlineMedium: () => IconCheckCircleOutlineMedium,
     IconCheckCircleOutlineRegular: () => IconCheckCircleOutlineRegular,
+    IconCheckOutline16: () => IconCheckOutline16,
     IconCheckOutlineMedium: () => IconCheckOutlineMedium,
     IconCheckOutlineRegular: () => IconCheckOutlineRegular,
     IconChecklistOutlineMedium: () => IconChecklistOutlineMedium,
     IconChecklistOutlineRegular: () => IconChecklistOutlineRegular,
+    IconChevronDownOutline14: () => IconChevronDownOutline14,
     IconChevronDownOutlineMedium: () => IconChevronDownOutlineMedium,
     IconChevronDownOutlineRegular: () => IconChevronDownOutlineRegular,
+    IconChevronLeft: () => IconChevronLeft,
+    IconChevronLeftOutline14: () => IconChevronLeftOutline14,
     IconChevronLeftOutlineMedium: () => IconChevronLeftOutlineMedium,
     IconChevronLeftOutlineRegular: () => IconChevronLeftOutlineRegular,
+    IconChevronRightOutline14: () => IconChevronRightOutline14,
     IconChevronRightOutlineMedium: () => IconChevronRightOutlineMedium,
     IconChevronRightOutlineRegular: () => IconChevronRightOutlineRegular,
+    IconChevronUpOutline14: () => IconChevronUpOutline14,
     IconChevronUpOutlineMedium: () => IconChevronUpOutlineMedium,
     IconChevronUpOutlineRegular: () => IconChevronUpOutlineRegular,
     IconChevronsUpDownOutlineMedium: () => IconChevronsUpDownOutlineMedium,
     IconChevronsUpDownOutlineRegular: () => IconChevronsUpDownOutlineRegular,
+    IconClock: () => IconClock,
     IconClockOutlineMedium: () => IconClockOutlineMedium,
     IconClockOutlineRegular: () => IconClockOutlineRegular,
+    IconClose: () => IconClose,
     IconCloseCircleFillMedium: () => IconCloseCircleFillMedium,
     IconCloseCircleFillRegular: () => IconCloseCircleFillRegular,
     IconCloseFillMedium: () => IconCloseFillMedium,
     IconCloseFillRegular: () => IconCloseFillRegular,
+    IconCloseOutline16: () => IconCloseOutline16,
     IconCloseOutlineMedium: () => IconCloseOutlineMedium,
     IconCloseOutlineRegular: () => IconCloseOutlineRegular,
+    IconCodeOutline16: () => IconCodeOutline16,
     IconCodeOutlineMedium: () => IconCodeOutlineMedium,
     IconCodeOutlineRegular: () => IconCodeOutlineRegular,
     IconCompactOutlineMedium: () => IconCompactOutlineMedium,
     IconCompactOutlineRegular: () => IconCompactOutlineRegular,
+    IconCompactRows: () => IconCompactRows,
     IconCompareSplitOutlineMedium: () => IconCompareSplitOutlineMedium,
     IconCompareSplitOutlineRegular: () => IconCompareSplitOutlineRegular,
     IconContextInjectionOutlineMedium: () => IconContextInjectionOutlineMedium,
     IconContextInjectionOutlineRegular: () => IconContextInjectionOutlineRegular,
+    IconContribution: () => IconContribution,
+    IconCopyOutline16: () => IconCopyOutline16,
     IconCopyOutlineMedium: () => IconCopyOutlineMedium,
     IconCopyOutlineRegular: () => IconCopyOutlineRegular,
+    IconCordisPluginOutline14: () => IconCordisPluginOutline14,
     IconCordisPluginOutlineMedium: () => IconCordisPluginOutlineMedium,
     IconCordisPluginOutlineRegular: () => IconCordisPluginOutlineRegular,
     IconDarkOutlineMedium: () => IconDarkOutlineMedium,
@@ -27572,24 +27598,33 @@
     IconDislikeFillRegular: () => IconDislikeFillRegular,
     IconDislikeOutlineMedium: () => IconDislikeOutlineMedium,
     IconDislikeOutlineRegular: () => IconDislikeOutlineRegular,
+    IconDownloadOutline16: () => IconDownloadOutline16,
     IconDownloadOutlineMedium: () => IconDownloadOutlineMedium,
     IconDownloadOutlineRegular: () => IconDownloadOutlineRegular,
+    IconEditOutline16: () => IconEditOutline16,
     IconEditOutlineMedium: () => IconEditOutlineMedium,
     IconEditOutlineRegular: () => IconEditOutlineRegular,
+    IconEllipsisOutline16: () => IconEllipsisOutline16,
     IconEllipsisOutlineMedium: () => IconEllipsisOutlineMedium,
     IconEllipsisOutlineRegular: () => IconEllipsisOutlineRegular,
+    IconEnhanceOutline16: () => IconEnhanceOutline16,
     IconEnhanceOutlineMedium: () => IconEnhanceOutlineMedium,
     IconEnhanceOutlineRegular: () => IconEnhanceOutlineRegular,
+    IconExpandRows: () => IconExpandRows,
     IconFlatListOutlineMedium: () => IconFlatListOutlineMedium,
     IconFlatListOutlineRegular: () => IconFlatListOutlineRegular,
+    IconFolderClose16: () => IconFolderClose16,
     IconFolderCloseMedium: () => IconFolderCloseMedium,
     IconFolderCloseRegular: () => IconFolderCloseRegular,
+    IconFolderOpen16: () => IconFolderOpen16,
     IconFolderOpenMedium: () => IconFolderOpenMedium,
+    IconFolderOpenOutline16: () => IconFolderOpenOutline16,
     IconFolderOpenOutlineMedium: () => IconFolderOpenOutlineMedium,
     IconFolderOpenOutlineRegular: () => IconFolderOpenOutlineRegular,
     IconFolderOpenRegular: () => IconFolderOpenRegular,
     IconFollowsystemOutlineMedium: () => IconFollowsystemOutlineMedium,
     IconFollowsystemOutlineRegular: () => IconFollowsystemOutlineRegular,
+    IconFullscreenOutline16: () => IconFullscreenOutline16,
     IconFullscreenOutlineMedium: () => IconFullscreenOutlineMedium,
     IconFullscreenOutlineRegular: () => IconFullscreenOutlineRegular,
     IconGaugeOutlineMedium: () => IconGaugeOutlineMedium,
@@ -27608,18 +27643,24 @@
     IconLikeFillRegular: () => IconLikeFillRegular,
     IconLikeOutlineMedium: () => IconLikeOutlineMedium,
     IconLikeOutlineRegular: () => IconLikeOutlineRegular,
+    IconLinkOutline14: () => IconLinkOutline14,
+    IconLinkOutline16: () => IconLinkOutline16,
     IconLinkOutlineMedium: () => IconLinkOutlineMedium,
     IconLinkOutlineRegular: () => IconLinkOutlineRegular,
+    IconListPenOutline16: () => IconListPenOutline16,
     IconListPenOutlineMedium: () => IconListPenOutlineMedium,
     IconListPenOutlineRegular: () => IconListPenOutlineRegular,
+    IconLoadingOutline16: () => IconLoadingOutline16,
     IconLoadingOutlineMedium: () => IconLoadingOutlineMedium,
     IconLoadingOutlineRegular: () => IconLoadingOutlineRegular,
     IconMicrophoneOutlineMedium: () => IconMicrophoneOutlineMedium,
     IconMicrophoneOutlineRegular: () => IconMicrophoneOutlineRegular,
+    IconNewChatOutline16: () => IconNewChatOutline16,
     IconNewChatOutlineMedium: () => IconNewChatOutlineMedium,
     IconNewChatOutlineRegular: () => IconNewChatOutlineRegular,
     IconNowrapFillMedium: () => IconNowrapFillMedium,
     IconNowrapFillRegular: () => IconNowrapFillRegular,
+    IconPanelLeftOutline16: () => IconPanelLeftOutline16,
     IconPanelLeftOutlineMedium: () => IconPanelLeftOutlineMedium,
     IconPanelLeftOutlineRegular: () => IconPanelLeftOutlineRegular,
     IconPaperPlaneOutlineMedium: () => IconPaperPlaneOutlineMedium,
@@ -27628,6 +27669,7 @@
     IconPaperclipOutlineRegular: () => IconPaperclipOutlineRegular,
     IconPauseOutlineMedium: () => IconPauseOutlineMedium,
     IconPauseOutlineRegular: () => IconPauseOutlineRegular,
+    IconPersonalizationOutline16: () => IconPersonalizationOutline16,
     IconPersonalizationOutlineMedium: () => IconPersonalizationOutlineMedium,
     IconPersonalizationOutlineRegular: () => IconPersonalizationOutlineRegular,
     IconPinFillMedium: () => IconPinFillMedium,
@@ -27638,40 +27680,53 @@
     IconPlanOutlineRegular: () => IconPlanOutlineRegular,
     IconPlayOutlineMedium: () => IconPlayOutlineMedium,
     IconPlayOutlineRegular: () => IconPlayOutlineRegular,
+    IconPluginPinwheelOutline16: () => IconPluginPinwheelOutline16,
     IconPluginPinwheelOutlineMedium: () => IconPluginPinwheelOutlineMedium,
     IconPluginPinwheelOutlineRegular: () => IconPluginPinwheelOutlineRegular,
+    IconPlus: () => IconPlus,
+    IconPlusOutline16: () => IconPlusOutline16,
     IconPlusOutlineMedium: () => IconPlusOutlineMedium,
     IconPlusOutlineRegular: () => IconPlusOutlineRegular,
+    IconProjectAddOutline16: () => IconProjectAddOutline16,
     IconProjectAddOutlineMedium: () => IconProjectAddOutlineMedium,
     IconProjectAddOutlineRegular: () => IconProjectAddOutlineRegular,
+    IconQuestionOutline14: () => IconQuestionOutline14,
     IconQuestionOutlineMedium: () => IconQuestionOutlineMedium,
     IconQuestionOutlineRegular: () => IconQuestionOutlineRegular,
     IconQueueOutlineMedium: () => IconQueueOutlineMedium,
     IconQueueOutlineRegular: () => IconQueueOutlineRegular,
+    IconRefreshOutline14: () => IconRefreshOutline14,
+    IconRefreshOutline16: () => IconRefreshOutline16,
     IconRefreshOutlineMedium: () => IconRefreshOutlineMedium,
     IconRefreshOutlineRegular: () => IconRefreshOutlineRegular,
     IconRightUpOutlineMedium: () => IconRightUpOutlineMedium,
     IconRightUpOutlineRegular: () => IconRightUpOutlineRegular,
+    IconSearchOutline16: () => IconSearchOutline16,
     IconSearchOutlineMedium: () => IconSearchOutlineMedium,
     IconSearchOutlineRegular: () => IconSearchOutlineRegular,
     IconSendOutlineMedium: () => IconSendOutlineMedium,
     IconSendOutlineRegular: () => IconSendOutlineRegular,
+    IconSession: () => IconSession,
+    IconSettingsOutline16: () => IconSettingsOutline16,
     IconSettingsOutlineMedium: () => IconSettingsOutlineMedium,
     IconSettingsOutlineRegular: () => IconSettingsOutlineRegular,
     IconShareOutlineMedium: () => IconShareOutlineMedium,
     IconShareOutlineRegular: () => IconShareOutlineRegular,
     IconShieldOutlineMedium: () => IconShieldOutlineMedium,
     IconShieldOutlineRegular: () => IconShieldOutlineRegular,
+    IconSkillOutline16: () => IconSkillOutline16,
     IconSkillOutlineMedium: () => IconSkillOutlineMedium,
     IconSkillOutlineRegular: () => IconSkillOutlineRegular,
     IconSlidersTwoOutlineMedium: () => IconSlidersTwoOutlineMedium,
     IconSlidersTwoOutlineRegular: () => IconSlidersTwoOutlineRegular,
+    IconSparkle16: () => IconSparkle16,
     IconSparkleMedium: () => IconSparkleMedium,
     IconSparkleRegular: () => IconSparkleRegular,
     IconStopFillMedium: () => IconStopFillMedium,
     IconStopFillRegular: () => IconStopFillRegular,
     IconThinkOutlineMedium: () => IconThinkOutlineMedium,
     IconThinkOutlineRegular: () => IconThinkOutlineRegular,
+    IconTrashOutline16: () => IconTrashOutline16,
     IconTrashOutlineMedium: () => IconTrashOutlineMedium,
     IconTrashOutlineRegular: () => IconTrashOutlineRegular,
     IconTreeCornerMedium: () => IconTreeCornerMedium,
@@ -27680,10 +27735,12 @@
     IconTriangleRightFillRegular: () => IconTriangleRightFillRegular,
     IconUnarchiveOutlineMedium: () => IconUnarchiveOutlineMedium,
     IconUnarchiveOutlineRegular: () => IconUnarchiveOutlineRegular,
+    IconUserOutline16: () => IconUserOutline16,
     IconUserOutlineMedium: () => IconUserOutlineMedium,
     IconUserOutlineRegular: () => IconUserOutlineRegular,
     IconUsersOutlineMedium: () => IconUsersOutlineMedium,
     IconUsersOutlineRegular: () => IconUsersOutlineRegular,
+    IconWarningOutline16: () => IconWarningOutline16,
     IconWarningOutlineMedium: () => IconWarningOutlineMedium,
     IconWarningOutlineRegular: () => IconWarningOutlineRegular,
     IconWarningTriangleOutlineMedium: () => IconWarningTriangleOutlineMedium,
@@ -27962,6 +28019,54 @@
   var IconWrapLinesOutlineMedium = makePlaceholder("IconWrapLinesOutlineMedium");
   var IconWrapLinesOutlineRegular = makePlaceholder("IconWrapLinesOutlineRegular");
   var ICON_NAMES = ["IconAgentPresetOutlineMedium", "IconAgentPresetOutlineRegular", "IconAlarmClockOutlineMedium", "IconAlarmClockOutlineRegular", "IconApiOutlineMedium", "IconApiOutlineRegular", "IconArchiveCheckOutlineMedium", "IconArchiveCheckOutlineRegular", "IconArchiveOffOutlineMedium", "IconArchiveOffOutlineRegular", "IconArchiveOutlineMedium", "IconArchiveOutlineRegular", "IconBranchOutlineMedium", "IconBranchOutlineRegular", "IconBrowseOutlineMedium", "IconBrowseOutlineRegular", "IconCheckCircleFillMedium", "IconCheckCircleFillRegular", "IconCheckCircleOutlineMedium", "IconCheckCircleOutlineRegular", "IconCheckOutlineMedium", "IconCheckOutlineRegular", "IconChecklistOutlineMedium", "IconChecklistOutlineRegular", "IconChevronDownOutlineMedium", "IconChevronDownOutlineRegular", "IconChevronLeftOutlineMedium", "IconChevronLeftOutlineRegular", "IconChevronRightOutlineMedium", "IconChevronRightOutlineRegular", "IconChevronUpOutlineMedium", "IconChevronUpOutlineRegular", "IconChevronsUpDownOutlineMedium", "IconChevronsUpDownOutlineRegular", "IconClockOutlineMedium", "IconClockOutlineRegular", "IconCloseCircleFillMedium", "IconCloseCircleFillRegular", "IconCloseFillMedium", "IconCloseFillRegular", "IconCloseOutlineMedium", "IconCloseOutlineRegular", "IconCodeOutlineMedium", "IconCodeOutlineRegular", "IconCompactOutlineMedium", "IconCompactOutlineRegular", "IconCompareSplitOutlineMedium", "IconCompareSplitOutlineRegular", "IconContextInjectionOutlineMedium", "IconContextInjectionOutlineRegular", "IconCopyOutlineMedium", "IconCopyOutlineRegular", "IconCordisPluginOutlineMedium", "IconCordisPluginOutlineRegular", "IconDarkOutlineMedium", "IconDarkOutlineRegular", "IconDataOutlineMedium", "IconDataOutlineRegular", "IconDatabaseOutlineMedium", "IconDatabaseOutlineRegular", "IconDeliverDocMedium", "IconDeliverDocRegular", "IconDislikeFillMedium", "IconDislikeFillRegular", "IconDislikeOutlineMedium", "IconDislikeOutlineRegular", "IconDownloadOutlineMedium", "IconDownloadOutlineRegular", "IconEditOutlineMedium", "IconEditOutlineRegular", "IconEllipsisOutlineMedium", "IconEllipsisOutlineRegular", "IconEnhanceOutlineMedium", "IconEnhanceOutlineRegular", "IconFlatListOutlineMedium", "IconFlatListOutlineRegular", "IconFolderCloseMedium", "IconFolderCloseRegular", "IconFolderOpenMedium", "IconFolderOpenOutlineMedium", "IconFolderOpenOutlineRegular", "IconFolderOpenRegular", "IconFollowsystemOutlineMedium", "IconFollowsystemOutlineRegular", "IconFullscreenOutlineMedium", "IconFullscreenOutlineRegular", "IconGaugeOutlineMedium", "IconGaugeOutlineRegular", "IconGlobeOutlineMedium", "IconGlobeOutlineRegular", "IconGoalOutlineMedium", "IconGoalOutlineRegular", "IconInfoOutlineMedium", "IconInfoOutlineRegular", "IconInspectOutlineMedium", "IconInspectOutlineRegular", "IconLightOutlineMedium", "IconLightOutlineRegular", "IconLikeFillMedium", "IconLikeFillRegular", "IconLikeOutlineMedium", "IconLikeOutlineRegular", "IconLinkOutlineMedium", "IconLinkOutlineRegular", "IconListPenOutlineMedium", "IconListPenOutlineRegular", "IconLoadingOutlineMedium", "IconLoadingOutlineRegular", "IconMicrophoneOutlineMedium", "IconMicrophoneOutlineRegular", "IconNewChatOutlineMedium", "IconNewChatOutlineRegular", "IconNowrapFillMedium", "IconNowrapFillRegular", "IconPanelLeftOutlineMedium", "IconPanelLeftOutlineRegular", "IconPaperPlaneOutlineMedium", "IconPaperPlaneOutlineRegular", "IconPaperclipOutlineMedium", "IconPaperclipOutlineRegular", "IconPauseOutlineMedium", "IconPauseOutlineRegular", "IconPersonalizationOutlineMedium", "IconPersonalizationOutlineRegular", "IconPinFillMedium", "IconPinFillRegular", "IconPinOutlineMedium", "IconPinOutlineRegular", "IconPlanOutlineMedium", "IconPlanOutlineRegular", "IconPlayOutlineMedium", "IconPlayOutlineRegular", "IconPluginPinwheelOutlineMedium", "IconPluginPinwheelOutlineRegular", "IconPlusOutlineMedium", "IconPlusOutlineRegular", "IconProjectAddOutlineMedium", "IconProjectAddOutlineRegular", "IconQuestionOutlineMedium", "IconQuestionOutlineRegular", "IconQueueOutlineMedium", "IconQueueOutlineRegular", "IconRefreshOutlineMedium", "IconRefreshOutlineRegular", "IconRightUpOutlineMedium", "IconRightUpOutlineRegular", "IconSearchOutlineMedium", "IconSearchOutlineRegular", "IconSendOutlineMedium", "IconSendOutlineRegular", "IconSettingsOutlineMedium", "IconSettingsOutlineRegular", "IconShareOutlineMedium", "IconShareOutlineRegular", "IconShieldOutlineMedium", "IconShieldOutlineRegular", "IconSkillOutlineMedium", "IconSkillOutlineRegular", "IconSlidersTwoOutlineMedium", "IconSlidersTwoOutlineRegular", "IconSparkleMedium", "IconSparkleRegular", "IconStopFillMedium", "IconStopFillRegular", "IconThinkOutlineMedium", "IconThinkOutlineRegular", "IconTrashOutlineMedium", "IconTrashOutlineRegular", "IconTreeCornerMedium", "IconTreeCornerRegular", "IconTriangleRightFillMedium", "IconTriangleRightFillRegular", "IconUnarchiveOutlineMedium", "IconUnarchiveOutlineRegular", "IconUserOutlineMedium", "IconUserOutlineRegular", "IconUsersOutlineMedium", "IconUsersOutlineRegular", "IconWarningOutlineMedium", "IconWarningOutlineRegular", "IconWarningTriangleOutlineMedium", "IconWarningTriangleOutlineRegular", "IconWorkspaceTreeOutlineMedium", "IconWorkspaceTreeOutlineRegular", "IconWrapFillMedium", "IconWrapFillRegular", "IconWrapLinesOutlineMedium", "IconWrapLinesOutlineRegular"];
+  var IconArchiveOutline20 = makePlaceholder("IconArchiveOutline20");
+  var IconBellOff = makePlaceholder("IconBellOff");
+  var IconBranchOutline16 = makePlaceholder("IconBranchOutline16");
+  var IconCheckOutline16 = makePlaceholder("IconCheckOutline16");
+  var IconChevronDownOutline14 = makePlaceholder("IconChevronDownOutline14");
+  var IconChevronLeft = makePlaceholder("IconChevronLeft");
+  var IconChevronLeftOutline14 = makePlaceholder("IconChevronLeftOutline14");
+  var IconChevronRightOutline14 = makePlaceholder("IconChevronRightOutline14");
+  var IconChevronUpOutline14 = makePlaceholder("IconChevronUpOutline14");
+  var IconClock = makePlaceholder("IconClock");
+  var IconClose = makePlaceholder("IconClose");
+  var IconCloseOutline16 = makePlaceholder("IconCloseOutline16");
+  var IconCodeOutline16 = makePlaceholder("IconCodeOutline16");
+  var IconCompactRows = makePlaceholder("IconCompactRows");
+  var IconContribution = makePlaceholder("IconContribution");
+  var IconCopyOutline16 = makePlaceholder("IconCopyOutline16");
+  var IconCordisPluginOutline14 = makePlaceholder("IconCordisPluginOutline14");
+  var IconDownloadOutline16 = makePlaceholder("IconDownloadOutline16");
+  var IconEditOutline16 = makePlaceholder("IconEditOutline16");
+  var IconEllipsisOutline16 = makePlaceholder("IconEllipsisOutline16");
+  var IconEnhanceOutline16 = makePlaceholder("IconEnhanceOutline16");
+  var IconExpandRows = makePlaceholder("IconExpandRows");
+  var IconFolderClose16 = makePlaceholder("IconFolderClose16");
+  var IconFolderOpen16 = makePlaceholder("IconFolderOpen16");
+  var IconFolderOpenOutline16 = makePlaceholder("IconFolderOpenOutline16");
+  var IconFullscreenOutline16 = makePlaceholder("IconFullscreenOutline16");
+  var IconLinkOutline14 = makePlaceholder("IconLinkOutline14");
+  var IconLinkOutline16 = makePlaceholder("IconLinkOutline16");
+  var IconListPenOutline16 = makePlaceholder("IconListPenOutline16");
+  var IconLoadingOutline16 = makePlaceholder("IconLoadingOutline16");
+  var IconNewChatOutline16 = makePlaceholder("IconNewChatOutline16");
+  var IconPanelLeftOutline16 = makePlaceholder("IconPanelLeftOutline16");
+  var IconPersonalizationOutline16 = makePlaceholder("IconPersonalizationOutline16");
+  var IconPluginPinwheelOutline16 = makePlaceholder("IconPluginPinwheelOutline16");
+  var IconPlus = makePlaceholder("IconPlus");
+  var IconPlusOutline16 = makePlaceholder("IconPlusOutline16");
+  var IconProjectAddOutline16 = makePlaceholder("IconProjectAddOutline16");
+  var IconQuestionOutline14 = makePlaceholder("IconQuestionOutline14");
+  var IconRefreshOutline14 = makePlaceholder("IconRefreshOutline14");
+  var IconRefreshOutline16 = makePlaceholder("IconRefreshOutline16");
+  var IconSearchOutline16 = makePlaceholder("IconSearchOutline16");
+  var IconSession = makePlaceholder("IconSession");
+  var IconSettingsOutline16 = makePlaceholder("IconSettingsOutline16");
+  var IconSkillOutline16 = makePlaceholder("IconSkillOutline16");
+  var IconSparkle16 = makePlaceholder("IconSparkle16");
+  var IconTrashOutline16 = makePlaceholder("IconTrashOutline16");
+  var IconUserOutline16 = makePlaceholder("IconUserOutline16");
+  var IconWarningOutline16 = makePlaceholder("IconWarningOutline16");
 
   // src/ui/shell/scripts/dsh-primitives/components.tsx
   var import_react2 = __toESM(require_react(), 1);
@@ -28031,21 +28136,25 @@
     );
   }
   function Switch(props) {
-    const { checked, onCheckedChange, className, disabled, ...rest } = props || {};
+    const { checked, onCheckedChange, onChange, className, disabled, label, title, ...rest } = props || {};
+    const handler = typeof onChange === "function" ? onChange : onCheckedChange;
     return (0, import_react2.createElement)("button", {
       type: "button",
       role: "switch",
       "aria-checked": !!checked,
       disabled,
+      "aria-label": label,
+      title,
       className: cx("ck-dp-switch", checked && "on", disabled && "disabled", className),
       onClick: () => {
-        if (!disabled && typeof onCheckedChange === "function") onCheckedChange(!checked);
+        if (!disabled && typeof handler === "function") handler(!checked);
       },
       ...rest
     }, (0, import_react2.createElement)("span", { className: "ck-dp-switch-thumb" }));
   }
   function Checkbox(props) {
-    const { checked, onCheckedChange, className, disabled, ...rest } = props || {};
+    const { checked, onCheckedChange, onChange, className, disabled, ...rest } = props || {};
+    const handler = typeof onChange === "function" ? onChange : onCheckedChange;
     return (0, import_react2.createElement)("button", {
       type: "button",
       role: "checkbox",
@@ -28053,7 +28162,7 @@
       disabled,
       className: cx("ck-dp-checkbox", checked && "on", disabled && "disabled", className),
       onClick: () => {
-        if (!disabled && typeof onCheckedChange === "function") onCheckedChange(!checked);
+        if (!disabled && typeof handler === "function") handler(!checked);
       },
       ...rest
     }, checked ? (0, import_react2.createElement)("span", { className: "ck-dp-checkbox-mark" }, "\u2713") : null);
@@ -28080,7 +28189,7 @@
   }
   var SegmentedTabs = SegmentedControl;
   function Toast(props) {
-    const { text, icon, onDone, className, ...rest } = props || {};
+    const { text, icon, onDone, holdMs, className, style, ...rest } = props || {};
     (0, import_react2.useEffect)(() => {
       if (typeof onDone !== "function") return;
       const t = setTimeout(() => {
@@ -28088,12 +28197,21 @@
           onDone();
         } catch (_) {
         }
-      }, 2400);
+      }, typeof holdMs === "number" ? holdMs : 2400);
       return () => clearTimeout(t);
-    }, [onDone]);
+    }, [onDone, holdMs]);
+    const inlineStyle = Object.assign({
+      display: "inline-flex",
+      width: "fit-content",
+      maxWidth: "min(560px, 80vw)",
+      position: "fixed",
+      left: "50%",
+      bottom: "44px",
+      transform: "translateX(-50%)"
+    }, style || {});
     return (0, import_react2.createElement)(
       "div",
-      { className: cx("ck-dp-toast", className), ...rest },
+      { className: cx("ck-dp-toast", className), style: inlineStyle, ...rest },
       icon != null ? (0, import_react2.createElement)("span", { className: "ck-dp-toast-icon" }, icon) : null,
       (0, import_react2.createElement)("span", null, text)
     );
@@ -28387,9 +28505,153 @@
     return props && props.children != null ? props.children : null;
   }
 
+  // src/ui/shell/scripts/dsh-client-store/index.ts
+  var dsh_client_store_exports = {};
+  __export(dsh_client_store_exports, {
+    createSnapshotStore: () => createSnapshotStore,
+    defineStore: () => defineStore,
+    notifySubscribers: () => notifySubscribers,
+    rafBatch: () => rafBatch,
+    shallowEqual: () => shallowEqual
+  });
+  function shallowClone(v) {
+    if (Array.isArray(v)) return v.slice();
+    if (v && typeof v === "object") return Object.assign({}, v);
+    return v;
+  }
+  function attachPersistence(store, name) {
+    try {
+      if (typeof localStorage === "undefined") return;
+      const raw = localStorage.getItem(name);
+      if (raw !== null) {
+        try {
+          store.set(JSON.parse(raw));
+        } catch (_) {
+        }
+      }
+      store.subscribe(() => {
+        try {
+          localStorage.setItem(name, JSON.stringify(store.getSnapshot()));
+        } catch (_) {
+        }
+      });
+    } catch (_) {
+    }
+  }
+  function createSnapshotStore(init, opts) {
+    let state = init;
+    const listeners2 = /* @__PURE__ */ new Set();
+    const notify2 = () => {
+      for (const fn of [...listeners2]) {
+        try {
+          fn();
+        } catch (e) {
+          console.error("[client-store] subscriber failed:", e);
+        }
+      }
+    };
+    const store = {
+      getSnapshot: () => state,
+      subscribe(fn) {
+        if (typeof fn !== "function") return () => {
+        };
+        listeners2.add(fn);
+        return () => {
+          listeners2.delete(fn);
+        };
+      },
+      update(mutator) {
+        const draft = shallowClone(state);
+        try {
+          mutator(draft);
+        } catch (e) {
+          console.error("[client-store] update mutator failed:", e);
+          return;
+        }
+        state = draft;
+        notify2();
+      },
+      set(next) {
+        state = next;
+        notify2();
+      }
+    };
+    if (opts && opts.persist && opts.persist.name) attachPersistence(store, opts.persist.name);
+    return store;
+  }
+  function defineStore(decl) {
+    if (!decl || typeof decl !== "object") throw new Error("[client-store] defineStore: decl required");
+    const init = typeof decl.init === "function" ? decl.init : () => ({ ...decl.init || {} });
+    const actionsDecl = decl.actions || {};
+    return {
+      spec: decl,
+      create(scopeKey) {
+        const persistKey = decl.persist === void 0 ? void 0 : scopeKey === void 0 ? decl.persist : decl.persist + "." + scopeKey;
+        const store = createSnapshotStore(init(), persistKey !== void 0 ? { persist: { name: persistKey } } : void 0);
+        const actions = {};
+        for (const key of Object.keys(actionsDecl)) {
+          const mutate = actionsDecl[key];
+          actions[key] = (...params) => {
+            store.update((draft) => {
+              mutate(draft, ...params);
+            });
+          };
+        }
+        return {
+          actions,
+          getSnapshot: () => store.getSnapshot(),
+          subscribe: (fn) => store.subscribe(fn),
+          store,
+          clearPersisted: () => {
+            try {
+              if (persistKey && typeof localStorage !== "undefined") localStorage.removeItem(persistKey);
+            } catch (_) {
+            }
+          }
+        };
+      }
+    };
+  }
+  function shallowEqual(a, b) {
+    if (a === b) return true;
+    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+    const ka = Object.keys(a), kb = Object.keys(b);
+    if (ka.length !== kb.length) return false;
+    for (const k of ka) {
+      if (a[k] !== b[k]) return false;
+    }
+    return true;
+  }
+  function notifySubscribers(listeners2, label, ...args) {
+    for (const fn of [...listeners2]) {
+      try {
+        fn(...args);
+      } catch (e) {
+        console.error((label || "[client-store]") + " subscriber failed:", e);
+      }
+    }
+  }
+  function rafBatch(fn) {
+    const schedule = typeof requestAnimationFrame === "function" ? (f) => requestAnimationFrame(() => {
+      f();
+    }) : (f) => queueMicrotask(f);
+    let scheduled = false;
+    return () => {
+      if (scheduled) return;
+      scheduled = true;
+      schedule(() => {
+        scheduled = false;
+        fn();
+      });
+    };
+  }
+
   // src/ui/shell/scripts/dsh-client-runtime.ts
   var slotTable = /* @__PURE__ */ new Map();
   var listeners = /* @__PURE__ */ new Set();
+  var slotListeners = /* @__PURE__ */ new Map();
+  var slotVersions = /* @__PURE__ */ new Map();
+  var slotSpecs = /* @__PURE__ */ new Map();
   function notify() {
     for (const cb of listeners) {
       try {
@@ -28397,6 +28659,44 @@
       } catch (_) {
       }
     }
+  }
+  function notifySlot(slotName) {
+    slotVersions.set(slotName, (slotVersions.get(slotName) || 0) + 1);
+    const subs = slotListeners.get(slotName);
+    if (subs) for (const cb of [...subs]) {
+      try {
+        cb();
+      } catch (_) {
+      }
+    }
+    notify();
+  }
+  function toEntry(it) {
+    return {
+      options: { id: it.id, key: it.key, order: it.order, ...it.spec || {} },
+      id: it.id,
+      order: it.order,
+      spec: it.spec,
+      Component: it.Component,
+      t: it.t,
+      injectedProps: it.injectedProps
+    };
+  }
+  function entriesOfSlotImpl(slotName) {
+    const all = (slotTable.get(slotName) || []).slice().sort((a, b) => (a.order || 100) - (b.order || 100));
+    const spec = slotSpecs.get(slotName);
+    const kind = spec && spec.kind;
+    if (kind === "chain") return all.map(toEntry);
+    const heads = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const it of all) {
+      const cell = kind === "keyed" ? it.key2 : kind === "list" ? it.id : void 0;
+      const cellKey = String(cell === void 0 ? "" : cell);
+      if (seen.has(cellKey)) continue;
+      seen.add(cellKey);
+      heads.push(toEntry(it));
+    }
+    return heads;
   }
   function subscribeSlots(cb) {
     listeners.add(cb);
@@ -28475,61 +28775,6 @@
     };
     return shimObj;
   }
-  function makeStoreEngine() {
-    function defineStore(spec) {
-      const s = spec || {};
-      return {
-        create() {
-          let state = typeof s.init === "function" ? s.init() : {};
-          const subs = /* @__PURE__ */ new Set();
-          const notify2 = () => {
-            for (const fn of [...subs]) {
-              try {
-                fn();
-              } catch (_) {
-              }
-            }
-          };
-          const actions = {};
-          const src = s.actions || {};
-          for (const key of Object.keys(src)) {
-            actions[key] = (...args) => {
-              try {
-                src[key](state, ...args);
-              } catch (e) {
-                console.error("[store] action \u5931\u8D25 " + key, e);
-              }
-              notify2();
-            };
-          }
-          return {
-            getSnapshot: () => state,
-            subscribe(fn) {
-              subs.add(fn);
-              return () => {
-                subs.delete(fn);
-              };
-            },
-            actions
-          };
-        }
-      };
-    }
-    function createSnapshotStore(init) {
-      return defineStore({ init: typeof init === "function" ? init : () => init || {}, actions: {} });
-    }
-    function shallowEqual(a, b) {
-      if (a === b) return true;
-      if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
-      const ka = Object.keys(a), kb = Object.keys(b);
-      if (ka.length !== kb.length) return false;
-      for (const k of ka) {
-        if (a[k] !== b[k]) return false;
-      }
-      return true;
-    }
-    return { defineStore, createSnapshotStore, shallowEqual };
-  }
   var moduleTable = {
     "react": React,
     "react-dom": ReactDOM,
@@ -28537,9 +28782,9 @@
     "react/jsx-runtime": jsxRuntime,
     "react/jsx-dev-runtime": jsxRuntime,
     "@deepseek-ai/dsh-client-ui-primitives": dsh_primitives_exports,
-    "@deepseek-ai/dsh-client-store": makeStoreEngine(),
-    "@deepseek-ai/dsh-client-runtime/client": makeStoreEngine(),
-    "@deepseek-ai/dsh-client-runtime": makeStoreEngine()
+    "@deepseek-ai/dsh-client-store": dsh_client_store_exports,
+    "@deepseek-ai/dsh-client-runtime/client": dsh_client_store_exports,
+    "@deepseek-ai/dsh-client-runtime": dsh_client_store_exports
   };
   var loadedModules = {};
   function makeObservable(initial) {
@@ -28649,6 +28894,11 @@
     return {
       selectPanel(id) {
         activePanelId.set(id);
+        try {
+          const fn = window.__cuckooSelectPanel;
+          if (typeof fn === "function") fn(id);
+        } catch (_) {
+        }
       },
       panelInfo: { getSnapshot: () => ({ activePanelId: activePanelId.getSnapshot() }), subscribe: activePanelId.subscribe }
     };
@@ -28659,12 +28909,65 @@
   function makeRemote() {
     const noop = () => () => {
     };
+    const api2 = () => window.shellAPI;
+    const call = async (fn, ...args) => {
+      try {
+        const a = api2();
+        if (!a || typeof a[fn] !== "function") return { ok: false, error: { code: "operation-error", diagnostic: "shellAPI." + fn + " \u4E0D\u5B58\u5728" } };
+        return await a[fn](...args);
+      } catch (e) {
+        return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } };
+      }
+    };
+    const remoteListeners = /* @__PURE__ */ new Map();
+    const initRemoteListener = () => {
+      try {
+        const a = api2();
+        if (a && typeof a.onRemoteEvent === "function" && !window.__cuckooRemoteBound) {
+          window.__cuckooRemoteBound = true;
+          a.onRemoteEvent((evt, data) => {
+            const set = remoteListeners.get(evt);
+            if (set) for (const fn of [...set]) {
+              try {
+                fn(data);
+              } catch (e) {
+                console.error("[remote.$on] " + evt + " \u56DE\u8C03\u5931\u8D25", e);
+              }
+            }
+          });
+        }
+      } catch (_) {
+      }
+    };
     return {
-      $on: (_evt, _cb) => noop(),
+      $on: (evt, cb) => {
+        if (typeof cb !== "function") return noop();
+        initRemoteListener();
+        if (!remoteListeners.has(evt)) remoteListeners.set(evt, /* @__PURE__ */ new Set());
+        remoteListeners.get(evt).add(cb);
+        return () => {
+          const s = remoteListeners.get(evt);
+          if (s) s.delete(cb);
+        };
+      },
       settings: { get: async () => void 0, set: async () => true },
       goals: { get: async () => null, edit: async () => ({ ok: false }), pause: async () => ({ ok: false }), resume: async () => ({ ok: false }), clear: async () => ({ ok: false }) },
       session: { modelCatalog: async () => ({ result: { value: { groups: [] } } }) },
-      agentPresets: { list: async () => ({ result: { value: { presets: [] } } }) }
+      agentPresets: { list: async () => ({ result: { value: { presets: [] } } }) },
+      // ===== DSH plugin-manager RPC =====
+      pluginManager: {
+        listBundles: () => call("pluginManagerListBundles"),
+        listPlugins: () => call("pluginManagerListPlugins"),
+        setBundleEnabled: (name, enabled) => call("pluginManagerSetEnabled", name, enabled),
+        setPluginEnabled: (entryId, enabled) => call("pluginManagerSetEnabled", entryId, enabled),
+        removeBundle: (name) => call("pluginManagerRemoveBundle", name),
+        installBundle: (spec, _opts) => call("pluginManagerInstallBundle", spec),
+        inspect: (spec, _signal) => call("pluginManagerInspect", spec),
+        cancelInstall: (_requestId) => call("pluginManagerCancelInstall")
+      },
+      pluginInventory: {
+        list: () => call("pluginInventoryList")
+      }
     };
   }
   function makeUiWorkspace() {
@@ -28724,6 +29027,60 @@
       },
       getSnapshot: () => desc.getSnapshot(),
       subscribe: desc.subscribe
+    };
+  }
+  function makeSettingsScope() {
+    const mirrorSubs = /* @__PURE__ */ new Set();
+    let mirrorSnapshot = { status: "unavailable", view: void 0, error: null };
+    const mirror = {
+      getSnapshot: () => mirrorSnapshot,
+      subscribe(cb) {
+        if (typeof cb === "function") mirrorSubs.add(cb);
+        return () => {
+          mirrorSubs.delete(cb);
+        };
+      },
+      load: async () => {
+      },
+      ensure: async () => {
+      },
+      acceptView: () => {
+      },
+      namespace: (_ns) => void 0
+    };
+    return {
+      /** 绑定一个命名空间 scope */
+      bind(spec) {
+        const ns = spec && spec.namespace ? String(spec.namespace) : "default";
+        const subs = /* @__PURE__ */ new Set();
+        const snap = {
+          status: "unavailable",
+          value: void 0,
+          base: void 0,
+          user: void 0,
+          revision: void 0,
+          writable: false,
+          mode: "memory",
+          namespace: ns
+        };
+        return {
+          getSnapshot: () => snap,
+          subscribe(cb) {
+            if (typeof cb === "function") subs.add(cb);
+            return () => {
+              subs.delete(cb);
+            };
+          },
+          async set(_field, _value) {
+          },
+          async unset(_field) {
+          }
+        };
+      },
+      /** 共享镜像 face */
+      describe: () => mirror,
+      getSnapshot: () => mirrorSnapshot,
+      subscribe: (cb) => mirror.subscribe(cb)
     };
   }
   function makeTheme(emit) {
@@ -28810,6 +29167,7 @@
       uiWorkspace: makeUiWorkspace(),
       locale,
       theme,
+      settingsScope: makeSettingsScope(),
       configForms: makeConfigForms(),
       forms: makeConfigForms(),
       tools: makeStub("tools"),
@@ -28824,6 +29182,20 @@
       inject(name, cb) {
         try {
           const d = cb();
+          if (d && typeof d.next === "function" && typeof d[Symbol.iterator] === "function") {
+            const disposers = [];
+            for (const item of d) {
+              if (typeof item === "function") disposers.push(item);
+            }
+            return () => {
+              for (const fn of disposers) {
+                try {
+                  fn();
+                } catch (_) {
+                }
+              }
+            };
+          }
           return typeof d === "function" ? d : () => {
           };
         } catch (e) {
@@ -28833,10 +29205,10 @@
           };
         }
       },
-      register(spec, Component3) {
+      register(spec, Component4) {
         const s = spec || {};
         const slotName = s.name || s.slot;
-        const id = s.id || slotName;
+        const id = s.id || s.key || slotName;
         if (!slotName) return () => {
         };
         const key = pluginId + ":" + slotName + ":" + id;
@@ -28870,10 +29242,18 @@
         } catch (e) {
           console.error("[dsh-client] spec.inject \u89E3\u6790\u5931\u8D25 " + id, e);
         }
+        if (!slotSpecs.has(slotName)) {
+          slotSpecs.set(slotName, {
+            name: slotName,
+            kind: s.kind || (s.children ? "list" : "single"),
+            scope: s.scope,
+            children: s.children
+          });
+        }
         const list = (slotTable.get(slotName) || []).filter((x) => x.key !== key);
-        list.push({ key, pluginId, slot: slotName, id, order: typeof s.order === "number" ? s.order : 100, spec: s, Component: Component3, t, injectedProps });
+        list.push({ key, pluginId, slot: slotName, id, order: typeof s.order === "number" ? s.order : 100, spec: s, Component: Component4, t, injectedProps });
         slotTable.set(slotName, list);
-        notify();
+        notifySlot(slotName);
         try {
           const api2 = window.shellAPI;
           if (api2 && typeof api2.slotRegister === "function") {
@@ -28885,10 +29265,41 @@
         return () => {
           const l = (slotTable.get(slotName) || []).filter((x) => x.key !== key);
           slotTable.set(slotName, l);
-          notify();
+          notifySlot(slotName);
         };
       },
       unregister() {
+      },
+      /** 拿某槽的条目（DSH 契约：stable 引用）*/
+      entries(slotName) {
+        return (slotTable.get(slotName) || []).map(toEntry);
+      },
+      /** 投影"胜出者"（按 kind 去重）*/
+      entriesOfSlot(slotName) {
+        return entriesOfSlotImpl(slotName);
+      },
+      /** 插槽声明（codex-ui 判 typeof === "function"）*/
+      spec(slotName) {
+        return slotSpecs.get(slotName);
+      },
+      /** 订阅某槽变化（返回退订）*/
+      subscribe(slotName, fn) {
+        if (typeof fn !== "function") return () => {
+        };
+        if (!slotListeners.has(slotName)) slotListeners.set(slotName, /* @__PURE__ */ new Set());
+        slotListeners.get(slotName).add(fn);
+        return () => {
+          const s = slotListeners.get(slotName);
+          if (s) s.delete(fn);
+        };
+      },
+      /** 版本号（每次变化 +1）*/
+      getVersion(slotName) {
+        return slotVersions.get(slotName) || 0;
+      },
+      /** 拿所有已声明槽（调试用）*/
+      allSlots() {
+        return [...slotSpecs.keys()];
       }
     };
     services.slots = slots;
@@ -29066,6 +29477,7 @@
           if (moduleTable[name]) return moduleTable[name];
           if (loadedModules[name]) return loadedModules[name];
           if (name.includes("ui-primitives")) return makePrimitivesShim();
+          if (name === "@deepseek-ai/dsh-client-store") return dsh_client_store_exports;
           return makeStub(name);
         };
         try {
@@ -29741,6 +30153,77 @@
   function registerPage(id, comp) {
     PAGES[id] = comp;
   }
+  function MainSlotPage({ item }) {
+    const C = item.Component;
+    const face = item.injectedProps || {};
+    const t = item.t || ((k) => k);
+    const pmStore = face && face.hooks ? face.hooks.pluginManager : void 0;
+    const clStore = face && face.hooks ? face.hooks.configLedger : void 0;
+    const usePluginManager = (0, import_react9.useCallback)((selector) => {
+      return (0, import_react9.useSyncExternalStore)(
+        (cb) => pmStore && typeof pmStore.subscribe === "function" ? pmStore.subscribe(cb) : () => {
+        },
+        () => {
+          const s = pmStore ? pmStore.getSnapshot() : { status: "idle", packages: [], busy: [], notice: null, install: {}, confirm: null, highlight: null };
+          return selector ? selector(s) : s;
+        }
+      );
+    }, [pmStore]);
+    const useConfigLedger = (0, import_react9.useCallback)((selector) => {
+      return (0, import_react9.useSyncExternalStore)(
+        (cb) => clStore && typeof clStore.subscribe === "function" ? clStore.subscribe(cb) : () => {
+        },
+        () => {
+          const s = clStore ? clStore.getSnapshot() : { items: [], bundles: /* @__PURE__ */ new Set(), rows: /* @__PURE__ */ new Set() };
+          return selector ? selector(s) : s;
+        }
+      );
+    }, [clStore]);
+    const renderSlot = (0, import_react9.useCallback)((slotName, ownerProps, opts) => {
+      try {
+        const items = getSlotItems(slotName);
+        let filtered = items;
+        if (opts && opts.only !== void 0) filtered = items.filter((it) => it.id === opts.only);
+        else if (opts && opts.entryKey !== void 0) filtered = items.filter((it) => it.id === opts.entryKey || it.spec && it.spec.key === opts.entryKey);
+        if (!filtered.length) return opts && opts.fallback || null;
+        return (0, import_react9.createElement)(import_react9.Fragment, null, ...filtered.map((it, i) => {
+          const C2 = it.Component;
+          if (!C2) return null;
+          const p = Object.assign({}, ownerProps || {}, it.injectedProps || {});
+          p.t = it.t || ((k) => k);
+          return (0, import_react9.createElement)(C2, { key: it.key || "slot-" + i, ...p });
+        }));
+      } catch (e) {
+        console.error("[dsh-slot] renderSlot(" + slotName + ") \u5931\u8D25", e);
+        return null;
+      }
+    }, []);
+    const props = { ...face, usePluginManager, useConfigLedger, renderSlot, t };
+    return (0, import_react9.createElement)(C, props);
+  }
+  var PageErrorBoundary = class extends import_react9.Component {
+    constructor(props) {
+      super(props);
+      this.state = { err: null };
+    }
+    static getDerivedStateFromError(e) {
+      return { err: e && e.message ? e.message : String(e) };
+    }
+    componentDidCatch(e) {
+      console.error("[dsh-page] Page \u5D29\u6E83", e);
+    }
+    render() {
+      if (this.state.err) {
+        return (0, import_react9.createElement)(
+          "div",
+          { style: { padding: 16, color: "#e55" } },
+          (0, import_react9.createElement)("div", { style: { fontWeight: 700, marginBottom: 8 } }, "\u26A0 \u9875\u9762\u7EC4\u4EF6\u5D29\u6E83"),
+          (0, import_react9.createElement)("div", { style: { fontSize: 12, color: "#888", whiteSpace: "pre-wrap" } }, this.state.err)
+        );
+      }
+      return this.props.children;
+    }
+  };
   function Icon({ icon }) {
     if (typeof icon === "object" && "text" in icon) return (0, import_react9.createElement)("span", { className: "ck-ab-text" }, icon.text);
     return (0, import_react9.createElement)("svg", { className: "ck-ab-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react9.createElement)("path", { d: icon }));
@@ -29750,9 +30233,55 @@
   }
   function ShellFrame() {
     const [activeTab, setActiveTab] = (0, import_react9.useState)("home");
+    const [mainPanelId, setMainPanelId] = (0, import_react9.useState)(null);
     const [settingsOpen, setSettingsOpen] = (0, import_react9.useState)(false);
+    const [mainSlotItems, setMainSlotItems] = (0, import_react9.useState)([]);
+    (0, import_react9.useEffect)(() => {
+      const refresh = () => setMainSlotItems(getSlotItems("main"));
+      refresh();
+      return subscribeSlots(refresh);
+    }, []);
+    (0, import_react9.useEffect)(() => {
+      window.__cuckooSelectPanel = (id) => {
+        if (id) {
+          const sidebar = document.getElementById("ck-sidebar");
+          if (sidebar && sidebar.classList.contains("ck-collapsed")) expandSidebar();
+        }
+        setMainPanelId(id);
+      };
+      return () => {
+        try {
+          delete window.__cuckooSelectPanel;
+        } catch (_) {
+        }
+      };
+    }, []);
+    const mainSlotItem = (0, import_react9.useMemo)(() => mainSlotItems.find((m) => m.id === mainPanelId), [mainSlotItems, mainPanelId]);
+    const isMainSlotActive = !!(mainSlotItem && mainSlotItem.Component);
     const Page = (0, import_react9.useMemo)(() => PAGES[activeTab], [activeTab]);
+    (0, import_react9.useEffect)(() => {
+      const anyApi = api;
+      if (isMainSlotActive) {
+        if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(false).catch(() => {
+        });
+      } else {
+        if (anyApi.setAiViewVisible) anyApi.setAiViewVisible(true).catch(() => {
+        });
+      }
+    }, [isMainSlotActive]);
+    const viewportEl = (0, import_react9.useMemo)(() => document.querySelector(".viewport"), []);
+    const mainOverlay = isMainSlotActive && viewportEl ? (0, import_react_dom2.createPortal)(
+      (0, import_react9.createElement)(
+        "div",
+        {
+          style: { position: "absolute", inset: 0, overflow: "auto", background: "var(--ck-bg, #fff)", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start" }
+        },
+        (0, import_react9.createElement)(PageErrorBoundary, null, (0, import_react9.createElement)(MainSlotPage, { item: mainSlotItem }))
+      ),
+      viewportEl
+    ) : null;
     const onTabClick = (id) => {
+      setMainPanelId(null);
       const sidebar = document.getElementById("ck-sidebar");
       const collapsed = !!(sidebar && sidebar.classList.contains("ck-collapsed"));
       if (collapsed) {
@@ -29798,9 +30327,11 @@
         (0, import_react9.createElement)(
           "div",
           { className: "ck-panel-body" },
-          Page ? (0, import_react9.createElement)(Page) : (0, import_react9.createElement)("div", { style: { padding: 12, color: "#888" } }, "\u9875\u9762\u300C" + activeTab + "\u300D\u5C1A\u672A\u91CD\u5199")
+          Page ? (0, import_react9.createElement)(PageErrorBoundary, null, (0, import_react9.createElement)(Page)) : (0, import_react9.createElement)("div", { style: { padding: 12, color: "#888" } }, "\u9875\u9762\u300C" + activeTab + "\u300D\u5C1A\u672A\u91CD\u5199")
         )
       ),
+      // DSH main 插槽内容（Portal 到 .viewport）
+      mainOverlay,
       // 设置模态（Portal 挂到 body，全窗遮罩 + 居中对话框）
       settingsOpen ? (0, import_react_dom2.createPortal)(
         (0, import_react9.createElement)(SettingsModal, { onClose: () => setSettingsOpen(false) }),
@@ -30214,6 +30745,13 @@
       if (spec && spec.command && typeof anyApi.commandInvoke === "function") anyApi.commandInvoke(spec.command).catch(() => {
       });
     }, []);
+    const selectPanel = (0, import_react12.useCallback)((id) => {
+      try {
+        const fn = window.__cuckooSelectPanel;
+        if (typeof fn === "function") fn(id);
+      } catch (_) {
+      }
+    }, []);
     const renderItem = (m) => {
       const label = specLabel2(m.spec, m.id);
       const C = m.Component;
@@ -30226,6 +30764,9 @@
       const props = { wide: true, ...injected };
       props.t = t;
       const showLabel = !!(m.spec && (m.spec.label || m.spec.text || m.spec.title));
+      const hasCommand = !!(m.spec && m.spec.command);
+      const panelId = m.id;
+      const onClick = hasCommand ? (() => invokeCommand(m.spec)) : (() => selectPanel(panelId));
       if (C) {
         return (0, import_react12.createElement)(
           "div",
@@ -30233,7 +30774,8 @@
             key: m.key,
             className: "ck-btn ck-btn-anim",
             title: m.spec && m.spec.title ? String(m.spec.title) : label,
-            style: { flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, cursor: "default" }
+            onClick,
+            style: { flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }
           },
           (0, import_react12.createElement)(
             "span",
@@ -30247,7 +30789,7 @@
         key: m.key,
         className: "ck-btn ck-btn-anim",
         title: m.spec && m.spec.title ? String(m.spec.title) : label,
-        onClick: () => invokeCommand(m.spec),
+        onClick,
         style: { flex: "0 0 auto" }
       }, (0, import_react12.createElement)("span", null, label));
     };
