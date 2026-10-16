@@ -45,6 +45,8 @@ export interface ShellAPI {
   wgDelete?: (groupId: string) => Promise<any>;
   wgSwitch?: (groupId: string) => Promise<any>;
   // 记忆
+  getMemoriesEnabled?: () => Promise<any>;
+  setMemoriesEnabled?: (enabled: boolean) => Promise<any>;
   listMemories?: () => Promise<any>;
   saveMemories?: (memories: any[]) => Promise<any>;
   addMemory?: (text: string) => Promise<any>;

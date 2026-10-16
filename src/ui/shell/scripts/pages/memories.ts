@@ -5,7 +5,17 @@ import { api, ckAlert, ckConfirm, ckPrompt, escapeHtml, escapeAttr } from '../sh
 
 let memories: any[] = [];
 
+async function loadEnabledState(): Promise<void> {
+  const cb = document.getElementById('mem-enabled') as any;
+  if (!cb || !api.getMemoriesEnabled) return;
+  try {
+    const r = await api.getMemoriesEnabled();
+    cb.checked = !!(r && r.success && r.enabled);
+  } catch (_) { cb.checked = false; }
+}
+
 export async function loadMemories(): Promise<void> {
+  await loadEnabledState();
   if (!api.listMemories) return;
   try {
     const res = await api.listMemories();
@@ -72,6 +82,15 @@ document.getElementById('mem-add')?.addEventListener('click', async () => {
   await loadMemories();
 });
 document.getElementById('mem-refresh')?.addEventListener('click', loadMemories);
+
+// 记忆功能开关
+document.getElementById('mem-enabled')?.addEventListener('change', async (e: any) => {
+  if (!api.setMemoriesEnabled) return;
+  try {
+    await api.setMemoriesEnabled(!!e.target.checked);
+    await ckAlert(e.target.checked ? '记忆功能已开启' : '记忆功能已关闭');
+  } catch (_) { await ckAlert('设置失败'); }
+});
 
 if (api.onMemoriesChanged) {
   api.onMemoriesChanged(() => { loadMemories(); });

@@ -1,11 +1,13 @@
 import { Tool } from '../core/Tool.js';
 import type { ToolApiMeta } from '../core/Tool.js';
 import { ToolResult } from '../core/ToolResult.js';
+import { isMemoriesEnabled } from '../../infra/config.js';
 
 // ========== D12：API 契约元数据 ==========
 export const apiMetas: ToolApiMeta[] = [
   {
     order: 17,
+    feature: 'memories',
     category: '记忆',
     name: 'remember',
     doc: '把用户明确表达的偏好、习惯或长期有用的事实记入长期记忆（跨会话、跨项目保留）。后续对话会自动注入这些记忆。',
@@ -19,6 +21,7 @@ export const apiMetas: ToolApiMeta[] = [
   },
   {
     order: 18,
+    feature: 'memories',
     category: '记忆',
     name: 'forgetMemory',
     doc: '按 id 删除一条长期记忆（当用户要求"忘掉"某事，或记忆已过时）。可用 listMemories 查看现有记忆及其 id。',
@@ -63,6 +66,10 @@ class RememberTool extends Tool {
     );
   }
 
+  isEnabled() {
+    return isMemoriesEnabled();
+  }
+
   getPromptSection() {
     return {
       name: 'tool:remember',
@@ -77,6 +84,7 @@ class RememberTool extends Tool {
   }
 
   async execute(params: any): Promise<ToolResult> {
+    if (!isMemoriesEnabled()) return ToolResult.error('记忆功能已关闭（可在侧边栏「记忆」页开启）');
     const text = String(params.text || '').trim();
     if (!text) return ToolResult.error('记忆内容为空');
     if (!_store) return ToolResult.error('记忆存储未初始化');
@@ -107,7 +115,12 @@ class ForgetMemoryTool extends Tool {
     );
   }
 
+  isEnabled() {
+    return isMemoriesEnabled();
+  }
+
   async execute(params: any): Promise<ToolResult> {
+    if (!isMemoriesEnabled()) return ToolResult.error('记忆功能已关闭（可在侧边栏「记忆」页开启）');
     const id = String(params.id || '').trim();
     if (!id) return ToolResult.error('id 为空');
     if (!_store) return ToolResult.error('记忆存储未初始化');

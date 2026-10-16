@@ -9,6 +9,7 @@
 import { createRequire } from 'node:module';
 import * as windowState from '../window.js';
 import { listMemories, saveMemories, addMemory, removeMemory } from '../../infra/memories.js';
+import { isMemoriesEnabled, setMemoriesEnabled } from '../../infra/config.js';
 
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
@@ -47,11 +48,21 @@ function registerMemoryIpc(): void {
     return { success: ok, error: ok ? null : '记忆不存在' };
   });
 
-  // AI 正文标记 [记忆]xxx 触发
+  // AI 正文标记 [记忆]xxx 触发（记忆功能关闭时不捕获）
   ipcMain.handle('create-memory-marker', async (_event: any, { text }: any) => {
+    if (!isMemoriesEnabled()) return { success: false, error: '记忆功能已关闭' };
     const m = addMemory(text);
     if (m) broadcastChanged();
     return { success: !!m, memory: m, error: m ? null : '内容为空' };
+  });
+
+  // 记忆功能开关（全局配置）
+  ipcMain.handle('get-memories-enabled', async () => {
+    return { success: true, enabled: isMemoriesEnabled() };
+  });
+  ipcMain.handle('set-memories-enabled', async (_event: any, { enabled }: any) => {
+    const ok = setMemoriesEnabled(enabled === true);
+    return { success: ok };
   });
 }
 

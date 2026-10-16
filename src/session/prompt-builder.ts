@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getProvider } from '../providers/registry.js';
 import * as mcpClient from '../mcp/client.js';
-import { resolveSrc, resolveToolSpec } from '../infra/paths.js';
+import { resolveSrc, resolveToolSpec, resolveToolSpecFeature } from '../infra/paths.js';
+import { getEnabledToolFeatures } from '../infra/config.js';
 import { registry as toolRegistry } from '../tools/index.js';
 import { scanSkills, buildSkillsSection } from '../skills/index.js';
 import { scanAgents, buildAgentsSection } from '../agents/index.js';
@@ -17,6 +18,7 @@ import type { PluginScanRoots } from '../plugins/roots.js';
 import { buildMemorySection } from '../infra/memories.js';
 // DSH 插件注册的提示词段（C4）
 import { getPromptSections as getDshPromptSections } from '../plugins/dsh-compat/prompt-sections.js';
+import { buildMemorySection } from '../infra/memories.js';
 
 // 提示词模板目录（D20：锚定应用根，与 dist 结构解耦）
 const PROMPT_DIR = resolveSrc('prompt');
@@ -152,6 +154,13 @@ function buildPrompt(opts: { providerId: string; selectedDir: string; isCompacti
   let toolApiTypes = '';
   try {
     toolApiTypes = fs.readFileSync(resolveToolSpec(), 'utf-8');
+    // 追加已启用功能分组的类型定义（如记忆功能开启时注入 api.memories.d.ts）
+    for (const feat of getEnabledToolFeatures()) {
+      try {
+        const spec = fs.readFileSync(resolveToolSpecFeature(feat), 'utf-8');
+        if (spec) toolApiTypes += '\n\n' + spec;
+      } catch (_) { /* 该 feature 文件不存在则跳过 */ }
+    }
   } catch (err) { /* 找不到时保持空串 */ }
   if (!toolApiTypes) {
     console.error('[Cuckoo Code] 读取 cuckoo-tools.d.ts 失败:', resolveToolSpec());

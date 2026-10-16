@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { isMemoriesEnabled } from './config.js';
 
 export interface Memory {
   id: string;
@@ -130,6 +131,8 @@ function removeMemory(id: string): boolean {
  * 无记忆时返回空串（不注入章节）。
  */
 function buildMemorySection(): string {
+  // 记忆功能关闭时：不注入章节
+  if (!isMemoriesEnabled()) return '';
   const list = listMemories();
   if (!list.length) return '';
   const lines = list.map((m) => '- ' + m.text.replace(/\n/g, ' '));

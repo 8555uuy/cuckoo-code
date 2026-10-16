@@ -1579,6 +1579,12 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                 </button>
               </div>
+              <div class="ck-actions" style="margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                  <input type="checkbox" id="mem-enabled" />
+                  <span>启用记忆功能（关闭后不注入提示词、不捕获标记、不可调用）</span>
+                </label>
+              </div>
               <p class="ck-about-tip">记忆会随系统提示词发给模型，让 AI 了解你的习惯（跨项目保留）。</p>
               <div class="ck-list" id="mem-list">
                 <div class="ck-list-empty">加载中…</div>
@@ -1866,7 +1872,13 @@
                 <div class="ck-about-ver">版本 <span id="about-version">—</span></div>
               </div>
 
-              <p class="ck-about-tip">本版本为<strong>插件改造版</strong>（plugin-ui-ext），已禁用原版在线更新，以免被覆盖丢失插件系统。</p>
+              <div class="ck-actions">
+                <button class="ck-btn ck-btn-anim" id="about-check-update">
+                  <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                  <span>检查更新</span>
+                </button>
+              </div>
+              <p class="ck-about-tip">更新需能连接 GitHub；如无法连接，请加下方 QQ 群自行下载。</p>
 
               <div class="ck-about-group">
                 <div class="ck-about-group-title">开源地址</div>
@@ -3973,6 +3985,18 @@
       }
     }
   }
+  var aboutCheckBtn = document.getElementById("about-check-update");
+  if (aboutCheckBtn) aboutCheckBtn.addEventListener("click", async () => {
+    if (!api.checkUpdate) return;
+    aboutCheckBtn.disabled = true;
+    try {
+      const r = await api.checkUpdate();
+      if (r && !r.success) await ckAlert(r && r.error || "\u68C0\u67E5\u66F4\u65B0\u5931\u8D25");
+    } catch (e) {
+      await ckAlert("\u68C0\u67E5\u66F4\u65B0\u5931\u8D25: " + (e.message || e));
+    }
+    aboutCheckBtn.disabled = false;
+  });
   document.getElementById("about-github")?.addEventListener("click", () => {
     if (api.openExternal) api.openExternal("https://github.com/wangyongpeng90/cuckoo-code");
   });
@@ -5041,7 +5065,18 @@
   // src/ui/shell/scripts/pages/memories.ts
   init_shared();
   var memories = [];
+  async function loadEnabledState() {
+    const cb = document.getElementById("mem-enabled");
+    if (!cb || !api.getMemoriesEnabled) return;
+    try {
+      const r = await api.getMemoriesEnabled();
+      cb.checked = !!(r && r.success && r.enabled);
+    } catch (_) {
+      cb.checked = false;
+    }
+  }
   async function loadMemories() {
+    await loadEnabledState();
     if (!api.listMemories) return;
     try {
       const res = await api.listMemories();
@@ -5116,6 +5151,15 @@
     await loadMemories();
   });
   document.getElementById("mem-refresh")?.addEventListener("click", loadMemories);
+  document.getElementById("mem-enabled")?.addEventListener("change", async (e) => {
+    if (!api.setMemoriesEnabled) return;
+    try {
+      await api.setMemoriesEnabled(!!e.target.checked);
+      await ckAlert(e.target.checked ? "\u8BB0\u5FC6\u529F\u80FD\u5DF2\u5F00\u542F" : "\u8BB0\u5FC6\u529F\u80FD\u5DF2\u5173\u95ED");
+    } catch (_) {
+      await ckAlert("\u8BBE\u7F6E\u5931\u8D25");
+    }
+  });
   if (api.onMemoriesChanged) {
     api.onMemoriesChanged(() => {
       loadMemories();

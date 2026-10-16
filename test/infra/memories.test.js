@@ -10,8 +10,13 @@ const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'cuckoo-mem-'));
 process.env.CUCKOO_HOME = TMP;
 
 const { listMemories, saveMemories, addMemory, removeMemory, buildMemorySection } = await import('../../src/infra/memories.js');
+const { setMemoriesEnabled } = await import('../../src/infra/config.js');
 
-beforeEach(() => { try { fs.rmSync(path.join(TMP, 'memories.json'), { force: true }); } catch {} });
+beforeEach(() => {
+  try { fs.rmSync(path.join(TMP, 'memories.json'), { force: true }); } catch {}
+  try { fs.rmSync(path.join(TMP, 'config.json'), { force: true }); } catch {}
+  setMemoriesEnabled(false); // 默认关闭
+});
 
 test('初始为空', () => {
   assert.deepStrictEqual(listMemories(), []);
@@ -42,10 +47,19 @@ test('saveMemories 覆盖并过滤非法项', () => {
 });
 
 test('buildMemorySection 无记忆返回空串', () => {
+  setMemoriesEnabled(true);
   assert.strictEqual(buildMemorySection(), '');
 });
 
-test('buildMemorySection 有记忆返回章节', () => {
+test('记忆功能默认关闭时 buildMemorySection 返回空串（即使有记忆）', () => {
+  setMemoriesEnabled(true);
+  addMemory('开启后写入的记忆');
+  setMemoriesEnabled(false);
+  assert.strictEqual(buildMemorySection(), '');
+});
+
+test('buildMemorySection 有记忆返回章节（需开启功能）', () => {
+  setMemoriesEnabled(true);
   addMemory('习惯1');
   addMemory('习惯2');
   const s = buildMemorySection();
@@ -83,7 +97,8 @@ test('addMemory 超过 200 条时丢弃最旧', () => {
   assert.ok(!list.some((m) => m.text === '记忆0'));
 });
 
-test('buildMemorySection 超长时截断并提示', () => {
+test('buildMemorySection 超长时截断并提示（需开启功能）', () => {
+  setMemoriesEnabled(true);
   for (let i = 0; i < 100; i++) addMemory('很长的记忆内容' + i + '-' + 'y'.repeat(100));
   const s = buildMemorySection();
   assert.ok(s.includes('更多记忆已省略'));

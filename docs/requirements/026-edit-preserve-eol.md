@@ -1,11 +1,11 @@
 ---
-id: 023
+id: 026
 type: fix
 title: edit 编辑混合换行符文件时保留未编辑区域
 status: done
 branch: fix/023-edit-preserve-eol
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-15
 ---
 
 ## 背景

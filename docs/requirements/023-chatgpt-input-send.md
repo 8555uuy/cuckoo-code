@@ -95,12 +95,12 @@ ChatGPT 一条 SSE 流会下发**多条 assistant 消息** + **重放帧**，原
 triggerSend：循环最多 10 次（约 6 秒），每次用最新 DOM，交替尝试「真实鼠标点击 / Enter」。
 修「填入大文本后按钮延迟就绪 → findSendButton 返回 null → 直接放弃」的问题。
 
-### 七、工具结果末尾追加提醒
+### 七、工具结果末尾追加提醒（**已移除**）
 
-sendCombinedJsResultsToChat 在工具结果消息**末尾**追加固定提醒：
-「提醒：需要给我结果或需要我确定的回答中不要调用工具哦。」
-位置在 applyResultTransform **之后**（保证在末尾、不被 provider transform 影响），
-避免 AI 在本该给结论/该问用户时仍继续调工具。
+曾于 sendCombinedJsResultsToChat 末尾追加「提醒：需要给我结果或需要我确定的回答中不要调用工具哦。」，
+意图避免 AI 在本该给结论/该问用户时仍继续调工具。
+
+**2026-10-15 移除**：实测**不管用**（AI 仍会继续调工具），故删除该提醒。
 
 ## 验收标准
 

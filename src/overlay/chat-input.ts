@@ -266,10 +266,6 @@ async function sendCombinedJsResultsToChat(results: any, onSent?: () => void): P
   // provider 可自定义回传格式（某些平台对格式敏感，如触发风控）
   msg = applyResultTransform(msg, getCurrentProvider());
 
-  // 末尾提醒（放在 transform 之后，保证一定在消息末尾、且不被 transform 影响）：
-  // 避免 AI 在本该给结论/该问用户时仍继续调工具
-  msg += sep + '提醒：需要给我结果或需要我确定的回答中不要调用工具哦。';
-
   // 追加（不覆盖）：保留用户已输入的内容，工具结果拼在其后一起发送
   const input = findInputArea();
   if (input) {
