@@ -29521,17 +29521,35 @@
     slotTable.clear();
     notify();
   }
-  async function reloadDshClients() {
+  function clearSlotsByPlugin(pluginId) {
+    if (!pluginId) return;
+    for (const [slotName, items] of [...slotTable.entries()]) {
+      const next = items.filter((x) => x.pluginId !== pluginId);
+      if (next.length) slotTable.set(slotName, next);
+      else slotTable.delete(slotName);
+    }
+    notify();
+  }
+  async function reloadDshClients(pluginId) {
     try {
-      clearAllSlots();
-      for (const k of Object.keys(loadedModules)) delete loadedModules[k];
-      await loadDshClients();
-      console.log("[dsh-client] HMR \u91CD\u8F7D\u5B8C\u6210");
+      if (pluginId) {
+        clearSlotsByPlugin(pluginId);
+        for (const k of Object.keys(loadedModules)) {
+          if (k === pluginId) delete loadedModules[k];
+        }
+        await loadDshClients(pluginId);
+        console.log("[dsh-client] HMR \u91CD\u8F7D\u5B8C\u6210\uFF08\u4EC5 " + pluginId + "\uFF09");
+      } else {
+        clearAllSlots();
+        for (const k of Object.keys(loadedModules)) delete loadedModules[k];
+        await loadDshClients();
+        console.log("[dsh-client] HMR \u91CD\u8F7D\u5B8C\u6210\uFF08\u5168\u90E8\uFF09");
+      }
     } catch (e) {
       console.error("[dsh-client] HMR \u91CD\u8F7D\u5931\u8D25", e);
     }
   }
-  async function loadDshClients() {
+  async function loadDshClients(onlyPkgName) {
     installFetchInterceptor();
     installModuleLoader();
     const api2 = window.shellAPI;
@@ -29540,6 +29558,7 @@
       const r = await api2.cuckooPluginClientSources();
       if (!r || !r.success || !Array.isArray(r.clients)) return;
       for (const c of r.clients) {
+        if (onlyPkgName && c.pkgName !== onlyPkgName) continue;
         const src = String(c.source || "");
         if (!src.includes("__ModuleLoader__")) continue;
         try {
@@ -30290,8 +30309,8 @@
     (0, import_react9.useEffect)(() => {
       const anyApi = api;
       if (anyApi.onCuckooReload) {
-        anyApi.onCuckooReload(() => {
-          void reloadDshClients();
+        anyApi.onCuckooReload((data) => {
+          void reloadDshClients(data && data.pluginId);
         });
       }
     }, []);

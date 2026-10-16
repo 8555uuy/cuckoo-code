@@ -171,7 +171,7 @@ function ShellFrame() {
   useEffect(() => {
     const anyApi = api as any;
     if (anyApi.onCuckooReload) {
-      anyApi.onCuckooReload(() => { void reloadDshClients(); });
+      anyApi.onCuckooReload((data: any) => { void reloadDshClients(data && data.pluginId); });
     }
   }, []);
   // 桥接：dsh-client-runtime 的 ctx.layout.selectPanel(id) → setActiveTab

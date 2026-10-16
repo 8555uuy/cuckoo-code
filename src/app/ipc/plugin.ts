@@ -244,7 +244,8 @@ function registerPluginIpc(): void {
         const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
         if (mw && mw.webContents) {
           mw.webContents.send('plugin-manager-changed', { reason: 'bundle', reloaded: hmrOk, pluginId: pid, enabled: on });
-          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pid });
+          // 用【包名】（对齐壳页面 SlotItem.pluginId）——HMR 只重载该插件
+          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName });
         }
       } catch (_) {}
       return {

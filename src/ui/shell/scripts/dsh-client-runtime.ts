@@ -825,22 +825,49 @@ export function clearAllSlots(): void {
   notify();
 }
 
-/** HMR：重载 DSH client（清空插槽 + 重新执行所有 client 源码） */
-export async function reloadDshClients(): Promise<void> {
+/** HMR：只清某插件的插槽（按 pluginId = 包名） */
+export function clearSlotsByPlugin(pluginId: string): void {
+  if (!pluginId) return;
+  for (const [slotName, items] of [...slotTable.entries()]) {
+    const next = items.filter((x) => x.pluginId !== pluginId);
+    if (next.length) slotTable.set(slotName, next);
+    else slotTable.delete(slotName);
+  }
+  notify();
+}
+
+/**
+ * HMR：重载 DSH client
+ * @param pluginId 可选——只重载该插件（包名）；不传则全量重载
+ */
+export async function reloadDshClients(pluginId?: string): Promise<void> {
   try {
-    clearAllSlots();
-    // 清空已加载模块（让 require 重新走）
-    for (const k of Object.keys(loadedModules)) delete loadedModules[k];
-    // 重新加载
-    await loadDshClients();
-    console.log('[dsh-client] HMR 重载完成');
+    if (pluginId) {
+      // 只重载该插件：清它的插槽 + 清它的模块（按包名）
+      clearSlotsByPlugin(pluginId);
+      for (const k of Object.keys(loadedModules)) {
+        // loadedModules 的 key 是包名（@scope/name）
+        if (k === pluginId) delete loadedModules[k];
+      }
+      await loadDshClients(pluginId);
+      console.log('[dsh-client] HMR 重载完成（仅 ' + pluginId + '）');
+    } else {
+      // 全量重载
+      clearAllSlots();
+      for (const k of Object.keys(loadedModules)) delete loadedModules[k];
+      await loadDshClients();
+      console.log('[dsh-client] HMR 重载完成（全部）');
+    }
   } catch (e: any) {
     console.error('[dsh-client] HMR 重载失败', e);
   }
 }
 
-/** 加载所有已启用插件的 client 源码并执行（幂等） */
-export async function loadDshClients(): Promise<void> {
+/**
+ * 加载已启用插件的 client 源码并执行（幂等）
+ * @param onlyPkgName 可选——只加载该包（HMR 单插件重载）
+ */
+export async function loadDshClients(onlyPkgName?: string): Promise<void> {
   installFetchInterceptor();
   installModuleLoader();
   const api = (window as any).shellAPI;
@@ -849,6 +876,7 @@ export async function loadDshClients(): Promise<void> {
     const r = await api.cuckooPluginClientSources();
     if (!r || !r.success || !Array.isArray(r.clients)) return;
     for (const c of r.clients) {
+      if (onlyPkgName && c.pkgName !== onlyPkgName) continue;
       const src = String(c.source || '');
       if (!src.includes('__ModuleLoader__')) continue;
       try {
