@@ -787,6 +787,26 @@ function installModuleLoader(): void {
   };
 }
 
+/** HMR：清空所有插槽（用于重载前） */
+export function clearAllSlots(): void {
+  slotTable.clear();
+  notify();
+}
+
+/** HMR：重载 DSH client（清空插槽 + 重新执行所有 client 源码） */
+export async function reloadDshClients(): Promise<void> {
+  try {
+    clearAllSlots();
+    // 清空已加载模块（让 require 重新走）
+    for (const k of Object.keys(loadedModules)) delete loadedModules[k];
+    // 重新加载
+    await loadDshClients();
+    console.log('[dsh-client] HMR 重载完成');
+  } catch (e: any) {
+    console.error('[dsh-client] HMR 重载失败', e);
+  }
+}
+
 /** 加载所有已启用插件的 client 源码并执行（幂等） */
 export async function loadDshClients(): Promise<void> {
   installFetchInterceptor();

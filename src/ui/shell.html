@@ -29490,6 +29490,20 @@
       }
     };
   }
+  function clearAllSlots() {
+    slotTable.clear();
+    notify();
+  }
+  async function reloadDshClients() {
+    try {
+      clearAllSlots();
+      for (const k of Object.keys(loadedModules)) delete loadedModules[k];
+      await loadDshClients();
+      console.log("[dsh-client] HMR \u91CD\u8F7D\u5B8C\u6210");
+    } catch (e) {
+      console.error("[dsh-client] HMR \u91CD\u8F7D\u5931\u8D25", e);
+    }
+  }
   async function loadDshClients() {
     installFetchInterceptor();
     installModuleLoader();
@@ -30240,6 +30254,14 @@
       const refresh = () => setMainSlotItems(getSlotItems("main"));
       refresh();
       return subscribeSlots(refresh);
+    }, []);
+    (0, import_react9.useEffect)(() => {
+      const anyApi = api;
+      if (anyApi.onCuckooReload) {
+        anyApi.onCuckooReload(() => {
+          void reloadDshClients();
+        });
+      }
     }, []);
     (0, import_react9.useEffect)(() => {
       window.__cuckooSelectPanel = (id) => {

@@ -32,6 +32,8 @@ import {
   loadEnabledPlugins,
   loadPluginFromDir,
   uninstallCuckooPlugin,
+  unloadPlugin,
+  reloadPlugin,
 } from '../../plugins/cuckoo-plugins/index.js';
 import { resolveClientEntry } from '../../plugins/cuckoo-plugins/loader.js';
 import {
@@ -193,10 +195,48 @@ function registerPluginIpc(): void {
   });
   ipcMain.handle("plugin-manager-set-enabled", async (_e: any, { id, enabled }: any = {}) => {
     try {
-      setPluginEnabledInProfile(String(id || ""), !!enabled);
-      // P2：广播 plugin-manager/changed（reason: bundle）
-      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'bundle' }); } catch (_) {}
-      return { ok: true, value: { changed: true, application: "restart-required" } };
+      // 前端传的是"包名"（如 @deepseek-ai/dsh-tool-todo）——HMR 要"插件 id"
+      const { packageNameToId } = await import('../../plugins/profile/installer.js');
+      const pkgName = String(id || "");
+      const pid = packageNameToId(pkgName);
+      const on = !!enabled;
+      // 1) 写 cordis.patch.yml（用包名，对齐 listProfilePluginEntries 的检查）
+      setPluginEnabledInProfile(pkgName, on);
+      // 2) HMR：立即加载/卸载
+      let hmrOk = false;
+      let hmrError: string | undefined;
+      try {
+        console.log('[HMR] set-enabled: pkg=' + pkgName + ' id=' + pid + ' on=' + on);
+        const { buildCuckooHost } = await import('../cuckoo-host.js');
+        const host = buildCuckooHost();
+        if (on) {
+          const r = await reloadPlugin(pid, toolRegistry, host);
+          hmrOk = r.ok;
+          if (!r.ok) hmrError = r.error;
+        } else {
+          hmrOk = unloadPlugin(pid, toolRegistry);
+        }
+        console.log('[HMR] 结果: ok=' + hmrOk + ' err=' + (hmrError || '无'));
+      } catch (e: any) {
+        hmrError = e && e.message ? e.message : String(e);
+        console.log('[HMR] 异常: ' + hmrError);
+      }
+      // 3) 广播（带 hmr 结果 + 通知壳页面重载 client）
+      try {
+        const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
+        if (mw && mw.webContents) {
+          mw.webContents.send('plugin-manager-changed', { reason: 'bundle', reloaded: hmrOk, pluginId: pid, enabled: on });
+          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pid });
+        }
+      } catch (_) {}
+      return {
+        ok: true,
+        value: {
+          changed: true,
+          application: hmrOk ? "applied" : "restart-required",
+          ...(hmrError ? { error: { code: "operation-error", diagnostic: hmrError } } : {}),
+        },
+      };
     }
     catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
   });

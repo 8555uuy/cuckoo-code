@@ -200,8 +200,11 @@ interface CuckooHost {
 }
 
 /** 一个"假 ctx"——收集插件注册的工具；未知属性用 stub 兜底（够用空接口） */
-function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any): { ctx: any; tools: any[]; bus: EventBus } {
+function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any): { ctx: any; tools: any[]; bus: EventBus; disposers: Array<() => void> } {
   const tools: any[] = [];
+  // HMR：收集所有"卸载"函数（effect 返回 / 工具注销 / 插槽注销 / 路由注销）
+  const disposers: Array<() => void> = [];
+  const addDisposer = (d: any) => { if (typeof d === 'function') disposers.push(d); return d || (() => {}); };
   // 插件专属事件总线（C3）：ctx.on/emit 接真；注册到桥以接收 Cuckoo 事件
   const bus = new EventBus();
   registerBus(bus);
@@ -232,7 +235,16 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       error: (...a: any[]) => dbg('error @' + pluginName + ': ' + a.map(String).join(' ')),
     },
     tools: {
-      register(tool: any) { tools.push(tool); return () => {}; },
+      register(tool: any) {
+        tools.push(tool);
+        // HMR：注销工具（从 host 卸载）
+        return addDisposer(() => {
+          try {
+            if (host && typeof (host as any).unregisterTool === 'function') (host as any).unregisterTool(tool.name);
+          } catch (_) {}
+          const i = tools.indexOf(tool); if (i >= 0) tools.splice(i, 1);
+        });
+      },
       // 真·列出工具（宿主注入；无则退回本插件注册的）
       list() { return host && host.getToolNames ? host.getToolNames() : tools.map((t) => t.name); },
     },
@@ -284,7 +296,8 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       // ⚠️ 加错误日志——dsh-market 的 mountMarketRoutes throw 会藏在这里
       try {
         const c = fn();
-        return typeof c === 'function' ? c : () => {};
+        // HMR：收集 disposer（卸载时调用）
+        return addDisposer(typeof c === 'function' ? c : () => {});
       } catch (e: any) {
         dbg('effect 执行失败 @' + pluginName + ': ' + (e && e.message ? e.message : String(e)));
         if (e && e.stack) dbg(String(e.stack).slice(0, 800));
@@ -370,8 +383,12 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       if (typeof cb !== 'function') return () => {};
       const names = Array.isArray(_names) ? _names.join(',') : String(_names);
       dbg('inject(' + names + ') 开始 @' + pluginName);
-      try { cb(ctx); dbg('inject(' + names + ') 完成 @' + pluginName); }
-      catch (e: any) {
+      try {
+        const ret = cb(ctx);
+        dbg('inject(' + names + ') 完成 @' + pluginName);
+        // HMR：收集 inject 回调的 disposer
+        return addDisposer(typeof ret === 'function' ? ret : () => {});
+      } catch (e: any) {
         dbg('inject(' + names + ') 回调失败 @' + pluginName + ': ' + (e && e.message ? e.message : String(e)));
         if (e && e.stack) dbg(String(e.stack).slice(0, 800));
       }
@@ -402,7 +419,7 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       return makeStub('ctx.' + String(prop));
     },
   });
-  return { ctx, tools, bus };
+  return { ctx, tools, bus, disposers };
 }
 
 /** 从插件目录加载，返回 { pluginName, tools, runtime, bus } */
@@ -418,7 +435,7 @@ function dbg(msg: string): void {
   try { console.log('[cuckoo-plugin] ' + msg); } catch (_) {}
 }
 
-async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{ pluginName: string; tools: any[]; runtime: any; bus: any }> {
+async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{ pluginName: string; tools: any[]; runtime: any; bus: any; disposers: Array<() => void> }> {
   const entry = resolveEntry(pluginDir);
   if (!entry) throw new Error('未找到插件入口（package.json main / index.js）');
   // 创建"最小 DSH 运行时"（内存会话 + 投影注册表），注入给插件（C2）
@@ -447,7 +464,7 @@ async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{
   const mod = fn(moduleObj, moduleObj.exports, require);
   const plugin = (mod && mod.default && typeof mod.default === 'object') ? mod.default : mod;
   const pluginName = (plugin && typeof plugin.name === 'string' && plugin.name) ? plugin.name : path.basename(pluginDir);
-  const { ctx, tools, bus } = createCollectorCtx(pluginName, host, runtime);
+  const { ctx, tools, bus, disposers } = createCollectorCtx(pluginName, host, runtime);
   dbg('开始 apply @' + pluginName + ' (entry=' + entry + ')');
   if (plugin && typeof plugin.apply === 'function') {
     try {
@@ -460,7 +477,7 @@ async function loadCuckooPlugin(pluginDir: string, host?: CuckooHost): Promise<{
   } else {
     dbg('插件无 apply 函数 @' + pluginName);
   }
-  return { pluginName, tools, runtime, bus };
+  return { pluginName, tools, runtime, bus, disposers };
 }
 
 /** 在某目录里找"客户端入口"：package.json 的 exports['./client'] */

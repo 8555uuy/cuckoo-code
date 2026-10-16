@@ -75,9 +75,12 @@ class DshPluginTool extends Tool {
 /** 已加载的插件工具名（供沙箱注入用） */
 const loadedPluginTools = new Set<string>();
 
+/** HMR：已加载插件的记录（id → { pluginName, toolNames, disposers }） */
+const loadedPlugins = new Map<string, { pluginName: string; toolNames: string[]; disposers: Array<() => void> }>();
+
 /** 从插件目录加载并注册工具到 registry */
-async function loadPluginFromDir(dir: string, registry: any, host?: CuckooHost): Promise<{ pluginName: string; tools: string[] }> {
-  const { pluginName, tools } = await loadCuckooPlugin(dir, host);
+async function loadPluginFromDir(dir: string, registry: any, host?: CuckooHost): Promise<{ pluginName: string; tools: string[]; disposers: Array<() => void> }> {
+  const { pluginName, tools, disposers } = await loadCuckooPlugin(dir, host);
   const names: string[] = [];
   for (const def of tools) {
     if (!def || typeof def.name !== 'string') continue;
@@ -85,7 +88,40 @@ async function loadPluginFromDir(dir: string, registry: any, host?: CuckooHost):
     loadedPluginTools.add(def.name);
     names.push(def.name);
   }
-  return { pluginName, tools: names };
+  return { pluginName, tools: names, disposers };
+}
+
+/** HMR：卸载一个已加载的插件（调 disposers + 注销工具） */
+function unloadPlugin(id: string, registry?: any): boolean {
+  const rec = loadedPlugins.get(id);
+  if (!rec) return false;
+  // 1) 调所有 disposer（effect 清理 + 工具注销）
+  for (const d of rec.disposers) { try { d(); } catch (e: any) { /* ignore */ } }
+  // 2) 兜底：从 loadedPluginTools 移除工具名
+  for (const n of rec.toolNames) {
+    loadedPluginTools.delete(n);
+    try { if (registry && typeof registry.unregister === 'function') registry.unregister(n); } catch (_) {}
+  }
+  loadedPlugins.delete(id);
+  return true;
+}
+
+/** HMR：重新加载一个插件（卸载 + 加载） */
+async function reloadPlugin(id: string, registry: any, host?: CuckooHost): Promise<{ ok: boolean; error?: string }> {
+  try {
+    // 1) 卸载旧的
+    unloadPlugin(id, registry);
+    // 2) 找到目录
+    const entries = listProfilePluginEntries();
+    const hit = entries.find((e) => e.id === id);
+    if (!hit) return { ok: false, error: '未找到插件目录: ' + id };
+    // 3) 加载新的
+    const r = await loadPluginFromDir(hit.dir, registry, host);
+    loadedPlugins.set(id, { pluginName: r.pluginName, toolNames: r.tools, disposers: r.disposers });
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e && e.message ? e.message : String(e) };
+  }
 }
 
 /** 安装（pnpm 装进 profile）+ 加载 + 注册工具 */
@@ -104,6 +140,8 @@ async function loadEnabledPlugins(registry: any, host?: CuckooHost): Promise<{ l
   for (const entry of listEnabledPlugins()) {
     try {
       const r = await loadPluginFromDir(entry.dir, registry, host);
+      // HMR：记录（供 unload/reload）
+      loadedPlugins.set(entry.id, { pluginName: r.pluginName, toolNames: r.tools, disposers: r.disposers });
       loaded.push(entry.id + '(' + r.pluginName + '):' + r.tools.join(','));
     } catch (err: any) {
       failed.push({ id: entry.id, error: err && err.message ? err.message : String(err) });
@@ -121,4 +159,4 @@ async function uninstallCuckooPlugin(id: string): Promise<boolean> {
   return r.ok;
 }
 
-export { installAndLoad, loadEnabledPlugins, loadPluginFromDir, uninstallCuckooPlugin, loadedPluginTools, DshPluginTool };
+export { installAndLoad, loadEnabledPlugins, loadPluginFromDir, uninstallCuckooPlugin, loadedPluginTools, DshPluginTool, unloadPlugin, reloadPlugin };

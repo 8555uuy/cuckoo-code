@@ -88,6 +88,10 @@ const shellAPI = {
     ipcRenderer.on('plugin-manager-install-log', (_e: any, d: any) => cb('plugin-manager/install-log', d));
     ipcRenderer.on('plugin-manager-install-state', (_e: any, d: any) => cb('plugin-manager/install-state', d));
   },
+  // HMR：主进程通知壳页面重载 DSH client（插件启用/禁用后）
+  onCuckooReload: (cb: (data: any) => void) => {
+    ipcRenderer.on('cuckoo-reload-dsh-clients', (_e: any, d: any) => cb(d));
+  },
   onPluginSlotRegister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-register', (_e: any, m: any) => cb(m)); },
   onPluginSlotUnregister: (cb: (m: any) => void) => { ipcRenderer.on('shell-slot-unregister', (_e: any, m: any) => cb(m)); },
   listPluginSlots: () => ipcRenderer.invoke('plugin-slot-list'),

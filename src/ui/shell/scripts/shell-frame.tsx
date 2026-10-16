@@ -11,7 +11,7 @@ import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { api } from './shared.js';
 import { SettingsModal } from './pages/settings-react.js';
-import { subscribeSlots, getSlotItems } from './dsh-client-runtime.js';
+import { subscribeSlots, getSlotItems, reloadDshClients } from './dsh-client-runtime.js';
 
 const SIDEBAR_COLLAPSED = 46;
 const MIN_WIDTH = 320;
@@ -165,6 +165,13 @@ function ShellFrame() {
     const refresh = () => setMainSlotItems(getSlotItems('main'));
     refresh();
     return subscribeSlots(refresh);
+  }, []);
+  // HMR：主进程通知"重载 DSH client"（插件启用/禁用后）
+  useEffect(() => {
+    const anyApi = api as any;
+    if (anyApi.onCuckooReload) {
+      anyApi.onCuckooReload(() => { void reloadDshClients(); });
+    }
   }, []);
   // 桥接：dsh-client-runtime 的 ctx.layout.selectPanel(id) → setActiveTab
   useEffect(() => {
