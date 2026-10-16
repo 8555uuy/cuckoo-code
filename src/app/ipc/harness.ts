@@ -20,6 +20,7 @@ import { getProvider } from '../../providers/registry.js';
 import { resetTodosCache } from './tool.js';
 import { cdpAttach } from './cdp-attach.js';
 import { initProject } from '../../session/project-context.js';
+import { broadcastPluginEvent } from './plugin-control.js';
 
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
@@ -217,6 +218,8 @@ function registerHarnessIpc(): void {
     try {
       import('../../plugins/cuckoo-plugins/event-bridge.js').then((m: any) => m.dispatchHarnessPayload(payload)).catch(() => {});
     } catch (_) { /* ignore */ }
+    // 插件控制面：把 AI 事件推给注册了 onEvent 的 providers/*.js 插件（如局域网控制）
+    try { broadcastPluginEvent(payload); } catch (_) { /* ignore */ }
     const hv = (ctx as any).harnessView;
     if (hv && !hv.webContents.isDestroyed()) {
       hv.webContents.send('harness-event', payload);
