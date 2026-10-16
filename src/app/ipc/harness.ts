@@ -231,7 +231,10 @@ function registerHarnessIpc(): void {
     try { broadcastPluginEvent(enriched); } catch (_) { /* ignore */ }
     const hv = (ctx as any).harnessView;
     if (hv && !hv.webContents.isDestroyed()) {
-      hv.webContents.send('harness-event', enriched);
+      // user-message 只用于外部（手机端）同步；桌面 harness 自己显示气泡，避免重复
+      if (payload && payload.type !== 'user-message') {
+        hv.webContents.send('harness-event', enriched);
+      }
     }
     return { success: true };
   });

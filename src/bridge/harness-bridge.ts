@@ -23,7 +23,7 @@ import {
   onInterceptedResponse, onToolCall, onStream, onTaskIdle, onAiError,
   requestAbort, clearAbort,
 } from './intercept/observer.js';
-import { sendToChat, cancelPendingSend, onMessageDelivered } from '../overlay/chat-input.js';
+import { sendToChat, cancelPendingSend, onMessageDelivered, onUserMessageSent } from '../overlay/chat-input.js';
 import { cancelPendingForSwitch, resumeRetry } from './loop/retry.js';
 
 const require = createRequire(import.meta.url);
@@ -131,6 +131,13 @@ export function initHarnessBridge(): void {
     if (!text) return;
     clearAbort(); // 新消息：清除中止标志
     sendToChat(text, 'harness', 300).catch(() => {});
+  });
+
+  // 用户消息已发出（含电脑端直发、手机端经 harness-user-message 转发）→ 上报。
+  // 主进程会广播给插件（手机端据此同步显示"电脑发了什么"）。
+  onUserMessageSent((text: string, tag?: string) => {
+    if (!text) return;
+    report({ type: 'user-message', text: text, tag: tag || '' });
   });
 
   // 停止：取消延时发送 + 中止工具回传
