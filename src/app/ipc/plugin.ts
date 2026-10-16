@@ -322,7 +322,73 @@ function registerPluginIpc(): void {
   ipcMain.handle("plugin-manager-inspect", async (_e: any, { spec }: any = {}) => {
     const s = String(spec || "").trim();
     if (!s) return { ok: true, value: { status: "refused", problem: "invalid-spec", reason: "包名不能为空" } };
-    return { ok: true, value: { status: "accepted", kind: "registry", name: s.replace(/@[\w.^~-]+$/, ""), bundle: null, registry: null } };
+    // ===== 真检查（对齐 DSH PluginSpecInspection 契约）=====
+    try {
+      // 1) 本地目录（path:）
+      if (/^(file|link):|^\.\.?[/\\]/.test(s)) {
+        try {
+          const abs = path.resolve(s.replace(/^(file|link):/, ''));
+          const pkgPath = path.join(abs, 'package.json');
+          if (!fs.existsSync(pkgPath)) {
+            return { ok: true, value: { status: "refused", problem: "not-found", reason: "目录下没有 package.json: " + abs } };
+          }
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+          const isBundle = !!(pkg.dsh && pkg.dsh.bundle && pkg.dsh.bundle.patch);
+          return { ok: true, value: { status: "accepted", kind: "path", name: pkg.name, version: pkg.version, description: pkg.description, bundle: isBundle, registry: null } };
+        } catch (e: any) {
+          return { ok: true, value: { status: "refused", problem: "invalid-spec", reason: "路径无效: " + (e && e.message ? e.message : String(e)) } };
+        }
+      }
+      // 2) Git（github:owner/repo / git+https://...）
+      if (/^(github:|git\+|git:)/.test(s) || /github\.com/.test(s)) {
+        return { ok: true, value: { status: "accepted", kind: "git", name: s, bundle: null, registry: null, host: 'github.com' } };
+      }
+      // 3) tarball（http(s)://...tgz / .tar.gz）
+      if (/^https?:\/\//.test(s) && /\.(tgz|tar\.gz)$/i.test(s)) {
+        return { ok: true, value: { status: "accepted", kind: "tarball", name: s, bundle: null, registry: null } };
+      }
+      // 4) npm registry（默认）——查 registry 看包存不存在
+      const bareName = s.replace(/@[\w.^~-]+$/, '');
+      // 校验包名
+      if (!/^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/i.test(bareName)) {
+        return { ok: true, value: { status: "refused", problem: "invalid-spec", reason: "包名非法: " + s } };
+      }
+      const regUrl = 'https://registry.npmjs.org/' + encodeURIComponent(bareName).replace(/%40/g, '@').replace(/%2F/g, '/');
+      let version: string | undefined;
+      let description: string | undefined;
+      let isBundle = false;
+      let registryAnswer = true;
+      try {
+        const res = await httpGet({ url: regUrl, timeoutMs: 15000 });
+        if (res.status === 404) {
+          return { ok: true, value: { status: "refused", problem: "not-found", reason: "npm 上找不到这个包: " + bareName } };
+        }
+        if (res.status !== 200) {
+          return { ok: true, value: { status: "refused", problem: "network", reason: "registry 返回 " + res.status } };
+        }
+        const meta = JSON.parse(res.body.toString('utf-8'));
+        const latest = (meta && meta['dist-tags'] && meta['dist-tags'].latest) || undefined;
+        version = latest;
+        if (latest && meta.versions && meta.versions[latest]) {
+          const v = meta.versions[latest];
+          description = v.description || (meta.description) || undefined;
+          isBundle = !!(v.dsh && v.dsh.bundle && v.dsh.bundle.patch);
+        } else {
+          description = meta.description;
+        }
+      } catch (e: any) {
+        registryAnswer = false;
+        // 网络失败——不阻断（让 pnpm 试）
+        return { ok: true, value: { status: "accepted", kind: "registry", name: bareName, bundle: null, registry: null, host: 'registry.npmjs.org' } };
+      }
+      // 5) 不是 bundle → 拒绝（对齐 DSH "not-a-bundle"）
+      if (registryAnswer && !isBundle) {
+        return { ok: true, value: { status: "refused", problem: "not-a-bundle", reason: "这个包不是 DSH 插件 bundle（没有 dsh.bundle.patch）: " + bareName } };
+      }
+      return { ok: true, value: { status: "accepted", kind: "registry", name: bareName, version, description, bundle: isBundle, registry: null, host: 'registry.npmjs.org' } };
+    } catch (e: any) {
+      return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } };
+    }
   });
   ipcMain.handle("plugin-manager-cancel-install", async () => ({ ok: true, value: { status: "not-running" } }));
   ipcMain.handle("plugin-inventory-list", async () => {
