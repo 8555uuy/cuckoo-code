@@ -10,8 +10,47 @@
  */
 import { createRequire } from 'node:module';
 import * as windowState from '../window.js';
+import { invokeIpc } from './registry.js';
 
 const require = createRequire(import.meta.url);
+
+/**
+ * 壳页桥白名单：手机端只允许调用这些 IPC channel。
+ * 全部来自界面实际用到的能力；不含删除/危险操作（归档等可逆操作除外）。
+ */
+const SHELL_BRIDGE_ALLOW: string[] = [
+  // —— 窗口/项目 ——
+  'get-project-dir', 'init-project', 'get-app-info', 'list-providers',
+  // —— 会话（工作区）——
+  'list-all-sessions', 'navigate-session', 'set-session-archived', 'get-dir-info',
+  'set-project-archived', 'set-session-title', 'new-conversation-for-project',
+  'web-list-sessions', 'web-navigate-session', 'web-new-conversation',
+  // —— 项目文件（只读）——
+  'list-project-tree', 'read-project-file',
+  // —— 提示词 ——
+  'list-snippets', 'save-snippets', 'trigger-snippet',
+  // —— 记忆 ——
+  'list-memories', 'save-memories', 'add-memory', 'delete-memory',
+  'get-memories-enabled', 'set-memories-enabled',
+  // —— 快照 ——
+  'list-snapshots', 'create-snapshot', 'restore-snapshot', 'delete-snapshot',
+  // —— 技能 / 子代理 ——
+  'list-skills', 'list-agents',
+  // —— 插件 ——
+  'plugin-market-list', 'plugin-market-remote', 'plugin-install', 'plugin-uninstall',
+  'plugin-list-installed', 'plugin-set-enabled', 'cuckoo-plugin-list',
+  'cuckoo-plugin-toggle',
+  // —— 设置 / 主题 ——
+  'get-settings', 'save-settings', 'reset-settings',
+  'theme-get', 'theme-set', 'theme-list',
+  // —— 子代理运行态 ——
+  'subagent-list',
+  // —— 自动压缩 ——
+  'get-autocompact', 'save-autocompact', 'trigger-compact',
+  // —— 系统总 token ——
+  'get-system-total',
+];
+const ALLOW_SET = new Set(SHELL_BRIDGE_ALLOW);
 
 let installed = false;
 
@@ -94,6 +133,22 @@ function buildControl() {
         const ctx: any = activeCtx();
         const list = getAllProviders().map((p: any) => ({ id: p.id, name: p.name || p.id }));
         return { success: true, providers: list, current: ctx ? (ctx.providerId || '') : '' };
+      } catch (e: any) {
+        return { success: false, error: e && e.message ? e.message : String(e) };
+      }
+    },
+
+    /**
+     * 壳页桥：手机端调用任意白名单 IPC channel（用活跃窗口作 sender）。
+     * @param channel IPC 通道名
+     * @param args 参数对象
+     */
+    async invoke(channel: string, args?: any) {
+      if (!channel || typeof channel !== 'string') return { success: false, error: 'no-channel' };
+      if (!ALLOW_SET.has(channel)) return { success: false, error: 'channel-not-allowed: ' + channel };
+      try {
+        const data = await invokeIpc(channel, args);
+        return { success: true, data };
       } catch (e: any) {
         return { success: false, error: e && e.message ? e.message : String(e) };
       }
