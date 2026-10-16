@@ -28672,11 +28672,19 @@
     notify();
   }
   function toEntry(it) {
+    const s = it.spec || {};
     return {
-      options: { id: it.id, key: it.key, order: it.order, ...it.spec || {} },
+      // DSH 契约字段（小写 component——dsh-codex-ui 用它拿组件）
+      component: it.Component,
+      options: { id: it.id, key: s.key !== void 0 ? s.key : it.key, order: it.order, label: s.label, priority: s.priority },
+      inject: typeof s.inject === "function" ? s.inject : void 0,
+      children: s.children,
+      locale: s.locale,
+      registrant: it.pluginId,
+      // 我们自己的字段（兼容旧用法）
       id: it.id,
       order: it.order,
-      spec: it.spec,
+      spec: s,
       Component: it.Component,
       t: it.t,
       injectedProps: it.injectedProps
@@ -28816,18 +28824,28 @@
       lang = (navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en";
     } catch (_) {
     }
+    const interpolate = (v, params) => {
+      let out = v === void 0 || v === null ? "" : String(v);
+      if (params && typeof params === "object") {
+        out = out.replace(/\{(\w+)\}/g, (m, name) => {
+          const pv = params[name];
+          return pv === void 0 || pv === null ? m : String(pv);
+        });
+      }
+      return out;
+    };
     const lookup = (ns, key) => {
       const d = dicts[ns];
       if (!d) return key;
       const pack = d[lang] || d.zh || d.en || {};
       return pack && pack[key] || key;
     };
-    const t = (key) => {
+    const t = (key, params) => {
       for (const ns of Object.keys(dicts)) {
         const v = lookup(ns, key);
-        if (v !== key) return v;
+        if (v !== key) return interpolate(v, params);
       }
-      return key;
+      return interpolate(key, params);
     };
     const localeSubs = /* @__PURE__ */ new Set();
     let localeSnapshot = { current: lang, active: lang };
@@ -28839,7 +28857,7 @@
         };
       },
       bind(ns) {
-        return (key) => lookup(ns, key);
+        return (key, params) => interpolate(lookup(ns, key), params);
       },
       t,
       // 订阅语言变化（组件常用：locale.subscribe(() => ...)）
@@ -29212,17 +29230,26 @@
         if (!slotName) return () => {
         };
         const key = pluginId + ":" + slotName + ":" + id;
-        let t = (k) => String(k);
+        const interpolate = (v, params) => {
+          let out = v === void 0 || v === null ? "" : String(v);
+          if (params && typeof params === "object") {
+            out = out.replace(/\{(\w+)\}/g, (m, name) => {
+              const pv = params[name];
+              return pv === void 0 || pv === null ? m : String(pv);
+            });
+          }
+          return out;
+        };
+        let t = (k, params) => interpolate(k, params);
         try {
           const ns = s.locale;
           if (ns && services.locale && typeof services.locale.bind === "function") {
             const bound = services.locale.bind(ns);
-            if (typeof bound === "function") t = (k) => {
+            if (typeof bound === "function") t = (k, params) => {
               try {
-                const v = bound(k);
-                return v === void 0 || v === null ? String(k) : String(v);
+                return interpolate(bound(k), params);
               } catch (_) {
-                return String(k);
+                return interpolate(k, params);
               }
             };
           }
@@ -29600,18 +29627,23 @@
   function renderPluginElement(item, extra) {
     const C = item && item.Component;
     if (!C) return null;
-    const renderSlot = (slotName, slotProps) => {
+    const renderSlot = (slotName, slotProps, opts) => {
       if (!slotName) return null;
-      const items = getSlotItems(slotName);
-      if (!items.length) return null;
+      let items = getSlotItems(slotName);
+      if (opts && opts.only !== void 0) {
+        items = items.filter((it) => it.id === opts.only);
+      } else if (opts && opts.entryKey !== void 0) {
+        items = items.filter((it) => it.id === opts.entryKey || it.spec && it.spec.key === opts.entryKey);
+      }
+      if (!items.length) return opts && opts.fallback || null;
       return (0, import_react3.createElement)(
         "div",
         { "data-render-slot": slotName, style: { display: "contents" } },
         ...items.map((it, i) => {
           const IC2 = it.Component;
-          if (!IC2) return null;
+          if (typeof IC2 !== "function") return null;
           return (0, import_react3.createElement)(IC2, {
-            key: it.key || slotName + ":" + i,
+            key: it.spec && it.spec.key || it.key || slotName + ":" + i,
             ...it.injectedProps || {},
             ...slotProps || {},
             renderSlot,
@@ -30202,10 +30234,10 @@
         if (!filtered.length) return opts && opts.fallback || null;
         return (0, import_react9.createElement)(import_react9.Fragment, null, ...filtered.map((it, i) => {
           const C2 = it.Component;
-          if (!C2) return null;
+          if (typeof C2 !== "function") return null;
           const p = Object.assign({}, ownerProps || {}, it.injectedProps || {});
           p.t = it.t || ((k) => k);
-          return (0, import_react9.createElement)(C2, { key: it.key || "slot-" + i, ...p });
+          return (0, import_react9.createElement)(C2, { key: it.spec && it.spec.key || it.key || "slot-" + i, ...p });
         }));
       } catch (e) {
         console.error("[dsh-slot] renderSlot(" + slotName + ") \u5931\u8D25", e);

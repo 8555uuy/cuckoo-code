@@ -47,13 +47,21 @@ function notifySlot(slotName: string): void {
   notify();
 }
 
-/** DSH 条目格式：{ options, ... }（entries 返回它）*/
+/** DSH 条目格式：{ component, options, inject, locale, children, registrant }（对齐 DSH StoredEntry）*/
 function toEntry(it: SlotItem): any {
+  const s = it.spec || {};
   return {
-    options: { id: it.id, key: it.key, order: it.order, ...(it.spec || {}) },
+    // DSH 契约字段（小写 component——dsh-codex-ui 用它拿组件）
+    component: it.Component,
+    options: { id: it.id, key: s.key !== undefined ? s.key : it.key, order: it.order, label: s.label, priority: s.priority },
+    inject: typeof s.inject === 'function' ? s.inject : undefined,
+    children: s.children,
+    locale: s.locale,
+    registrant: it.pluginId,
+    // 我们自己的字段（兼容旧用法）
     id: it.id,
     order: it.order,
-    spec: it.spec,
+    spec: s,
     Component: it.Component,
     t: it.t,
     injectedProps: it.injectedProps,
@@ -229,23 +237,34 @@ function makeLocale(): any {
   const dicts: Record<string, any> = {};
   let lang = 'zh';
   try { lang = (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en'; } catch (_) {}
+  /** 插值：把 "v{version}" + {version:'1.2'} → "v1.2" */
+  const interpolate = (v: any, params?: any): string => {
+    let out = (v === undefined || v === null) ? '' : String(v);
+    if (params && typeof params === 'object') {
+      out = out.replace(/\{(\w+)\}/g, (m: string, name: string) => {
+        const pv = params[name];
+        return (pv === undefined || pv === null) ? m : String(pv);
+      });
+    }
+    return out;
+  };
   const lookup = (ns: string, key: string): string => {
     const d = dicts[ns];
     if (!d) return key;
     const pack = d[lang] || d.zh || d.en || {};
     return (pack && pack[key]) || key;
   };
-  const t = (key: string): string => {
+  const t = (key: string, params?: any): string => {
     // 无 ns 时全局找
-    for (const ns of Object.keys(dicts)) { const v = lookup(ns, key); if (v !== key) return v; }
-    return key;
+    for (const ns of Object.keys(dicts)) { const v = lookup(ns, key); if (v !== key) return interpolate(v, params); }
+    return interpolate(key, params);
   };
   const localeSubs = new Set<(l: string) => void>();
   // ⚠️ getSnapshot 必须返回稳定引用（useSyncExternalStore 要求）——否则无限重渲染
   let localeSnapshot: any = { current: lang, active: lang };
   const api: any = {
     register(ns: string, dict: any) { dicts[ns] = dict; return () => { delete dicts[ns]; }; },
-    bind(ns: string) { return (key: string) => lookup(ns, key); },
+    bind(ns: string) { return (key: string, params?: any) => interpolate(lookup(ns, key), params); },
     t,
     // 订阅语言变化（组件常用：locale.subscribe(() => ...)）
     subscribe(cb: any) { if (typeof cb === 'function') localeSubs.add(cb); return () => { localeSubs.delete(cb); }; },
@@ -556,12 +575,25 @@ function makeCtx(pluginId: string, services: Record<string, any>): any {
       const key = pluginId + ':' + slotName + ':' + id;
       // i18n：从 spec.locale 生成 t 函数（DSH 组件常用 ({ t }) => ...）
       // 注意：返回的 t 必须是函数，任何 key 都安全返回（查不到回退 key）
-      let t: any = (k: string) => String(k);
+      // t(key, params?) → 支持插值（DSH 的 t('xxx', { name: '...' })）
+      const interpolate = (v: any, params: any): string => {
+        let out = (v === undefined || v === null) ? '' : String(v);
+        if (params && typeof params === 'object') {
+          out = out.replace(/\{(\w+)\}/g, (m: string, name: string) => {
+            const pv = params[name];
+            return (pv === undefined || pv === null) ? m : String(pv);
+          });
+        }
+        return out;
+      };
+      let t: any = (k: string, params?: any) => interpolate(k, params);
       try {
         const ns = s.locale;
         if (ns && services.locale && typeof services.locale.bind === 'function') {
           const bound = services.locale.bind(ns);
-          if (typeof bound === 'function') t = (k: string) => { try { const v = bound(k); return (v === undefined || v === null) ? String(k) : String(v); } catch (_) { return String(k); } };
+          if (typeof bound === 'function') t = (k: string, params?: any) => {
+            try { return interpolate(bound(k), params); } catch (_) { return interpolate(k, params); }
+          };
         }
       } catch (_) {}
       // DSH 依赖注入面：spec.inject

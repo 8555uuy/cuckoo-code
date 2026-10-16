@@ -88,17 +88,29 @@ export function renderPluginElement(item: SlotEntry, extra?: any): any {
   const C = item && item.Component;
   if (!C) return null;
 
-  /** DSH renderSlot：渲染某子插槽下的所有组件（递归，带 renderSlot） */
-  const renderSlot = (slotName: string, slotProps?: any): any => {
+  /**
+   * DSH renderSlot：渲染子插槽（对齐 DSH 契约）
+   * 签名：renderSlot(slotName, ownerProps?, opts?)
+   *   opts.only     → list 类型：只渲染指定 id
+   *   opts.entryKey → keyed 类型：只渲染指定 key
+   *   opts.fallback → 空时回退
+   */
+  const renderSlot = (slotName: string, slotProps?: any, opts?: any): any => {
     if (!slotName) return null;
-    const items = getSlotItems(slotName);
-    if (!items.length) return null;
+    let items = getSlotItems(slotName);
+    // DSH 契约：opts.only / opts.entryKey 过滤
+    if (opts && opts.only !== undefined) {
+      items = items.filter((it: any) => it.id === opts.only);
+    } else if (opts && opts.entryKey !== undefined) {
+      items = items.filter((it: any) => it.id === opts.entryKey || (it.spec && it.spec.key === opts.entryKey));
+    }
+    if (!items.length) return (opts && opts.fallback) || null;
     return createElement('div', { 'data-render-slot': slotName, style: { display: 'contents' } },
       ...items.map((it, i) => {
         const IC = it.Component;
-        if (!IC) return null;
+        if (typeof IC !== 'function') return null;
         return createElement(IC, {
-          key: it.key || (slotName + ':' + i),
+          key: (it.spec && it.spec.key) || it.key || (slotName + ':' + i),
           ...(it.injectedProps || {}),
           ...(slotProps || {}),
           renderSlot,

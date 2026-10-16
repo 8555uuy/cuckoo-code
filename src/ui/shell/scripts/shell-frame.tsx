@@ -108,15 +108,16 @@ function MainSlotPage({ item }: { item: any }) {
     try {
       const items = getSlotItems(slotName);
       let filtered = items;
+      // DSH 契约：opts.only（list）、opts.entryKey（keyed）
       if (opts && opts.only !== undefined) filtered = items.filter((it: any) => it.id === opts.only);
       else if (opts && opts.entryKey !== undefined) filtered = items.filter((it: any) => it.id === opts.entryKey || (it.spec && it.spec.key === opts.entryKey));
       if (!filtered.length) return (opts && opts.fallback) || null;
       return createElement(Fragment, null, ...filtered.map((it: any, i: number) => {
         const C = it.Component;
-        if (!C) return null;
+        if (typeof C !== 'function') return null;
         const p = Object.assign({}, ownerProps || {}, it.injectedProps || {});
         p.t = it.t || ((k: string) => k);
-        return createElement(C, { key: it.key || ('slot-' + i), ...p });
+        return createElement(C, { key: (it.spec && it.spec.key) || it.key || ('slot-' + i), ...p });
       }));
     } catch (e) {
       console.error('[dsh-slot] renderSlot(' + slotName + ') 失败', e);
