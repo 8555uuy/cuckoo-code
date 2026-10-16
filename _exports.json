@@ -1,0 +1,754 @@
+[
+  {
+    "exportName": "IconNewChatOutlineRegular",
+    "artwork": "NewChatOutlineArtwork"
+  },
+  {
+    "exportName": "IconNewChatOutlineMedium",
+    "artwork": "NewChatOutlineArtwork"
+  },
+  {
+    "exportName": "IconSearchOutlineRegular",
+    "artwork": "IconSearchOutlineArtwork"
+  },
+  {
+    "exportName": "IconSearchOutlineMedium",
+    "artwork": "IconSearchOutlineArtwork"
+  },
+  {
+    "exportName": "IconGlobeOutlineRegular",
+    "artwork": "GlobeOutlineArtwork"
+  },
+  {
+    "exportName": "IconGlobeOutlineMedium",
+    "artwork": "GlobeOutlineArtwork"
+  },
+  {
+    "exportName": "IconSettingsOutlineRegular",
+    "artwork": "IconSettingsOutlineArtwork"
+  },
+  {
+    "exportName": "IconSettingsOutlineMedium",
+    "artwork": "IconSettingsOutlineArtwork"
+  },
+  {
+    "exportName": "IconPanelLeftOutlineRegular",
+    "artwork": "IconPanelLeftOutlineArtwork"
+  },
+  {
+    "exportName": "IconPanelLeftOutlineMedium",
+    "artwork": "IconPanelLeftOutlineArtwork"
+  },
+  {
+    "exportName": "IconEllipsisOutlineRegular",
+    "artwork": "IconEllipsisOutlineArtwork"
+  },
+  {
+    "exportName": "IconEllipsisOutlineMedium",
+    "artwork": "IconEllipsisOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlusOutlineRegular",
+    "artwork": "IconPlusOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlusOutlineMedium",
+    "artwork": "IconPlusOutlineArtwork"
+  },
+  {
+    "exportName": "IconCheckOutlineRegular",
+    "artwork": "IconCheckOutlineArtwork"
+  },
+  {
+    "exportName": "IconCheckOutlineMedium",
+    "artwork": "IconCheckOutlineArtwork"
+  },
+  {
+    "exportName": "IconBranchOutlineRegular",
+    "artwork": "IconBranchOutlineArtwork"
+  },
+  {
+    "exportName": "IconBranchOutlineMedium",
+    "artwork": "IconBranchOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronDownOutlineRegular",
+    "artwork": "IconChevronDownOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronDownOutlineMedium",
+    "artwork": "IconChevronDownOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronLeftOutlineRegular",
+    "artwork": "IconChevronLeftOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronLeftOutlineMedium",
+    "artwork": "IconChevronLeftOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronRightOutlineRegular",
+    "artwork": "IconChevronRightOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronRightOutlineMedium",
+    "artwork": "IconChevronRightOutlineArtwork"
+  },
+  {
+    "exportName": "IconTriangleRightFillRegular",
+    "artwork": "IconTriangleRightFillArtwork"
+  },
+  {
+    "exportName": "IconTriangleRightFillMedium",
+    "artwork": "IconTriangleRightFillArtwork"
+  },
+  {
+    "exportName": "IconChevronUpOutlineRegular",
+    "artwork": "IconChevronUpOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronUpOutlineMedium",
+    "artwork": "IconChevronUpOutlineArtwork"
+  },
+  {
+    "exportName": "IconCloseOutlineRegular",
+    "artwork": "IconCloseOutlineArtwork"
+  },
+  {
+    "exportName": "IconCloseOutlineMedium",
+    "artwork": "IconCloseOutlineArtwork"
+  },
+  {
+    "exportName": "IconCloseFillRegular",
+    "artwork": "IconCloseFillArtwork"
+  },
+  {
+    "exportName": "IconCloseFillMedium",
+    "artwork": "IconCloseFillArtwork"
+  },
+  {
+    "exportName": "IconCloseCircleFillRegular",
+    "artwork": "IconCloseCircleFillArtwork"
+  },
+  {
+    "exportName": "IconCloseCircleFillMedium",
+    "artwork": "IconCloseCircleFillArtwork"
+  },
+  {
+    "exportName": "IconCopyOutlineRegular",
+    "artwork": "IconCopyOutlineArtwork"
+  },
+  {
+    "exportName": "IconCopyOutlineMedium",
+    "artwork": "IconCopyOutlineArtwork"
+  },
+  {
+    "exportName": "IconRefreshOutlineRegular",
+    "artwork": "IconRefreshOutlineArtwork"
+  },
+  {
+    "exportName": "IconRefreshOutlineMedium",
+    "artwork": "IconRefreshOutlineArtwork"
+  },
+  {
+    "exportName": "IconLikeOutlineRegular",
+    "artwork": "IconLikeOutlineArtwork"
+  },
+  {
+    "exportName": "IconLikeOutlineMedium",
+    "artwork": "IconLikeOutlineArtwork"
+  },
+  {
+    "exportName": "IconLikeFillRegular",
+    "artwork": "IconLikeFillArtwork"
+  },
+  {
+    "exportName": "IconLikeFillMedium",
+    "artwork": "IconLikeFillArtwork"
+  },
+  {
+    "exportName": "IconDislikeOutlineRegular",
+    "artwork": "IconDislikeOutlineArtwork"
+  },
+  {
+    "exportName": "IconDislikeOutlineMedium",
+    "artwork": "IconDislikeOutlineArtwork"
+  },
+  {
+    "exportName": "IconDislikeFillRegular",
+    "artwork": "IconDislikeFillArtwork"
+  },
+  {
+    "exportName": "IconDislikeFillMedium",
+    "artwork": "IconDislikeFillArtwork"
+  },
+  {
+    "exportName": "IconShareOutlineRegular",
+    "artwork": "IconShareOutlineArtwork"
+  },
+  {
+    "exportName": "IconShareOutlineMedium",
+    "artwork": "IconShareOutlineArtwork"
+  },
+  {
+    "exportName": "IconDeliverDocRegular",
+    "artwork": "IconDeliverDocArtwork"
+  },
+  {
+    "exportName": "IconDeliverDocMedium",
+    "artwork": "IconDeliverDocArtwork"
+  },
+  {
+    "exportName": "IconEditOutlineRegular",
+    "artwork": "IconEditOutlineArtwork"
+  },
+  {
+    "exportName": "IconEditOutlineMedium",
+    "artwork": "IconEditOutlineArtwork"
+  },
+  {
+    "exportName": "IconThinkOutlineRegular",
+    "artwork": "IconThinkOutlineArtwork"
+  },
+  {
+    "exportName": "IconThinkOutlineMedium",
+    "artwork": "IconThinkOutlineArtwork"
+  },
+  {
+    "exportName": "IconAgentPresetOutlineRegular",
+    "artwork": "IconAgentPresetOutlineArtwork"
+  },
+  {
+    "exportName": "IconAgentPresetOutlineMedium",
+    "artwork": "IconAgentPresetOutlineArtwork"
+  },
+  {
+    "exportName": "IconBrowseOutlineRegular",
+    "artwork": "BrowseOutlineArtwork"
+  },
+  {
+    "exportName": "IconBrowseOutlineMedium",
+    "artwork": "BrowseOutlineArtwork"
+  },
+  {
+    "exportName": "IconContextInjectionOutlineRegular",
+    "artwork": "IconContextInjectionOutlineArtwork"
+  },
+  {
+    "exportName": "IconContextInjectionOutlineMedium",
+    "artwork": "IconContextInjectionOutlineArtwork"
+  },
+  {
+    "exportName": "IconLinkOutlineRegular",
+    "artwork": "IconLinkOutlineArtwork"
+  },
+  {
+    "exportName": "IconLinkOutlineMedium",
+    "artwork": "IconLinkOutlineArtwork"
+  },
+  {
+    "exportName": "IconRightUpOutlineRegular",
+    "artwork": "IconRightUpOutlineArtwork"
+  },
+  {
+    "exportName": "IconRightUpOutlineMedium",
+    "artwork": "IconRightUpOutlineArtwork"
+  },
+  {
+    "exportName": "IconEnhanceOutlineRegular",
+    "artwork": "IconEnhanceOutlineArtwork"
+  },
+  {
+    "exportName": "IconEnhanceOutlineMedium",
+    "artwork": "IconEnhanceOutlineArtwork"
+  },
+  {
+    "exportName": "IconTrashOutlineRegular",
+    "artwork": "IconTrashOutlineArtwork"
+  },
+  {
+    "exportName": "IconTrashOutlineMedium",
+    "artwork": "IconTrashOutlineArtwork"
+  },
+  {
+    "exportName": "IconWarningOutlineRegular",
+    "artwork": "IconWarningOutlineArtwork"
+  },
+  {
+    "exportName": "IconWarningOutlineMedium",
+    "artwork": "IconWarningOutlineArtwork"
+  },
+  {
+    "exportName": "IconCheckCircleFillRegular",
+    "artwork": "IconCheckCircleFillArtwork"
+  },
+  {
+    "exportName": "IconCheckCircleFillMedium",
+    "artwork": "IconCheckCircleFillArtwork"
+  },
+  {
+    "exportName": "IconWarningTriangleOutlineRegular",
+    "artwork": "IconWarningTriangleOutlineArtwork"
+  },
+  {
+    "exportName": "IconWarningTriangleOutlineMedium",
+    "artwork": "IconWarningTriangleOutlineArtwork"
+  },
+  {
+    "exportName": "IconUserOutlineRegular",
+    "artwork": "IconUserOutlineArtwork"
+  },
+  {
+    "exportName": "IconUserOutlineMedium",
+    "artwork": "IconUserOutlineArtwork"
+  },
+  {
+    "exportName": "IconUsersOutlineRegular",
+    "artwork": "IconUsersOutlineArtwork"
+  },
+  {
+    "exportName": "IconUsersOutlineMedium",
+    "artwork": "IconUsersOutlineArtwork"
+  },
+  {
+    "exportName": "IconPaperPlaneOutlineRegular",
+    "artwork": "IconPaperPlaneOutlineArtwork"
+  },
+  {
+    "exportName": "IconPaperPlaneOutlineMedium",
+    "artwork": "IconPaperPlaneOutlineArtwork"
+  },
+  {
+    "exportName": "IconStopFillRegular",
+    "artwork": "IconStopFillArtwork"
+  },
+  {
+    "exportName": "IconStopFillMedium",
+    "artwork": "IconStopFillArtwork"
+  },
+  {
+    "exportName": "IconPaperclipOutlineRegular",
+    "artwork": "IconPaperclipOutlineArtwork"
+  },
+  {
+    "exportName": "IconPaperclipOutlineMedium",
+    "artwork": "IconPaperclipOutlineArtwork"
+  },
+  {
+    "exportName": "IconLoadingOutlineRegular",
+    "artwork": "IconLoadingOutlineArtwork"
+  },
+  {
+    "exportName": "IconLoadingOutlineMedium",
+    "artwork": "IconLoadingOutlineArtwork"
+  },
+  {
+    "exportName": "IconDownloadOutlineRegular",
+    "artwork": "IconDownloadOutlineArtwork"
+  },
+  {
+    "exportName": "IconDownloadOutlineMedium",
+    "artwork": "IconDownloadOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlayOutlineRegular",
+    "artwork": "IconPlayOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlayOutlineMedium",
+    "artwork": "IconPlayOutlineArtwork"
+  },
+  {
+    "exportName": "IconPauseOutlineRegular",
+    "artwork": "IconPauseOutlineArtwork"
+  },
+  {
+    "exportName": "IconPauseOutlineMedium",
+    "artwork": "IconPauseOutlineArtwork"
+  },
+  {
+    "exportName": "IconFullscreenOutlineRegular",
+    "artwork": "IconFullscreenOutlineArtwork"
+  },
+  {
+    "exportName": "IconFullscreenOutlineMedium",
+    "artwork": "IconFullscreenOutlineArtwork"
+  },
+  {
+    "exportName": "IconCodeOutlineRegular",
+    "artwork": "IconCodeOutlineArtwork"
+  },
+  {
+    "exportName": "IconCodeOutlineMedium",
+    "artwork": "IconCodeOutlineArtwork"
+  },
+  {
+    "exportName": "IconCordisPluginOutlineRegular",
+    "artwork": "IconCordisPluginOutlineArtwork"
+  },
+  {
+    "exportName": "IconCordisPluginOutlineMedium",
+    "artwork": "IconCordisPluginOutlineArtwork"
+  },
+  {
+    "exportName": "IconApiOutlineRegular",
+    "artwork": "IconApiOutlineArtwork"
+  },
+  {
+    "exportName": "IconApiOutlineMedium",
+    "artwork": "IconApiOutlineArtwork"
+  },
+  {
+    "exportName": "IconPersonalizationOutlineRegular",
+    "artwork": "IconPersonalizationOutlineArtwork"
+  },
+  {
+    "exportName": "IconPersonalizationOutlineMedium",
+    "artwork": "IconPersonalizationOutlineArtwork"
+  },
+  {
+    "exportName": "IconProjectAddOutlineRegular",
+    "artwork": "IconProjectAddOutlineArtwork"
+  },
+  {
+    "exportName": "IconProjectAddOutlineMedium",
+    "artwork": "IconProjectAddOutlineArtwork"
+  },
+  {
+    "exportName": "IconFolderOpenOutlineRegular",
+    "artwork": "IconFolderOpenOutlineArtwork"
+  },
+  {
+    "exportName": "IconFolderOpenOutlineMedium",
+    "artwork": "IconFolderOpenOutlineArtwork"
+  },
+  {
+    "exportName": "IconFolderOpenRegular",
+    "artwork": "IconFolderOpenArtwork"
+  },
+  {
+    "exportName": "IconFolderOpenMedium",
+    "artwork": "IconFolderOpenArtwork"
+  },
+  {
+    "exportName": "IconFolderCloseRegular",
+    "artwork": "FolderCloseArtwork"
+  },
+  {
+    "exportName": "IconFolderCloseMedium",
+    "artwork": "FolderCloseArtwork"
+  },
+  {
+    "exportName": "IconTreeCornerRegular",
+    "artwork": "IconTreeCornerArtwork"
+  },
+  {
+    "exportName": "IconTreeCornerMedium",
+    "artwork": "IconTreeCornerArtwork"
+  },
+  {
+    "exportName": "IconLightOutlineRegular",
+    "artwork": "IconLightOutlineArtwork"
+  },
+  {
+    "exportName": "IconLightOutlineMedium",
+    "artwork": "IconLightOutlineArtwork"
+  },
+  {
+    "exportName": "IconDarkOutlineRegular",
+    "artwork": "IconDarkOutlineArtwork"
+  },
+  {
+    "exportName": "IconDarkOutlineMedium",
+    "artwork": "IconDarkOutlineArtwork"
+  },
+  {
+    "exportName": "IconFollowsystemOutlineRegular",
+    "artwork": "IconFollowsystemOutlineArtwork"
+  },
+  {
+    "exportName": "IconFollowsystemOutlineMedium",
+    "artwork": "IconFollowsystemOutlineArtwork"
+  },
+  {
+    "exportName": "IconDataOutlineRegular",
+    "artwork": "IconDataOutlineArtwork"
+  },
+  {
+    "exportName": "IconDataOutlineMedium",
+    "artwork": "IconDataOutlineArtwork"
+  },
+  {
+    "exportName": "IconDatabaseOutlineRegular",
+    "artwork": "IconDatabaseOutlineArtwork"
+  },
+  {
+    "exportName": "IconDatabaseOutlineMedium",
+    "artwork": "IconDatabaseOutlineArtwork"
+  },
+  {
+    "exportName": "IconClockOutlineRegular",
+    "artwork": "IconClockOutlineArtwork"
+  },
+  {
+    "exportName": "IconClockOutlineMedium",
+    "artwork": "IconClockOutlineArtwork"
+  },
+  {
+    "exportName": "IconGaugeOutlineRegular",
+    "artwork": "IconGaugeOutlineArtwork"
+  },
+  {
+    "exportName": "IconGaugeOutlineMedium",
+    "artwork": "IconGaugeOutlineArtwork"
+  },
+  {
+    "exportName": "IconSendOutlineRegular",
+    "artwork": "IconSendOutlineArtwork"
+  },
+  {
+    "exportName": "IconSendOutlineMedium",
+    "artwork": "IconSendOutlineArtwork"
+  },
+  {
+    "exportName": "IconQueueOutlineRegular",
+    "artwork": "IconQueueOutlineArtwork"
+  },
+  {
+    "exportName": "IconQueueOutlineMedium",
+    "artwork": "IconQueueOutlineArtwork"
+  },
+  {
+    "exportName": "IconChecklistOutlineRegular",
+    "artwork": "IconChecklistOutlineArtwork"
+  },
+  {
+    "exportName": "IconChecklistOutlineMedium",
+    "artwork": "IconChecklistOutlineArtwork"
+  },
+  {
+    "exportName": "IconListPenOutlineRegular",
+    "artwork": "IconListPenOutlineArtwork"
+  },
+  {
+    "exportName": "IconListPenOutlineMedium",
+    "artwork": "IconListPenOutlineArtwork"
+  },
+  {
+    "exportName": "IconGoalOutlineRegular",
+    "artwork": "IconGoalOutlineArtwork"
+  },
+  {
+    "exportName": "IconGoalOutlineMedium",
+    "artwork": "IconGoalOutlineArtwork"
+  },
+  {
+    "exportName": "IconSparkleRegular",
+    "artwork": "IconSparkleArtwork"
+  },
+  {
+    "exportName": "IconSparkleMedium",
+    "artwork": "IconSparkleArtwork"
+  },
+  {
+    "exportName": "IconInspectOutlineRegular",
+    "artwork": "CodeBracketsArtwork"
+  },
+  {
+    "exportName": "IconInspectOutlineMedium",
+    "artwork": "CodeBracketsArtwork"
+  },
+  {
+    "exportName": "IconSkillOutlineRegular",
+    "artwork": "IconSkillOutlineArtwork"
+  },
+  {
+    "exportName": "IconSkillOutlineMedium",
+    "artwork": "IconSkillOutlineArtwork"
+  },
+  {
+    "exportName": "IconQuestionOutlineRegular",
+    "artwork": "IconQuestionOutlineArtwork"
+  },
+  {
+    "exportName": "IconQuestionOutlineMedium",
+    "artwork": "IconQuestionOutlineArtwork"
+  },
+  {
+    "exportName": "IconInfoOutlineRegular",
+    "artwork": "IconInfoOutlineArtwork"
+  },
+  {
+    "exportName": "IconInfoOutlineMedium",
+    "artwork": "IconInfoOutlineArtwork"
+  },
+  {
+    "exportName": "IconPluginPinwheelOutlineRegular",
+    "artwork": "IconPluginPinwheelOutlineArtwork"
+  },
+  {
+    "exportName": "IconPluginPinwheelOutlineMedium",
+    "artwork": "IconPluginPinwheelOutlineArtwork"
+  },
+  {
+    "exportName": "IconAlarmClockOutlineRegular",
+    "artwork": "IconAlarmClockOutlineArtwork"
+  },
+  {
+    "exportName": "IconAlarmClockOutlineMedium",
+    "artwork": "IconAlarmClockOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveOutlineRegular",
+    "artwork": "IconArchiveOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveOutlineMedium",
+    "artwork": "IconArchiveOutlineArtwork"
+  },
+  {
+    "exportName": "IconWrapLinesOutlineRegular",
+    "artwork": "IconWrapLinesOutlineArtwork"
+  },
+  {
+    "exportName": "IconWrapLinesOutlineMedium",
+    "artwork": "IconWrapLinesOutlineArtwork"
+  },
+  {
+    "exportName": "IconNowrapFillRegular",
+    "artwork": "IconNowrapFillArtwork"
+  },
+  {
+    "exportName": "IconNowrapFillMedium",
+    "artwork": "IconNowrapFillArtwork"
+  },
+  {
+    "exportName": "IconWrapFillRegular",
+    "artwork": "IconWrapFillArtwork"
+  },
+  {
+    "exportName": "IconWrapFillMedium",
+    "artwork": "IconWrapFillArtwork"
+  },
+  {
+    "exportName": "IconCompareSplitOutlineRegular",
+    "artwork": "IconCompareSplitOutlineArtwork"
+  },
+  {
+    "exportName": "IconCompareSplitOutlineMedium",
+    "artwork": "IconCompareSplitOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlanOutlineRegular",
+    "artwork": "IconPlanOutlineArtwork"
+  },
+  {
+    "exportName": "IconPlanOutlineMedium",
+    "artwork": "IconPlanOutlineArtwork"
+  },
+  {
+    "exportName": "IconCompactOutlineRegular",
+    "artwork": "IconCompactOutlineArtwork"
+  },
+  {
+    "exportName": "IconCompactOutlineMedium",
+    "artwork": "IconCompactOutlineArtwork"
+  },
+  {
+    "exportName": "IconShieldOutlineRegular",
+    "artwork": "IconShieldOutlineArtwork"
+  },
+  {
+    "exportName": "IconShieldOutlineMedium",
+    "artwork": "IconShieldOutlineArtwork"
+  },
+  {
+    "exportName": "IconCheckCircleOutlineRegular",
+    "artwork": "IconCheckCircleOutlineArtwork"
+  },
+  {
+    "exportName": "IconCheckCircleOutlineMedium",
+    "artwork": "IconCheckCircleOutlineArtwork"
+  },
+  {
+    "exportName": "IconUnarchiveOutlineRegular",
+    "artwork": "IconUnarchiveOutlineArtwork"
+  },
+  {
+    "exportName": "IconUnarchiveOutlineMedium",
+    "artwork": "IconUnarchiveOutlineArtwork"
+  },
+  {
+    "exportName": "IconPinOutlineRegular",
+    "artwork": "IconPinOutlineArtwork"
+  },
+  {
+    "exportName": "IconPinOutlineMedium",
+    "artwork": "IconPinOutlineArtwork"
+  },
+  {
+    "exportName": "IconPinFillRegular",
+    "artwork": "IconPinFillArtwork"
+  },
+  {
+    "exportName": "IconPinFillMedium",
+    "artwork": "IconPinFillArtwork"
+  },
+  {
+    "exportName": "IconFlatListOutlineRegular",
+    "artwork": "IconFlatListOutlineArtwork"
+  },
+  {
+    "exportName": "IconFlatListOutlineMedium",
+    "artwork": "IconFlatListOutlineArtwork"
+  },
+  {
+    "exportName": "IconWorkspaceTreeOutlineRegular",
+    "artwork": "IconWorkspaceTreeOutlineArtwork"
+  },
+  {
+    "exportName": "IconWorkspaceTreeOutlineMedium",
+    "artwork": "IconWorkspaceTreeOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronsUpDownOutlineRegular",
+    "artwork": "IconChevronsUpDownOutlineArtwork"
+  },
+  {
+    "exportName": "IconChevronsUpDownOutlineMedium",
+    "artwork": "IconChevronsUpDownOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveOffOutlineRegular",
+    "artwork": "IconArchiveOffOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveOffOutlineMedium",
+    "artwork": "IconArchiveOffOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveCheckOutlineRegular",
+    "artwork": "IconArchiveCheckOutlineArtwork"
+  },
+  {
+    "exportName": "IconArchiveCheckOutlineMedium",
+    "artwork": "IconArchiveCheckOutlineArtwork"
+  },
+  {
+    "exportName": "IconSlidersTwoOutlineRegular",
+    "artwork": "IconSlidersTwoOutlineArtwork"
+  },
+  {
+    "exportName": "IconSlidersTwoOutlineMedium",
+    "artwork": "IconSlidersTwoOutlineArtwork"
+  },
+  {
+    "exportName": "IconMicrophoneOutlineRegular",
+    "artwork": "IconMicrophoneOutlineArtwork"
+  },
+  {
+    "exportName": "IconMicrophoneOutlineMedium",
+    "artwork": "IconMicrophoneOutlineArtwork"
+  }
+]
