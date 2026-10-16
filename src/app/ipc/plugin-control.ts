@@ -389,9 +389,9 @@ const DEDUP_WINDOW_MS = 300;
 function broadcastPluginEvent(payload: any): void {
   let fp = '';
   try {
-    fp = String(payload.type || '') + '|' + String(payload.text || '') + '|' +
-      String(payload.code || '') + '|' + (payload.finished ? '1' : '0') +
-      '|' + (payload.generating ? '1' : '0');
+    fp = String(payload.type || '') + '|' + String(payload.sessionId || '') + '|' +
+      String(payload.text || '') + '|' + String(payload.code || '') + '|' +
+      (payload.finished ? '1' : '0') + '|' + (payload.generating ? '1' : '0');
   } catch (_) { fp = ''; }
   if (fp) {
     const now = Date.now();

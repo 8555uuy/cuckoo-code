@@ -214,15 +214,24 @@ function registerHarnessIpc(): void {
   ipcMain.handle('harness-event-report', (event: any, payload: any) => {
     const ctx = findContext(event.sender);
     if (!ctx) return { success: false };
+    // 给事件打上会话 id：手机端（局域网控制插件）据此区分会话，
+    // 避免不同对话的消息串到同一个界面（"串门"）。
+    let sid = '';
+    try {
+      sid = (ctx.sessionStore && ctx.sessionStore.state && ctx.sessionStore.state.currentSessionId) || '';
+    } catch (_) { sid = ''; }
+    const enriched = (payload && typeof payload === 'object')
+      ? Object.assign({}, payload, { sessionId: sid })
+      : payload;
     // C3：把 AI 事件广播给已加载的 DSH 插件（事件总线）
     try {
-      import('../../plugins/cuckoo-plugins/event-bridge.js').then((m: any) => m.dispatchHarnessPayload(payload)).catch(() => {});
+      import('../../plugins/cuckoo-plugins/event-bridge.js').then((m: any) => m.dispatchHarnessPayload(enriched)).catch(() => {});
     } catch (_) { /* ignore */ }
     // 插件控制面：把 AI 事件推给注册了 onEvent 的 providers/*.js 插件（如局域网控制）
-    try { broadcastPluginEvent(payload); } catch (_) { /* ignore */ }
+    try { broadcastPluginEvent(enriched); } catch (_) { /* ignore */ }
     const hv = (ctx as any).harnessView;
     if (hv && !hv.webContents.isDestroyed()) {
-      hv.webContents.send('harness-event', payload);
+      hv.webContents.send('harness-event', enriched);
     }
     return { success: true };
   });
