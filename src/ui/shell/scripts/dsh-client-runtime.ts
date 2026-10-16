@@ -114,6 +114,40 @@ function makeStub(name: string): any {
   return p;
 }
 
+/**
+ * DSH slots 契约：把注册时的 label 解析成字符串（resolveSlotLabel）。
+ * label 形态：string | (() => string) | { key } | 本地化对象 { zh, en }
+ */
+function resolveSlotLabel(label: any): string | undefined {
+  if (label === null || label === undefined) return undefined;
+  if (typeof label === "string") return label;
+  if (typeof label === "number") return String(label);
+  if (typeof label === "function") {
+    try { const v = label(); return (v === null || v === undefined) ? undefined : String(v); }
+    catch (_) { return undefined; }
+  }
+  if (typeof label === "object") {
+    if (typeof (label as any).key === "string") return (label as any).key;
+    for (const v of Object.values(label)) { if (typeof v === "string") return v; }
+  }
+  return undefined;
+}
+
+/**
+ * @deepseek-ai/dsh-client-ui-slots 兼容层：
+ *  - resolveSlotLabel：真实现（插件管理页读 plugins.item 的 label 用）
+ *  - 其余导出：stub 兜底（缺哪个都不会崩）
+ */
+const dshUiSlots: any = new Proxy({ resolveSlotLabel }, {
+  get(t: any, prop: string | symbol) {
+    if (prop in t) return (t as any)[prop];
+    if (prop === "__esModule") return true;
+    if (prop === "default") return dshUiSlots;
+    if (prop === "then") return undefined;
+    return makeStub("dsh-client-ui-slots." + String(prop));
+  },
+});
+
 /** 占位图标组件（SVG 小方块），供 DSH primitives 的 IconXxx 兜底 */
 function makePlaceholderIcon(): any {
   return function PlaceholderIcon(props: any) {
@@ -260,17 +294,23 @@ function makeLocale(): any {
     return interpolate(key, params);
   };
   const localeSubs = new Set<(l: string) => void>();
+  // DSH 契约：locale 每次变化 revision +1（configLedgerSource 等用它判变化）
+  let localeRevision = 0;
   // ⚠️ getSnapshot 必须返回稳定引用（useSyncExternalStore 要求）——否则无限重渲染
-  let localeSnapshot: any = { current: lang, active: lang };
+  let localeSnapshot: any = { current: lang, active: lang, revision: localeRevision, locale: lang };
+  const rebuildSnapshot = () => { localeSnapshot = { current: lang, active: lang, revision: localeRevision, locale: lang }; };
   const api: any = {
-    register(ns: string, dict: any) { dicts[ns] = dict; return () => { delete dicts[ns]; }; },
+    // 注册字典：DSH 契约返回 { dispose } 或函数，这里返回函数（兼容两种用法）
+    register(ns: string, dict: any) { dicts[ns] = dict; localeRevision++; rebuildSnapshot(); return () => { delete dicts[ns]; localeRevision++; rebuildSnapshot(); }; },
     bind(ns: string) { return (key: string, params?: any) => interpolate(lookup(ns, key), params); },
     t,
     // 订阅语言变化（组件常用：locale.subscribe(() => ...)）
     subscribe(cb: any) { if (typeof cb === 'function') localeSubs.add(cb); return () => { localeSubs.delete(cb); }; },
     getSnapshot() { return localeSnapshot; },
-    setLocale(next: string) { lang = next; localeSnapshot = { current: lang, active: lang }; for (const fn of [...localeSubs]) { try { fn(next); } catch (_) {} } },
+    setLocale(next: string) { lang = next; localeRevision++; rebuildSnapshot(); for (const fn of [...localeSubs]) { try { fn(next); } catch (_) {} } },
     get current() { return lang; },
+    /** DSH 契约：当前语言（部分插件用 getLocale） */
+    getLocale() { return lang; },
   };
   return api;
 }
@@ -810,6 +850,8 @@ function installModuleLoader(): void {
         if (loadedModules[name]) return loadedModules[name];
         // primitives 包（Icon 组件）用"组件安全 shim"
         if (name.includes('ui-primitives')) return makePrimitivesShim();
+        // ui-slots 包（resolveSlotLabel 等）
+        if (name.includes("ui-slots")) return dshUiSlots;
         // client-store 包（createSnapshotStore/defineStore）
         if (name === '@deepseek-ai/dsh-client-store') return dshClientStore;
         // 其他 @deepseek-ai/*（服务/store 等）：万能 stub（可链式调用，不返回 null）

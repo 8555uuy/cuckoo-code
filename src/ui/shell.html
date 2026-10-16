@@ -28736,6 +28736,35 @@
     });
     return p;
   }
+  function resolveSlotLabel(label) {
+    if (label === null || label === void 0) return void 0;
+    if (typeof label === "string") return label;
+    if (typeof label === "number") return String(label);
+    if (typeof label === "function") {
+      try {
+        const v = label();
+        return v === null || v === void 0 ? void 0 : String(v);
+      } catch (_) {
+        return void 0;
+      }
+    }
+    if (typeof label === "object") {
+      if (typeof label.key === "string") return label.key;
+      for (const v of Object.values(label)) {
+        if (typeof v === "string") return v;
+      }
+    }
+    return void 0;
+  }
+  var dshUiSlots = new Proxy({ resolveSlotLabel }, {
+    get(t, prop) {
+      if (prop in t) return t[prop];
+      if (prop === "__esModule") return true;
+      if (prop === "default") return dshUiSlots;
+      if (prop === "then") return void 0;
+      return makeStub("dsh-client-ui-slots." + String(prop));
+    }
+  });
   function makePlaceholderIcon() {
     return function PlaceholderIcon(props) {
       const size = props && props.size || 16;
@@ -28848,12 +28877,21 @@
       return interpolate(key, params);
     };
     const localeSubs = /* @__PURE__ */ new Set();
-    let localeSnapshot = { current: lang, active: lang };
+    let localeRevision = 0;
+    let localeSnapshot = { current: lang, active: lang, revision: localeRevision, locale: lang };
+    const rebuildSnapshot = () => {
+      localeSnapshot = { current: lang, active: lang, revision: localeRevision, locale: lang };
+    };
     const api2 = {
+      // 注册字典：DSH 契约返回 { dispose } 或函数，这里返回函数（兼容两种用法）
       register(ns, dict) {
         dicts[ns] = dict;
+        localeRevision++;
+        rebuildSnapshot();
         return () => {
           delete dicts[ns];
+          localeRevision++;
+          rebuildSnapshot();
         };
       },
       bind(ns) {
@@ -28872,7 +28910,8 @@
       },
       setLocale(next) {
         lang = next;
-        localeSnapshot = { current: lang, active: lang };
+        localeRevision++;
+        rebuildSnapshot();
         for (const fn of [...localeSubs]) {
           try {
             fn(next);
@@ -28881,6 +28920,10 @@
         }
       },
       get current() {
+        return lang;
+      },
+      /** DSH 契约：当前语言（部分插件用 getLocale） */
+      getLocale() {
         return lang;
       }
     };
@@ -29507,6 +29550,7 @@
           if (moduleTable[name]) return moduleTable[name];
           if (loadedModules[name]) return loadedModules[name];
           if (name.includes("ui-primitives")) return makePrimitivesShim();
+          if (name.includes("ui-slots")) return dshUiSlots;
           if (name === "@deepseek-ai/dsh-client-store") return dsh_client_store_exports;
           return makeStub(name);
         };
