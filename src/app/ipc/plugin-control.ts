@@ -140,6 +140,47 @@ function buildControl() {
       }
     },
 
+    /**
+     * 读取 AI 官网侧栏的真实会话列表（注入 AI 页面主世界执行抓取）。
+     * 比 Cuckoo 自记历史更可靠——列表由官网维护，天然同步。
+     */
+    async listWebSessions() {
+      try {
+        const ctx: any = activeCtx();
+        const view = ctx ? ctx.view : null;
+        if (!view || !view.webContents || view.webContents.isDestroyed()) {
+          return { success: false, error: 'no-ai-view', sessions: [] };
+        }
+        const { getProvider } = await import('../../providers/registry.js');
+        const provider = (ctx && ctx.providerId) ? getProvider(ctx.providerId) : null;
+        const base = (provider && provider.sessionUrlBase) || '';
+        const shellMod: any = await import('./shell.js');
+        const fn = (provider && typeof provider.getSessionListFn === 'function')
+          ? provider.getSessionListFn()
+          : shellMod.getDefaultSessionListFn();
+        if (typeof fn !== 'function') return { success: false, error: 'no-list-fn', sessions: [] };
+        const list = await view.webContents.executeJavaScript(
+          '(' + fn.toString() + ')(document, window, ' + JSON.stringify(base) + ')'
+        );
+        return { success: true, sessions: list || [], currentUrl: view.webContents.getURL(), providerId: ctx.providerId || '' };
+      } catch (e: any) {
+        return { success: false, error: e && e.message ? e.message : String(e), sessions: [] };
+      }
+    },
+
+    /** 按官网会话 URL 直接导航（列表项自带 href） */
+    async navigateUrl(url: string) {
+      if (!url || !/^https?:\/\//i.test(url)) return { success: false, error: 'bad-url' };
+      try {
+        const ctx: any = activeCtx();
+        if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return { success: false, error: 'no-ai-view' };
+        await ctx.view.webContents.loadURL(url);
+        return { success: true, url };
+      } catch (e: any) {
+        return { success: false, error: e && e.message ? e.message : String(e) };
+      }
+    },
+
     /** 切换会话：给 sessionId，按当前平台拼 URL 导航 */
     async navigateSession(sessionId: string) {
       if (!sessionId) return { success: false, error: 'no-session-id' };

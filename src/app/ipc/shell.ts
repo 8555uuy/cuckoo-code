@@ -48,6 +48,11 @@ function defaultSessionListFn(doc: any, win: any, base: any) {
   } catch (e) { return []; }
 }
 
+/** 导出默认抓取实现（供插件控制面复用，保证单一真相源） */
+function getDefaultSessionListFn(): (doc: any, win: any, base: string) => Array<{ title: string; href: string; active: boolean }> {
+  return defaultSessionListFn;
+}
+
 /** 把当前 URL 与前进/后退可用状态推送给壳页面 */
 function pushUrlState(view: any): void {
   if (!view || !view.webContents || view.webContents.isDestroyed()) return;
@@ -389,4 +394,4 @@ function registerShellIpc(): void {
   });
 }
 
-export { registerShellIpc, pushUrlState, pushTokenUsage, pushProjectDir };
+export { registerShellIpc, pushUrlState, pushTokenUsage, pushProjectDir, getDefaultSessionListFn };
