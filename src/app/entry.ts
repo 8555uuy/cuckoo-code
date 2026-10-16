@@ -24,7 +24,11 @@ const closeConfirmed = new Set<number>();
 let isQuitting = false;
 
 // ========== 持久化会话配置 ==========
-const SESSION_DIR = process.env.CUCKOO_SESSION_DIR || 'cuckoo-ai-pro-session';
+// fork 版用独立 userData 目录：appId/productName 若含 fork，则 session 目录也加 -fork 后缀，
+// 避免与官方版共用同一 userData → 单实例锁冲突 → fork 版启动即静默退出。
+const _appName = (() => { try { return app.getName() || ''; } catch (_) { return ''; } })();
+const _isForkBuild = /fork/i.test(_appName);
+const SESSION_DIR = process.env.CUCKOO_SESSION_DIR || (_isForkBuild ? 'cuckoo-ai-pro-session-fork' : 'cuckoo-ai-pro-session');
 const USER_DATA_DIR = path.join(app.getPath('appData'), SESSION_DIR);
 // app.setPath('userData', ...) 要求目标目录必须已存在，否则会抛错导致启动闪退。
 // 用户首次运行或手动删除该目录时，此处负责兜底创建。
