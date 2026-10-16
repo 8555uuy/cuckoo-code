@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { getProfileDir, getProfileManifestPath, getProfilePatchPath, getProfileWorkspacePath, getProfileLocalDir, getUserDir, DEFAULT_PROFILE } from './paths.js';
+import { getProfileDir, getProfileManifestPath, getProfilePatchPath, getProfileWorkspacePath, getProfileLocalDir, getProfileModulesDir, getBundledPluginsDir, getUserDir, DEFAULT_PROFILE } from './paths.js';
 import { defaultManifest, readProfileManifest, writeProfileManifest } from './manifest.js';
 import { writeProfilePatch, readProfilePatch } from './patch.js';
 
@@ -58,7 +58,76 @@ export function ensureProfile(name: string = DEFAULT_PROFILE): string {
   // local-plugins/
   fs.mkdirSync(getProfileLocalDir(dir), { recursive: true });
 
+  // 预置插件（首次创建 profile 时复制内置插件；用标记防"用户删了又回来"）
+  seedBundledPlugins(dir, name);
+
   return dir;
+}
+
+/** 预置插件标记文件名 */
+const SEED_MARKER = '.bundled-plugins-seeded';
+
+/** 复制目录（递归） */
+function copyDirSync(src: string, dst: string): void {
+  fs.mkdirSync(dst, { recursive: true });
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    const sp = path.join(src, e.name);
+    const dp = path.join(dst, e.name);
+    if (e.isDirectory()) copyDirSync(sp, dp);
+    else fs.copyFileSync(sp, dp);
+  }
+}
+
+/**
+ * 首次创建 profile 时，把内置插件（resources/bundled-plugins/）复制进 profile 的
+ * node_modules/，并写进 package.json 的 dependencies + dsh.profile.bundles。
+ * 用 <profile>/.bundled-plugins-seeded 标记：用户删了插件后，下次启动不会"复活"。
+ */
+function seedBundledPlugins(dir: string, name: string): void {
+  const marker = path.join(dir, SEED_MARKER);
+  if (fs.existsSync(marker)) return; // 已预置过（用户可自由删）
+  const bundledDir = getBundledPluginsDir();
+  if (!fs.existsSync(bundledDir)) return; // 没有内置插件目录：不写标记（留待后续版本）
+
+  // 遍历 bundled-plugins 下的包（支持 @scope/name）
+  const seeded: string[] = [];
+  const scan = (baseDir: string, prefix: string) => {
+    for (const e of fs.readdirSync(baseDir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const full = path.join(baseDir, e.name);
+      const pkgName = prefix ? prefix + '/' + e.name : e.name;
+      if (fs.existsSync(path.join(full, 'package.json'))) {
+        // 是一个包：复制到 node_modules/<pkgName>
+        const dst = path.join(getProfileModulesDir(dir), pkgName);
+        if (!fs.existsSync(dst)) copyDirSync(full, dst);
+        seeded.push(pkgName);
+      } else if (e.name.startsWith('@')) {
+        // scope 目录：递归
+        scan(full, e.name);
+      }
+    }
+  };
+  try { scan(bundledDir, ''); } catch { /* ignore */ }
+
+  if (seeded.length) {
+    // 写进 manifest（dependencies + bundles）
+    const mf = readProfileManifest(dir, name);
+    mf.dependencies = mf.dependencies || {};
+    mf.dsh = mf.dsh || {};
+    mf.dsh.profile = mf.dsh.profile || {};
+    mf.dsh.profile.bundles = mf.dsh.profile.bundles || [];
+    for (const pkg of seeded) {
+      const pkgJson = path.join(getProfileModulesDir(dir), pkg, 'package.json');
+      let ver = '*';
+      try { ver = JSON.parse(fs.readFileSync(pkgJson, 'utf-8')).version || '*'; } catch { /* ignore */ }
+      if (!mf.dependencies[pkg]) mf.dependencies[pkg] = ver;
+      if (!mf.dsh.profile.bundles.includes(pkg)) mf.dsh.profile.bundles.push(pkg);
+    }
+    writeProfileManifest(dir, mf);
+  }
+  if (seeded.length) {
+    try { fs.writeFileSync(marker, seeded.join(String.fromCharCode(10)), 'utf-8'); } catch { /* ignore */ }
+  }
 }
 
 /** profile 是否已初始化 */

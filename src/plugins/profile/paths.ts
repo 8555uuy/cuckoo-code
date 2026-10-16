@@ -72,6 +72,19 @@ function getProfileModulesDir(dir: string): string {
   return path.join(dir, 'node_modules');
 }
 
+/** 内置（预置）插件目录：开发版 = <appRoot>/resources/bundled-plugins；打包版同（extraResources） */
+function getBundledPluginsDir(): string {
+  // 照抄 pnpm.ts 的 appRoot 逻辑：out/src/plugins/profile → 上 4 级 = 应用根
+  const appRoot = path.join(import.meta.dirname, '..', '..', '..', '..');
+  return path.join(appRoot, 'resources', 'bundled-plugins');
+}
+
+/** 内置插件的目录（按包名），不存在返回 null */
+function getBundledPluginDir(pkgName: string): string | null {
+  const dir = path.join(getBundledPluginsDir(), pkgName);
+  return fs.existsSync(path.join(dir, 'package.json')) ? dir : null;
+}
+
 /** 列出所有 profile 名（一层子目录） */
 function listProfiles(): string[] {
   const root = getProfilesDir();
@@ -100,5 +113,7 @@ export {
   getProfileWorkspacePath,
   getProfileLocalDir,
   getProfileModulesDir,
+  getBundledPluginsDir,
+  getBundledPluginDir,
   listProfiles,
 };

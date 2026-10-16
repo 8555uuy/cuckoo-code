@@ -138,6 +138,10 @@
       {
         "from": "resources/runtime",
         "to": "runtime"
+      },
+      {
+        "from": "resources/bundled-plugins",
+        "to": "bundled-plugins"
       }
     ],
     "files": [
