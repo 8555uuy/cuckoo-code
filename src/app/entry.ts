@@ -395,6 +395,8 @@ function createWindow(profile: any) {
       const provider = c.providerId ? getProvider(c.providerId) : null;
       if (provider && typeof provider.extractSessionId === 'function') sid = provider.extractSessionId(url) || '';
       hv.webContents.send('harness-event', { type: 'session-changed', sessionId: sid });
+      // 插件控制面：把会话切换也广播给手机端（清空对话流，避免与会话混在一起）
+      try { const pc = require('./ipc/plugin-control.js'); pc.broadcastPluginEvent({ type: 'session-changed', sessionId: sid }); } catch (_) { /* ignore */ }
     } catch (_) { /* ignore */ }
   };
 
