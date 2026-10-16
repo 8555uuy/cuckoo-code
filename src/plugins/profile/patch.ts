@@ -149,6 +149,47 @@ export function setDisabled(entries: PatchEntry[], id: string, disabled: boolean
   return out;
 }
 
+/** bundle patch 的一行（bundle 的 cordis.patch.yml 的 insert 条目） */
+export interface BundlePatchRow {
+  rowId: string;
+  moduleName: string;
+}
+
+/**
+ * 解析 bundle 的 cordis.patch.yml（"insert" 格式）：
+ *   - insert:
+ *       - id: dsh-market
+ *         name: 'dshmarket'
+ * @returns 行列表（rowId = id, moduleName = name）
+ */
+export function parseBundlePatch(text: string): BundlePatchRow[] {
+  const out: BundlePatchRow[] = [];
+  if (!text) return out;
+  const lines = text.split(/\r?\n/);
+  let cur: { id?: string; name?: string } | null = null;
+  const push = () => { if (cur && cur.id) out.push({ rowId: cur.id, moduleName: cur.name || cur.id }); cur = null; };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (!line.trim() || line.trim().startsWith('#')) continue;
+    const t = line.trim();
+    // 新行 "- id: xxx" 或 "- name: xxx"
+    if (t.startsWith('- id:') || t.startsWith('- name:')) {
+      // 遇到新的 id/name 前，先 push 旧的（如果完整）
+      if (t.startsWith('- id:')) { push(); cur = { id: unquote(t.slice(5).trim()) }; }
+      else if (cur) cur.name = unquote(t.slice(7).trim());
+      continue;
+    }
+    // 缩进键值（id: / name:）
+    const m = t.match(/^(id|name):\s*(.*)$/);
+    if (m && cur) {
+      if (m[1] === 'id') cur.id = unquote(m[2]);
+      else cur.name = unquote(m[2]);
+    }
+  }
+  push();
+  return out;
+}
+
 /** 删除某 id 的 patch 条目（卸载时用） */
 export function removePatchEntry(entries: PatchEntry[], id: string): PatchEntry[] {
   return entries.filter((e) => e.id !== id);

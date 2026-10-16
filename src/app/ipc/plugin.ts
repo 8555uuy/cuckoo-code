@@ -162,19 +162,37 @@ function registerPluginIpc(): void {
       const e = entryByName.get(p.name);
       let version: string | undefined;
       let description: string | undefined;
+      let rows: any[] = [];
+      let meta: any = undefined;
       try {
         if (p.dir) {
           const pkg = JSON.parse(fs.readFileSync(path.join(p.dir, "package.json"), "utf-8"));
           version = pkg.version;
           description = pkg.description;
+          // meta：本地化显示（title + description）
+          meta = { title: pkg.name || p.name, description: pkg.description };
+          // rows：读 bundle patch（dsh.bundle.patch 指向的 cordis.patch.yml）
+          const patchRel = pkg.dsh && pkg.dsh.bundle && pkg.dsh.bundle.patch;
+          if (patchRel) {
+            const patchPath = path.join(p.dir, patchRel);
+            if (fs.existsSync(patchPath)) {
+              const { parseBundlePatch } = require('../../plugins/profile/patch.js');
+              const patchRows = parseBundlePatch(fs.readFileSync(patchPath, 'utf-8'));
+              rows = patchRows.map((r: any) => ({
+                rowId: r.rowId,
+                moduleName: r.moduleName,
+                enabled: true,
+              }));
+            }
+          }
         }
       } catch (_) {}
       return {
-        name: p.name, version, description,
+        name: p.name, version, description, meta,
         enabled: e ? !!e.enabled : false,
         installed: !!p.installed,
         optional: false, removable: true,
-        rows: [], overrides: [],
+        rows, overrides: [],
       };
     });
   }
@@ -187,11 +205,11 @@ function registerPluginIpc(): void {
   }
   ipcMain.handle("plugin-manager-list-bundles", async () => {
     try { return { ok: true, value: buildBundleInfos() }; }
-    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-list-plugins", async () => {
     try { return { ok: true, value: buildPluginInfos() }; }
-    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-set-enabled", async (_e: any, { id, enabled }: any = {}) => {
     try {
@@ -234,17 +252,17 @@ function registerPluginIpc(): void {
         value: {
           changed: true,
           application: hmrOk ? "applied" : "restart-required",
-          ...(hmrError ? { error: { code: "operation-error", diagnostic: hmrError } } : {}),
+          ...(hmrError ? { error: { code: "operation-error", message: hmrError, diagnostic: hmrError } } : {}),
         },
       };
     }
-    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-remove-bundle", async (_e: any, { name }: any = {}) => {
     try {
       const pkgName = String(name || "");
       const r = await uninstallFromProfile(pkgName);
-      if (!r.ok) return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
+      if (!r.ok) return { ok: false, error: { code: "operation-error", message: r.error, diagnostic: r.error } };
       // HMR：卸载插件（若有加载）
       try {
         const { packageNameToId } = await import('../../plugins/profile/installer.js');
@@ -258,7 +276,7 @@ function registerPluginIpc(): void {
         }
       } catch (_) {}
       return { ok: true, value: { changed: true, application: "applied", stage: "remove", target: pkgName } };
-    } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    } catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-install-bundle", async (_e: any, { spec, opts }: any = {}) => {
     try {
@@ -278,12 +296,27 @@ function registerPluginIpc(): void {
       send('plugin-manager-install-log', { requestId, jobId, argv: ['pnpm', 'add', pkgName], cwd: '', stream: 'stdout', text: '', exitCode: r.ok ? 0 : 1 });
       if (!r.ok) {
         send('plugin-manager-install-state', { requestId, phase: 'applying' });
-        return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
+        return { ok: false, error: { code: "operation-error", message: r.error, diagnostic: r.error } };
       }
+      // 4) bundle 检查：必须声明 dsh.bundle.patch（不是普通 npm 包）
+      try {
+        const pkgDir = r.pluginDir;
+        let isBundle = false;
+        if (pkgDir) {
+          const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf-8'));
+          isBundle = !!(pkg.dsh && pkg.dsh.bundle && pkg.dsh.bundle.patch);
+        }
+        if (!isBundle) {
+          // 回滚（卸载刚装的）
+          try { const { uninstallFromProfile } = await import('../../plugins/profile/installer.js'); await uninstallFromProfile(pkgName); } catch (_) {}
+          send('plugin-manager-install-state', { requestId, phase: 'applying' });
+          return { ok: false, error: { code: "not-bundle", message: '这个包不是 DSH 插件 bundle（没有 dsh.bundle.patch）', diagnostic: '这个包不是 DSH 插件 bundle（没有 dsh.bundle.patch）' } };
+        }
+      } catch (_) {}
       send('plugin-manager-install-state', { requestId, phase: 'applying' });
       send('plugin-manager-changed', { reason: 'install' });
       return { ok: true, value: { changed: true, application: "restart-required", stage: "install", target: r.name, bundle: r.name } };
-    } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    } catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-inspect", async (_e: any, { spec }: any = {}) => {
     const s = String(spec || "").trim();
@@ -293,7 +326,7 @@ function registerPluginIpc(): void {
   ipcMain.handle("plugin-manager-cancel-install", async () => ({ ok: true, value: { status: "not-running" } }));
   ipcMain.handle("plugin-inventory-list", async () => {
     try { return { ok: true, value: { managementAvailable: true, entries: buildPluginInfos() } }; }
-    catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
+    catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });
 
   // ===== 网页注入脚本：已启用插件的 scripts/*.js（供 bridge 注入 AI 页面主世界） =====
