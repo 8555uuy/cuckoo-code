@@ -149,6 +149,11 @@ export function setDisabled(entries: PatchEntry[], id: string, disabled: boolean
   return out;
 }
 
+/** 删除某 id 的 patch 条目（卸载时用） */
+export function removePatchEntry(entries: PatchEntry[], id: string): PatchEntry[] {
+  return entries.filter((e) => e.id !== id);
+}
+
 /** 取某 id 是否禁用 */
 export function isDisabled(entries: PatchEntry[], id: string): boolean {
   const hit = entries.find((e) => e.id === id);

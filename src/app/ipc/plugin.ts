@@ -242,10 +242,22 @@ function registerPluginIpc(): void {
   });
   ipcMain.handle("plugin-manager-remove-bundle", async (_e: any, { name }: any = {}) => {
     try {
-      const r = await uninstallFromProfile(String(name || ""));
+      const pkgName = String(name || "");
+      const r = await uninstallFromProfile(pkgName);
       if (!r.ok) return { ok: false, error: { code: "operation-error", diagnostic: r.error } };
-      try { const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null; if (mw && mw.webContents) mw.webContents.send('plugin-manager-changed', { reason: 'remove' }); } catch (_) {}
-      return { ok: true, value: { changed: true, application: "restart-required", stage: "remove", target: name } };
+      // HMR：卸载插件（若有加载）
+      try {
+        const { packageNameToId } = await import('../../plugins/profile/installer.js');
+        unloadPlugin(packageNameToId(pkgName), toolRegistry);
+      } catch (_) {}
+      try {
+        const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
+        if (mw && mw.webContents) {
+          mw.webContents.send('plugin-manager-changed', { reason: 'remove' });
+          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName });
+        }
+      } catch (_) {}
+      return { ok: true, value: { changed: true, application: "applied", stage: "remove", target: pkgName } };
     } catch (e: any) { return { ok: false, error: { code: "operation-error", diagnostic: e && e.message ? e.message : String(e) } }; }
   });
   ipcMain.handle("plugin-manager-install-bundle", async (_e: any, { spec }: any = {}) => {

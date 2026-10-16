@@ -21,6 +21,7 @@ import {
 import { readProfileManifest, writeProfileManifest, addDependency, removeDependency } from './manifest.js';
 import { ensureProfile } from './init.js';
 import { runPnpm, isPnpmAvailable } from './pnpm.js';
+import { readProfilePatch, writeProfilePatch, removePatchEntry } from './patch.js';
 
 export interface ProfileInstallResult {
   ok: boolean;
@@ -104,6 +105,12 @@ export async function uninstallFromProfile(pkgName: string, profileName: string 
     }
     const manifest = readProfileManifest(dir, profileName);
     writeProfileManifest(dir, removeDependency(manifest, bare));
+    // 清 patch（包名 + 插件 id 两种形态都清）
+    try {
+      const patches = readProfilePatch(dir);
+      const cleaned = removePatchEntry(removePatchEntry(patches, bare), packageNameToId(bare));
+      writeProfilePatch(dir, cleaned);
+    } catch (_) { /* ignore */ }
     return { ok: true, name: bare, dir };
   } catch (e: any) {
     return { ok: false, error: e && e.message ? e.message : String(e) };
