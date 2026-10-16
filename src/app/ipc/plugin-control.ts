@@ -24,6 +24,7 @@ const SHELL_BRIDGE_ALLOW: string[] = [
   // —— 会话（工作区）——
   'list-all-sessions', 'navigate-session', 'set-session-archived', 'get-dir-info',
   'set-project-archived', 'set-session-title', 'new-conversation-for-project',
+  'read-session-history',
   'web-list-sessions', 'web-navigate-session', 'web-new-conversation',
   // —— 项目文件（只读）——
   'list-project-tree', 'read-project-file',

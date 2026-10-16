@@ -266,6 +266,80 @@ function registerSessionIpc(): void {
       return { success: false, error: err.message };
     }
   });
+
+  // 读取某会话的历史消息（在 AI 页面读 IndexedDB 的 history-message，沿 parent_id 回溯主线）。
+  // 供手机端切换会话时回填对话流。
+  ipcMain.handle('read-session-history', async (event: any, { sessionId }: any) => {
+    if (!sessionId) return { success: false, messages: [] };
+    const ctx = windowState.getContextByWebContents(event.sender);
+    const view = ctx ? ctx.view : null;
+    if (!view || !view.webContents || view.webContents.isDestroyed()) {
+      return { success: false, error: 'no-view', messages: [] };
+    }
+    // 注入到 AI 页面执行：读 deepseek-chat / history-message，回溯主链，只取 USER/ASSISTANT 文本
+    const code = '(' + function (sid: string) {
+      return new Promise<any>(function (resolve) {
+        let req: any;
+        try { req = (indexedDB as any).open('deepseek-chat'); } catch (e) { resolve({ error: String(e) }); return; }
+        req.onerror = function () { resolve({ error: 'open-failed' }); };
+        req.onsuccess = function () {
+          const db = req.result;
+          try {
+            const tx = db.transaction('history-message', 'readonly');
+            const st = tx.objectStore('history-message');
+            const g = st.get(sid);
+            g.onsuccess = function () {
+              db.close();
+              const val = g.result;
+              const data = val && val.data;
+              const msgs = data && data.chat_messages;
+              if (!Array.isArray(msgs)) { resolve({ messages: [] }); return; }
+              const byId: any = {};
+              for (const m of msgs) { if (typeof m.message_id === 'number') byId[m.message_id] = m; }
+              let leaf = (data && data.chat_session && data.chat_session.current_message_id);
+              if (typeof leaf !== 'number') {
+                let maxId: number | null = null;
+                for (const k in byId) { const id = Number(k); if (maxId === null || id > maxId) maxId = id; }
+                leaf = maxId;
+              }
+              const chain: any[] = [];
+              const seen: any = {};
+              let cur: any = leaf;
+              while (cur != null && byId[cur] && !seen[cur]) {
+                seen[cur] = 1; chain.push(byId[cur]);
+                cur = (typeof byId[cur].parent_id === 'number') ? byId[cur].parent_id : null;
+              }
+              chain.reverse();
+              const out: any[] = [];
+              for (const m of chain) {
+                let text = '';
+                if (Array.isArray(m.fragments)) {
+                  for (const fr of m.fragments) {
+                    if (!fr) continue;
+                    const ty = String(fr.type || '').toUpperCase();
+                    if (ty === 'THINK') continue;
+                    const c = (typeof fr.content === 'string') ? fr.content : (typeof fr.text === 'string' ? fr.text : '');
+                    text += c;
+                  }
+                }
+                if (!text && typeof m.content === 'string') text = m.content;
+                const role = String(m.role || '').toUpperCase();
+                if (text && (role === 'USER' || role === 'ASSISTANT')) out.push({ role, text });
+              }
+              resolve({ messages: out });
+            };
+            g.onerror = function () { db.close(); resolve({ error: 'read-failed' }); };
+          } catch (e) { db.close(); resolve({ error: String(e) }); }
+        };
+      });
+    }.toString() + ')(' + JSON.stringify(sessionId) + ')';
+    try {
+      const res = await view.webContents.executeJavaScript(code);
+      return { success: true, messages: (res && res.messages) || [], error: res && res.error };
+    } catch (err: any) {
+      return { success: false, error: err.message, messages: [] };
+    }
+  });
 }
 
 export { registerSessionIpc };
