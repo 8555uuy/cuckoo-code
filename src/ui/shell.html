@@ -28924,7 +28924,9 @@
   function makeConnection() {
     return { api: makeStub("connection.api"), agentPresets: void 0 };
   }
+  var __remoteSingleton = null;
   function makeRemote() {
+    if (__remoteSingleton) return __remoteSingleton;
     const noop = () => () => {
     };
     const api2 = () => window.shellAPI;
@@ -28957,7 +28959,7 @@
       } catch (_) {
       }
     };
-    return {
+    __remoteSingleton = {
       $on: (evt, cb) => {
         if (typeof cb !== "function") return noop();
         initRemoteListener();
@@ -28987,6 +28989,7 @@
         list: () => call("pluginInventoryList")
       }
     };
+    return __remoteSingleton;
   }
   function makeUiWorkspace() {
     return { openSession(_id) {
@@ -30274,8 +30277,9 @@
     static getDerivedStateFromError(e) {
       return { err: e && e.message ? e.message : String(e) };
     }
-    componentDidCatch(e) {
+    componentDidCatch(e, info) {
       console.error("[dsh-page] Page \u5D29\u6E83", e);
+      if (info && info.componentStack) console.error("[dsh-page] \u7EC4\u4EF6\u6808:", String(info.componentStack).slice(0, 1500));
     }
     render() {
       if (this.state.err) {

@@ -132,7 +132,10 @@ function MainSlotPage({ item }: { item: any }) {
 class PageErrorBoundary extends Component<{ children?: any }, { err: string | null }> {
   constructor(props: any) { super(props); this.state = { err: null }; }
   static getDerivedStateFromError(e: any) { return { err: (e && e.message) ? e.message : String(e) }; }
-  componentDidCatch(e: any) { console.error('[dsh-page] Page 崩溃', e); }
+  componentDidCatch(e: any, info: any) {
+    console.error('[dsh-page] Page 崩溃', e);
+    if (info && info.componentStack) console.error('[dsh-page] 组件栈:', String(info.componentStack).slice(0, 1500));
+  }
   render() {
     if (this.state.err) {
       return createElement('div', { style: { padding: 16, color: '#e55' } },

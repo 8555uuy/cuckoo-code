@@ -79,15 +79,13 @@ export function runPnpm(args: string[], cwd: string, opts?: { onData?: (s: strin
     // 让 pnpm 把自己当成"用户装"的（避免 corepack 干扰）
     env.PNPM_HOME = path.dirname(node.binDir);
 
-    const child = spawn(node.cmd, [pnpm, ...args], { cwd, env, shell: process.platform === 'win32' });
+    // 不用 shell（node.cmd 是 .exe，能直接 spawn；shell=true 会吞 stdout）
+    const child = spawn(node.cmd, [pnpm, ...args], { cwd, env, shell: false });
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (d) => {
-      const s = d.toString();
-      stdout += s;
-      if (opts && opts.onData) { try { opts.onData(s); } catch (_) {} }
-    });
-    child.stderr.on('data', (d) => { stderr += d.toString(); });
+    const feed = (s: string) => { if (opts && opts.onData) { try { opts.onData(s); } catch (_) {} } };
+    child.stdout.on('data', (d) => { const s = d.toString(); stdout += s; feed(s); });
+    child.stderr.on('data', (d) => { const s = d.toString(); stderr += s; feed(s); });
     child.on('error', reject);
     child.on('close', (code) => resolve({ code: code == null ? -1 : code, stdout, stderr }));
   });

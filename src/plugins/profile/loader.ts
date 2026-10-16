@@ -20,6 +20,17 @@ import { readProfilePatch, writeProfilePatch, isDisabled, setDisabled } from './
 import { ensureProfile } from './init.js';
 import { packageNameToId } from './installer.js';
 
+/** 已知在 Cuckoo 上不兼容的 DSH 包（前缀）——加载时跳过（装还是装，但不加载） */
+export const INCOMPATIBLE_DSH_PREFIXES = [
+  '@deepseek-ai/dsh-experimental-',
+];
+
+/** 判断包名是否"已知不兼容" */
+export function isIncompatibleDshPackage(name: string): boolean {
+  const n = String(name || '');
+  return INCOMPATIBLE_DSH_PREFIXES.some((p) => n.startsWith(p));
+}
+
 export interface ProfilePluginEntry {
   /** 包名（manifest 的 dependency key） */
   name: string;
@@ -62,9 +73,9 @@ export function listProfilePluginEntries(profileName: string = DEFAULT_PROFILE):
   return out;
 }
 
-/** 只取"启用"的插件 */
+/** 只取"启用"的插件（过滤掉已知不兼容的 DSH 包） */
 export function listEnabledPlugins(profileName: string = DEFAULT_PROFILE): ProfilePluginEntry[] {
-  return listProfilePluginEntries(profileName).filter((e) => e.enabled);
+  return listProfilePluginEntries(profileName).filter((e) => e.enabled && !isIncompatibleDshPackage(e.name));
 }
 
 /** 设置某插件的启用/禁用（写 cordis.patch.yml） */

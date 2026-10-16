@@ -866,8 +866,11 @@ function registerPluginIpc(): void {
   ipcMain.handle('cuckoo-plugin-client-sources', async () => {
     try {
       const out: Array<{ pluginId: string; pkgName: string; source: string }> = [];
+      const { isIncompatibleDshPackage } = await import('../../plugins/profile/loader.js');
       for (const entry of listProfilePluginEntries()) {
         if (!entry.enabled) continue;
+        // 跳过已知不兼容的 DSH 包（如 @deepseek-ai/dsh-experimental-*）
+        if (isIncompatibleDshPackage(entry.name)) continue;
         try {
           const c = resolveClientEntry(entry.dir);
           if (!c) continue;

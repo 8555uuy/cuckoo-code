@@ -315,8 +315,12 @@ function makeConnection(): any {
   return { api: makeStub('connection.api'), agentPresets: undefined };
 }
 
+/** 远端服务单例（DSH 的 remote 是全局共享的，所有插件的 $on 注册到同一个） */
+let __remoteSingleton: any = null;
+
 /** 远端服务（最小 + pluginManager/pluginInventory） */
 function makeRemote(): any {
+  if (__remoteSingleton) return __remoteSingleton;
   const noop = () => () => {};
   const api = () => (window as any).shellAPI;
   // DSH 契约：返回 { ok, value } / { ok, error }
@@ -343,7 +347,7 @@ function makeRemote(): any {
       }
     } catch (_) {}
   };
-  return {
+  __remoteSingleton = {
     $on: (evt: string, cb: any) => {
       if (typeof cb !== 'function') return noop();
       initRemoteListener();
@@ -370,6 +374,7 @@ function makeRemote(): any {
       list: () => call('pluginInventoryList'),
     },
   };
+  return __remoteSingleton;
 }
 
 /** 会话打开（uiWorkspace） */
