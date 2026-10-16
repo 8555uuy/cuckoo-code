@@ -20,18 +20,28 @@ const { ipcMain } = require('electron');
 /** channel → handler */
 const handlers = new Map<string, (event: any, ...args: any[]) => any>();
 
-/** 在注册期间抓取所有 ipcMain.handle（由 registerIpcHandlers 调用） */
-function captureHandlers(register: () => void): void {
+let wrapped = false;
+
+/**
+ * 安装捕获器（永久生效）。
+ * 注意：必须永久——因为有些 handler（如 list-profiles / list-mcp-servers）
+ * 是在 registerIpcHandlers() 之后才注册的（见 entry.ts），
+ * 若注册完就恢复原样，这些 channel 抓不到 → 手机端报"未注册"。
+ */
+function installCapture(): void {
+  if (wrapped) return;
+  wrapped = true;
   const orig = ipcMain.handle.bind(ipcMain);
   ipcMain.handle = (channel: string, fn: any) => {
     handlers.set(channel, fn);
     return orig(channel, fn);
   };
-  try {
-    register();
-  } finally {
-    ipcMain.handle = orig;
-  }
+}
+
+/** 抓取所有 ipcMain.handle（由 registerIpcHandlers 调用；捕获器永久生效） */
+function captureHandlers(register: () => void): void {
+  installCapture();
+  register();
 }
 
 /** 已注册的 channel 列表（调试用） */
