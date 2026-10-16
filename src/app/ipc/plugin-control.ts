@@ -16,7 +16,7 @@ const require = createRequire(import.meta.url);
 
 /**
  * 壳页桥白名单：手机端只允许调用这些 IPC channel。
- * 全部来自界面实际用到的能力；不含删除/危险操作（归档等可逆操作除外）。
+ * 全部来自界面实际用到的能力。
  */
 const SHELL_BRIDGE_ALLOW: string[] = [
   // —— 窗口/项目 ——
@@ -36,6 +36,10 @@ const SHELL_BRIDGE_ALLOW: string[] = [
   'list-snapshots', 'create-snapshot', 'restore-snapshot', 'delete-snapshot',
   // —— 技能 / 子代理 ——
   'list-skills', 'list-agents',
+  // —— MCP ——
+  'list-mcp-servers', 'enable-mcp-server', 'disable-mcp-server',
+  // —— 窗口 ——
+  'list-profiles', 'list-providers', 'create-profile-window', 'open-profile-window',
   // —— 插件 ——
   'plugin-market-list', 'plugin-market-remote', 'plugin-install', 'plugin-uninstall',
   'plugin-list-installed', 'plugin-set-enabled', 'cuckoo-plugin-list',
@@ -47,8 +51,8 @@ const SHELL_BRIDGE_ALLOW: string[] = [
   'subagent-list',
   // —— 自动压缩 ——
   'get-autocompact', 'save-autocompact', 'trigger-compact',
-  // —— 系统总 token ——
-  'get-system-total',
+  // —— 关于 / 系统 ——
+  'check-update', 'get-asset-url', 'get-system-total',
 ];
 const ALLOW_SET = new Set(SHELL_BRIDGE_ALLOW);
 
@@ -79,7 +83,7 @@ function buildControl() {
   return {
     // ========== 状态 ==========
 
-    /** 取活跃窗口状态（插件可读 providerId / url / projectDir） */
+    /** 取活跃窗口状态 */
     getStatus() {
       const ctx: any = activeCtx();
       if (!ctx) return { success: false, error: 'no-context' };
@@ -114,7 +118,7 @@ function buildControl() {
       }
     },
 
-    /** 切换活跃窗口（多窗口时选择控制哪个） */
+    /** 切换活跃窗口 */
     setActiveWindow(windowId: number) {
       try {
         const ctx = windowState.getWindowContext(windowId);
@@ -126,29 +130,13 @@ function buildControl() {
       }
     },
 
-    /** 列出已加载的平台（provider） */
+    /** 列出已加载的平台 */
     async listProviders() {
       try {
         const { getAllProviders } = await import('../../providers/registry.js');
         const ctx: any = activeCtx();
         const list = getAllProviders().map((p: any) => ({ id: p.id, name: p.name || p.id }));
         return { success: true, providers: list, current: ctx ? (ctx.providerId || '') : '' };
-      } catch (e: any) {
-        return { success: false, error: e && e.message ? e.message : String(e) };
-      }
-    },
-
-    /**
-     * 壳页桥：手机端调用任意白名单 IPC channel（用活跃窗口作 sender）。
-     * @param channel IPC 通道名
-     * @param args 参数对象
-     */
-    async invoke(channel: string, args?: any) {
-      if (!channel || typeof channel !== 'string') return { success: false, error: 'no-channel' };
-      if (!ALLOW_SET.has(channel)) return { success: false, error: 'channel-not-allowed: ' + channel };
-      try {
-        const data = await invokeIpc(channel, args);
-        return { success: true, data };
       } catch (e: any) {
         return { success: false, error: e && e.message ? e.message : String(e) };
       }
@@ -166,7 +154,7 @@ function buildControl() {
 
     // ========== 会话 ==========
 
-    /** 列出所有会话（按项目分组信息含在每条里） */
+    /** 列出所有会话 */
     listSessions() {
       try {
         const ctx: any = activeCtx();
@@ -197,7 +185,6 @@ function buildControl() {
 
     /**
      * 读取 AI 官网侧栏的真实会话列表（注入 AI 页面主世界执行抓取）。
-     * 比 Cuckoo 自记历史更可靠——列表由官网维护，天然同步。
      */
     async listWebSessions() {
       try {
@@ -223,7 +210,7 @@ function buildControl() {
       }
     },
 
-    /** 按官网会话 URL 直接导航（列表项自带 href） */
+    /** 按官网会话 URL 直接导航 */
     async navigateUrl(url: string) {
       if (!url || !/^https?:\/\//i.test(url)) return { success: false, error: 'bad-url' };
       try {
@@ -236,7 +223,7 @@ function buildControl() {
       }
     },
 
-    /** 切换会话：给 sessionId，按当前平台拼 URL 导航 */
+    /** 切换会话 */
     async navigateSession(sessionId: string) {
       if (!sessionId) return { success: false, error: 'no-session-id' };
       try {
@@ -365,6 +352,22 @@ function buildControl() {
         return { success: true, url };
       } catch (e: any) { return { success: false, error: e && e.message ? e.message : String(e) }; }
     },
+
+    // ========== 壳页桥（手机端调用白名单 IPC）==========
+
+    /**
+     * 用「活跃窗口」作 sender 调用一个白名单 IPC channel。
+     */
+    async invoke(channel: string, args?: any) {
+      if (!channel || typeof channel !== 'string') return { success: false, error: 'no-channel' };
+      if (!ALLOW_SET.has(channel)) return { success: false, error: 'channel-not-allowed: ' + channel };
+      try {
+        const data = await invokeIpc(channel, args);
+        return { success: true, data };
+      } catch (e: any) {
+        return { success: false, error: e && e.message ? e.message : String(e) };
+      }
+    },
   };
 }
 
@@ -382,10 +385,6 @@ const DEDUP_WINDOW_MS = 300;
 
 /**
  * 向所有注册了 onEvent 的插件广播一个事件。
- * 插件通过 __cuckooPluginHostFns['<id>:onEvent'] = fn 注册。
- *
- * 去重：AI 回复可能被 hook 从多条来源捕获（网络层 + DOM 层），导致相同
- * 内容的事件短时间内被上报两次。这里按"类型+内容"指纹去重，避免手机端重复显示。
  */
 function broadcastPluginEvent(payload: any): void {
   let fp = '';
