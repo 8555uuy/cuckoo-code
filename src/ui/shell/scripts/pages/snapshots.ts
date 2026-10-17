@@ -60,8 +60,19 @@ function renderSnapshots(): void {
       const id = btn.dataset.restore;
       const s = snapshots.filter((x: any) => x.id === id)[0];
       if (!(await ckConfirm('确定把快照「' + (s ? s.name : '') + '」恢复到项目目录？将覆盖同名文件。'))) return;
-      if (api.restoreSnapshot) { try { await api.restoreSnapshot(id); } catch (_) {} }
-      await ckAlert('已恢复');
+      if (!api.restoreSnapshot) { await ckAlert('接口不可用'); return; }
+      try {
+        const r = await api.restoreSnapshot(id);
+        if (r && r.success === false) {
+          await ckAlert('恢复失败：' + (r.error || '未知错误'));
+        } else if (r && typeof r.restored === 'number') {
+          await ckAlert('已恢复 ' + r.restored + ' 个文件');
+        } else {
+          await ckAlert('已恢复');
+        }
+      } catch (e: any) {
+        await ckAlert('恢复出错：' + (e && e.message ? e.message : e));
+      }
     });
   });
   listEl.querySelectorAll('[data-del]').forEach((btn: any) => {
@@ -85,8 +96,9 @@ document.getElementById('snap-add')?.addEventListener('click', async () => {
   if (api.createSnapshot) {
     try {
       const r = await api.createSnapshot(currentProjectDir, n);
-      if (r && !r.success) { await ckAlert('创建失败：' + (r.error || '')); }
-    } catch (_) {}
+      if (r && r.success === false) { await ckAlert('创建失败：' + (r.error || '')); }
+      else if (r && r.snapshot) { await ckAlert('已创建：' + r.snapshot.fileCount + ' 个文件 · ' + (r.snapshot.totalBytes / 1024 / 1024).toFixed(1) + 'MB'); }
+    } catch (e: any) { await ckAlert('创建出错：' + (e && e.message ? e.message : e)); }
   }
   await loadSnapshots();
 });

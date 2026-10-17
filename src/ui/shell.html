@@ -5215,13 +5215,22 @@
         const id = btn.dataset.restore;
         const s = snapshots.filter((x) => x.id === id)[0];
         if (!await ckConfirm("\u786E\u5B9A\u628A\u5FEB\u7167\u300C" + (s ? s.name : "") + "\u300D\u6062\u590D\u5230\u9879\u76EE\u76EE\u5F55\uFF1F\u5C06\u8986\u76D6\u540C\u540D\u6587\u4EF6\u3002")) return;
-        if (api.restoreSnapshot) {
-          try {
-            await api.restoreSnapshot(id);
-          } catch (_) {
-          }
+        if (!api.restoreSnapshot) {
+          await ckAlert("\u63A5\u53E3\u4E0D\u53EF\u7528");
+          return;
         }
-        await ckAlert("\u5DF2\u6062\u590D");
+        try {
+          const r = await api.restoreSnapshot(id);
+          if (r && r.success === false) {
+            await ckAlert("\u6062\u590D\u5931\u8D25\uFF1A" + (r.error || "\u672A\u77E5\u9519\u8BEF"));
+          } else if (r && typeof r.restored === "number") {
+            await ckAlert("\u5DF2\u6062\u590D " + r.restored + " \u4E2A\u6587\u4EF6");
+          } else {
+            await ckAlert("\u5DF2\u6062\u590D");
+          }
+        } catch (e2) {
+          await ckAlert("\u6062\u590D\u51FA\u9519\uFF1A" + (e2 && e2.message ? e2.message : e2));
+        }
       });
     });
     listEl2.querySelectorAll("[data-del]").forEach((btn) => {
@@ -5255,10 +5264,13 @@
     if (api.createSnapshot) {
       try {
         const r = await api.createSnapshot(currentProjectDir, n);
-        if (r && !r.success) {
+        if (r && r.success === false) {
           await ckAlert("\u521B\u5EFA\u5931\u8D25\uFF1A" + (r.error || ""));
+        } else if (r && r.snapshot) {
+          await ckAlert("\u5DF2\u521B\u5EFA\uFF1A" + r.snapshot.fileCount + " \u4E2A\u6587\u4EF6 \xB7 " + (r.snapshot.totalBytes / 1024 / 1024).toFixed(1) + "MB");
         }
-      } catch (_) {
+      } catch (e) {
+        await ckAlert("\u521B\u5EFA\u51FA\u9519\uFF1A" + (e && e.message ? e.message : e));
       }
     }
     await loadSnapshots();
