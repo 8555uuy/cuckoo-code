@@ -178,11 +178,19 @@ function registerPluginIpc(): void {
             if (fs.existsSync(patchPath)) {
               const { parseBundlePatch } = require('../../plugins/profile/patch.js');
               const patchRows = parseBundlePatch(fs.readFileSync(patchPath, 'utf-8'));
-              rows = patchRows.map((r: any) => ({
-                rowId: r.rowId,
-                moduleName: r.moduleName,
-                enabled: true,
-              }));
+              // 找 row 对应的 entryId（listPlugins 的 entryId = 包名转 kebab）
+              const entries = listProfilePluginEntries();
+              const entryByModule = new Map<string, any>();
+              for (const en of entries) entryByModule.set(en.name, en);
+              rows = patchRows.map((r: any) => {
+                const entry = entryByModule.get(r.moduleName);
+                return {
+                  rowId: r.rowId,
+                  moduleName: r.moduleName,
+                  entryId: entry ? entry.id : undefined,  // ← 关键：前端用它判"可开关"
+                  enabled: entry ? !!entry.enabled : false,
+                };
+              });
             }
           }
         }
@@ -213,9 +221,22 @@ function registerPluginIpc(): void {
   });
   ipcMain.handle("plugin-manager-set-enabled", async (_e: any, { id, enabled }: any = {}) => {
     try {
-      // 前端传的是"包名"（如 @deepseek-ai/dsh-tool-todo）——HMR 要"插件 id"
+      // 前端可能传"包名"（详情页）或"entryId"（rows 开关）——统一解析成包名
       const { packageNameToId } = await import('../../plugins/profile/installer.js');
-      const pkgName = String(id || "");
+      const raw = String(id || "");
+      // 是包名？直接查 manifest.dependencies
+      const { readProfileManifest } = await import('../../plugins/profile/manifest.js');
+      const { getProfileDir } = await import('../../plugins/profile/paths.js');
+      const { DEFAULT_PROFILE } = await import('../../plugins/profile/paths.js');
+      const pdir = getProfileDir(DEFAULT_PROFILE);
+      const deps = (readProfileManifest(pdir, DEFAULT_PROFILE).dependencies) || {};
+      let pkgName = raw;
+      if (!deps[raw]) {
+        // 不是包名 → 可能是 entryId，反查
+        for (const name of Object.keys(deps)) {
+          if (packageNameToId(name) === raw) { pkgName = name; break; }
+        }
+      }
       const pid = packageNameToId(pkgName);
       const on = !!enabled;
       // 1) 写 cordis.patch.yml（用包名，对齐 listProfilePluginEntries 的检查）
@@ -239,15 +260,19 @@ function registerPluginIpc(): void {
         hmrError = e && e.message ? e.message : String(e);
         console.log('[HMR] 异常: ' + hmrError);
       }
-      // 3) 广播（带 hmr 结果 + 通知壳页面重载 client）
+      // 3) 广播（带 hmr 结果 + 通知壳页面重载 client + 刷新壳）
       try {
-        const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
-        if (mw && mw.webContents) {
-          mw.webContents.send('plugin-manager-changed', { reason: 'bundle', reloaded: hmrOk, pluginId: pid, enabled: on });
-          // 用【包名】（对齐壳页面 SlotItem.pluginId）——HMR 只重载该插件
-          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName });
+        const { BrowserWindow } = require('electron');
+        const allWins = BrowserWindow.getAllWindows();
+        console.log('[HMR] 广播到 ' + allWins.length + ' 个窗口');
+        for (const w of allWins) {
+          if (!w.webContents || w.webContents.isDestroyed()) continue;
+          w.webContents.send('plugin-manager-changed', { reason: 'bundle', reloaded: hmrOk, pluginId: pid, enabled: on });
+          w.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName, enabled: on });
+          // 壳页面自动刷新（确保槽状态/设置页与插件启停一致；800ms 让 IPC 响应先回去）
+          setTimeout(() => { try { console.log('[HMR] reload 窗口 ' + w.id); w.webContents.reload(); } catch (e) { console.log('[HMR] reload 异常: ' + e); } }, 800);
         }
-      } catch (_) {}
+      } catch (e: any) { console.log('[HMR] 广播异常: ' + (e && e.message ? e.message : e)); }
       return {
         ok: true,
         value: {
@@ -270,12 +295,16 @@ function registerPluginIpc(): void {
         unloadPlugin(packageNameToId(pkgName), toolRegistry);
       } catch (_) {}
       try {
-        const mw: any = (windowState as any).getMainWindow ? (windowState as any).getMainWindow() : null;
-        if (mw && mw.webContents) {
-          mw.webContents.send('plugin-manager-changed', { reason: 'remove' });
-          mw.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName });
+        const { BrowserWindow } = require('electron');
+        const allWins = BrowserWindow.getAllWindows();
+        console.log('[HMR] remove 广播到 ' + allWins.length + ' 个窗口');
+        for (const w of allWins) {
+          if (!w.webContents || w.webContents.isDestroyed()) continue;
+          w.webContents.send('plugin-manager-changed', { reason: 'remove' });
+          w.webContents.send('cuckoo-reload-dsh-clients', { pluginId: pkgName, enabled: false });
+          setTimeout(() => { try { console.log('[HMR] remove reload 窗口 ' + w.id); w.webContents.reload(); } catch (e) { console.log('[HMR] remove reload 异常: ' + e); } }, 800);
         }
-      } catch (_) {}
+      } catch (e: any) { console.log('[HMR] remove 广播异常: ' + (e && e.message ? e.message : e)); }
       return { ok: true, value: { changed: true, application: "applied", stage: "remove", target: pkgName } };
     } catch (e: any) { return { ok: false, error: { code: "operation-error", message: e && e.message ? e.message : String(e), diagnostic: e && e.message ? e.message : String(e) } }; }
   });

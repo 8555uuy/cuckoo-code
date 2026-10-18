@@ -16,7 +16,7 @@ import {
   DEFAULT_PROFILE,
 } from './paths.js';
 import { readProfileManifest } from './manifest.js';
-import { readProfilePatch, writeProfilePatch, isDisabled, setDisabled } from './patch.js';
+import { readProfilePatch, writeProfilePatch, isDisabled, setDisabled, removePatchEntry } from './patch.js';
 import { ensureProfile } from './init.js';
 import { packageNameToId } from './installer.js';
 
@@ -78,10 +78,24 @@ export function listEnabledPlugins(profileName: string = DEFAULT_PROFILE): Profi
   return listProfilePluginEntries(profileName).filter((e) => e.enabled && !isIncompatibleDshPackage(e.name));
 }
 
-/** 设置某插件的启用/禁用（写 cordis.patch.yml） */
+/**
+ * 设置某插件的启用/禁用（写 cordis.patch.yml）。
+ * @param id 包名（@scope/name）或 entryId（scope-name）——两者都接受，
+ *           写入前会清理"同一插件的其他 id 变体"（防止历史脏数据）
+ */
 export function setPluginEnabledInProfile(id: string, enabled: boolean, profileName: string = DEFAULT_PROFILE): boolean {
   const dir = ensureProfile(profileName);
-  const patches = readProfilePatch(dir);
-  writeProfilePatch(dir, setDisabled(patches, id, !enabled));
+  const manifest = readProfileManifest(dir, profileName);
+  const deps = Object.keys(manifest.dependencies || {});
+  // 解析出 canonical 包名（若 id 是 entryId，反查）——packageNameToId 已在顶部 import
+  let pkgName = id;
+  if (!deps.includes(id)) {
+    for (const n of deps) { if (packageNameToId(n) === id) { pkgName = n; break; } }
+  }
+  const eid = packageNameToId(pkgName);
+  // 清同插件的其他 id 变体（pkgName / eid）
+  let patches = readProfilePatch(dir);
+  patches = removePatchEntry(patches, pkgName === id ? eid : pkgName);
+  writeProfilePatch(dir, setDisabled(patches, pkgName, !enabled));
   return true;
 }

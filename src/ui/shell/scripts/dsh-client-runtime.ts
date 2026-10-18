@@ -884,17 +884,25 @@ export function clearSlotsByPlugin(pluginId: string): void {
 }
 
 /**
- * HMR：重载 DSH client
- * @param pluginId 可选——只重载该插件（包名）；不传则全量重载
+ * HMR：重载 / 卸载 DSH client
+ * @param pluginId 可选——只处理该插件（包名）；不传则全量重载
+ * @param enabled  可选——true=重载；false=仅卸载（清槽 + 清模块，不重新执行）
  */
-export async function reloadDshClients(pluginId?: string): Promise<void> {
+export async function reloadDshClients(pluginId?: string, enabled?: boolean): Promise<void> {
   try {
     if (pluginId) {
-      // 只重载该插件：清它的插槽 + 清它的模块（按包名）
+      // 清它的插槽 + 清它的模块（按包名；同时兼容短名）
+      const shortId = (pluginId.includes('/') ? pluginId.split('/').pop() : pluginId) || pluginId;
       clearSlotsByPlugin(pluginId);
+      if (shortId !== pluginId) clearSlotsByPlugin(shortId);
       for (const k of Object.keys(loadedModules)) {
         // loadedModules 的 key 是包名（@scope/name）
-        if (k === pluginId) delete loadedModules[k];
+        if (k === pluginId || k === shortId) delete loadedModules[k];
+      }
+      // enabled === false：只卸载，不重新执行 client（禁用场景）
+      if (enabled === false) {
+        console.log('[dsh-client] HMR 卸载完成（仅 ' + pluginId + '）');
+        return;
       }
       await loadDshClients(pluginId);
       console.log('[dsh-client] HMR 重载完成（仅 ' + pluginId + '）');
@@ -923,7 +931,11 @@ export async function loadDshClients(onlyPkgName?: string): Promise<void> {
     const r = await api.cuckooPluginClientSources();
     if (!r || !r.success || !Array.isArray(r.clients)) return;
     for (const c of r.clients) {
-      if (onlyPkgName && c.pkgName !== onlyPkgName) continue;
+      // 匹配：全名（@scope/name）或短名（name）都算（主进程 clientSources 给短名，setEnabled 传全名）
+      if (onlyPkgName) {
+        const short = onlyPkgName.includes('/') ? onlyPkgName.split('/').pop() : onlyPkgName;
+        if (c.pkgName !== onlyPkgName && c.pkgName !== short) continue;
+      }
       const src = String(c.source || '');
       if (!src.includes('__ModuleLoader__')) continue;
       try {

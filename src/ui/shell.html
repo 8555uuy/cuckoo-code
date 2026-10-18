@@ -30493,12 +30493,18 @@ body {
     }
     notify();
   }
-  async function reloadDshClients(pluginId) {
+  async function reloadDshClients(pluginId, enabled) {
     try {
       if (pluginId) {
+        const shortId = (pluginId.includes("/") ? pluginId.split("/").pop() : pluginId) || pluginId;
         clearSlotsByPlugin(pluginId);
+        if (shortId !== pluginId) clearSlotsByPlugin(shortId);
         for (const k of Object.keys(loadedModules)) {
-          if (k === pluginId) delete loadedModules[k];
+          if (k === pluginId || k === shortId) delete loadedModules[k];
+        }
+        if (enabled === false) {
+          console.log("[dsh-client] HMR \u5378\u8F7D\u5B8C\u6210\uFF08\u4EC5 " + pluginId + "\uFF09");
+          return;
         }
         await loadDshClients(pluginId);
         console.log("[dsh-client] HMR \u91CD\u8F7D\u5B8C\u6210\uFF08\u4EC5 " + pluginId + "\uFF09");
@@ -30521,7 +30527,10 @@ body {
       const r = await api2.cuckooPluginClientSources();
       if (!r || !r.success || !Array.isArray(r.clients)) return;
       for (const c of r.clients) {
-        if (onlyPkgName && c.pkgName !== onlyPkgName) continue;
+        if (onlyPkgName) {
+          const short = onlyPkgName.includes("/") ? onlyPkgName.split("/").pop() : onlyPkgName;
+          if (c.pkgName !== onlyPkgName && c.pkgName !== short) continue;
+        }
         const src = String(c.source || "");
         if (!src.includes("__ModuleLoader__")) continue;
         try {
@@ -31274,7 +31283,7 @@ body {
       const anyApi = api;
       if (anyApi.onCuckooReload) {
         anyApi.onCuckooReload((data) => {
-          void reloadDshClients(data && data.pluginId);
+          void reloadDshClients(data && data.pluginId, data ? data.enabled : void 0);
         });
       }
     }, []);
