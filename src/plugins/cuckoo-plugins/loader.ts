@@ -507,7 +507,12 @@ function findClientIn(dir: string): string | null {
  */
 function resolveClientEntry(pluginDir: string): { file: string; pkgName: string } | null {
   const direct = findClientIn(pluginDir);
-  if (direct) return { file: direct, pkgName: path.basename(pluginDir) };
+  if (direct) {
+    // 优先读 package.json 的真名（@scope/name）；读不到才用目录名（短名）
+    let realName = '';
+    try { realName = String(JSON.parse(fs.readFileSync(path.join(pluginDir, 'package.json'), 'utf-8')).name || ''); } catch (_) { /* ignore */ }
+    return { file: direct, pkgName: realName || path.basename(pluginDir) };
+  }
   let pkg: any = null;
   try { pkg = JSON.parse(fs.readFileSync(path.join(pluginDir, 'package.json'), 'utf-8')); } catch (_) { /* ignore */ }
   const deps = (pkg && pkg.dependencies) || {};

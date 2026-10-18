@@ -875,12 +875,16 @@ export function clearAllSlots(): void {
 /** HMR：只清某插件的插槽（按 pluginId = 包名） */
 export function clearSlotsByPlugin(pluginId: string): void {
   if (!pluginId) return;
+  const touched: string[] = [];
   for (const [slotName, items] of [...slotTable.entries()]) {
     const next = items.filter((x) => x.pluginId !== pluginId);
+    if (next.length !== items.length) touched.push(slotName);
     if (next.length) slotTable.set(slotName, next);
     else slotTable.delete(slotName);
   }
-  notify();
+  // 每个受影响的槽都要 bump 版本（configLedger 的 getVersion 依赖它）
+  for (const name of touched) notifySlot(name);
+  if (!touched.length) notify();
 }
 
 /**

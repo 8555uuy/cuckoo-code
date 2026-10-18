@@ -93,9 +93,10 @@ export function setPluginEnabledInProfile(id: string, enabled: boolean, profileN
     for (const n of deps) { if (packageNameToId(n) === id) { pkgName = n; break; } }
   }
   const eid = packageNameToId(pkgName);
-  // 清同插件的其他 id 变体（pkgName / eid）
+  // 清同插件的两种 id 变体（包名 + entryId），再写包名（避免脏 patch）
   let patches = readProfilePatch(dir);
-  patches = removePatchEntry(patches, pkgName === id ? eid : pkgName);
+  patches = removePatchEntry(patches, pkgName);
+  patches = removePatchEntry(patches, eid);
   writeProfilePatch(dir, setDisabled(patches, pkgName, !enabled));
   return true;
 }

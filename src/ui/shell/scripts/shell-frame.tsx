@@ -204,11 +204,32 @@ function ShellFrame() {
   }, [isMainSlotActive]);
   // DSH main 插槽内容 → Portal 到 .viewport（和 AI 网页同位置）
   const viewportEl = useMemo(() => document.querySelector('.viewport'), []);
+  // 关闭 DSH 主面板（回 AI view）
+  const closeMainPanel = () => { setMainPanelId(null); };
   const mainOverlay = (isMainSlotActive && viewportEl)
     ? createPortal(
         createElement('div', {
-          style: { position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--ck-bg, #fff)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start' },
+          style: { position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--ck-bg, #fff)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start', paddingTop: 48 },
         },
+          // 关闭按钮（右上角浮层，悬浮于插件页内容之上）
+          createElement('button', {
+            type: 'button',
+            title: '关闭',
+            'aria-label': '关闭',
+            onClick: closeMainPanel,
+            style: {
+              position: 'absolute', top: 10, left: 12, zIndex: 10,
+              width: 28, height: 28, borderRadius: 8, border: '1px solid var(--ck-border, #e5e7eb)',
+              background: 'var(--ck-bg, #fff)', color: 'var(--ck-text-2, #666)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            },
+          },
+            createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+              createElement('path', { d: 'M18 6L6 18' }),
+              createElement('path', { d: 'M6 6l12 12' }),
+            ),
+          ),
           createElement(PageErrorBoundary, null, createElement(MainSlotPage, { item: mainSlotItem }))),
         viewportEl as Element)
     : null;
