@@ -18,6 +18,7 @@ import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
 import { createC8Services } from '../dsh-compat/c8-services.js';
+import { createStorageDomain, createAgentDefaultModel, createConnection } from '../dsh-compat/storage-service.js';
 import { CHILD_PROCESS_SHIM_CODE } from '../dsh-compat/cp-shim-code.js';
 import { getProfileDir, getProfilePatchPath, ensureProfile, DEFAULT_PROFILE, listProfilePluginEntries } from '../profile/index.js';
 import { getPnpmInvocation } from '../profile/pnpm.js';
@@ -375,6 +376,10 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       }
       // sessionProjectionCache：DSH 内部缓存，暂不提供
       if (key === 'sessionProjectionCache') return undefined;
+      // C9：storageDomain / agentDefaultModel / connection
+      if (key === 'storageDomain') return base.storageDomain;
+      if (key === 'agentDefaultModel') return base.agentDefaultModel;
+      if (key === 'connection') return base.connection;
       return undefined;
     },
     // inject 回调传 ctx 自身（带 stub 兜底），插件拿到 projectionCtx.sessionProjections 等不报错
@@ -394,6 +399,10 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       }
       return () => {};
     },
+    // C9：storageDomain / agentDefaultModel / connection（dsh-tasks 等用）
+    storageDomain: createStorageDomain(pluginName),
+    agentDefaultModel: createAgentDefaultModel(),
+    connection: createConnection(),
     // UI 槽位（对标 DSH slots）：ctx.ui.slot.register({ slot, id, order, ...内容 })
     ui: {
       slot: {
