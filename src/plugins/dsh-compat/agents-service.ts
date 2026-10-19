@@ -6,7 +6,7 @@
  *
  * 关键差异：
  * - DSH 的 create 是"内存组合作用域"，Cuckoo 的 create 是"登记一个 AgentSession"
- * - DSH 的 followup 进 inbox，Cuckoo 的 followup 负责"开对话 + 发消息"
+ * - DSH 的 followup 进 inbox，Cuckoo 的 followup 负责"开对话 + 发消息 + 队列持久化"
  */
 
 /** 简化 Agent 视图（DSH Agent 的核心面） */
@@ -35,22 +35,146 @@ interface AgentSessionState {
   status: 'initializing' | 'idle' | 'busy' | 'disposed';
   systemPromptSent: boolean;
   queue: Array<{ text: string; source: any }>;
+  _host: any;              // 必须在 create 时注入
 }
 
+/** 全局的活动会话（进程级） */
 const activeSessions = new Map<string, AgentSessionState>();
-/** 等 AI 回复完成的 waiter（logicId → resolve） */
-const waiters = new Map<string, () => void>();
+/** 显式调用 whenIdle() 的等待者 */
+const idleWaiters = new Map<string, Array<() => void>>();
+
+/** 会话变成 idle 时，唤醒所有 whenIdle() 等待者 */
+function notifyIdleWaiters(logicId: string): void {
+  const waiters = idleWaiters.get(logicId);
+  if (!waiters) return;
+  idleWaiters.delete(logicId);
+  for (const resolve of waiters) {
+    try { resolve(); } catch (_) { /* ignore */ }
+  }
+}
+
+function extractText(msg: any): string {
+  if (!msg) return '';
+  if (typeof msg.content === 'string') return msg.content;
+  if (Array.isArray(msg.content)) {
+    return msg.content.map((c: any) => (c && c.type === 'text' ? c.text : '')).join('');
+  }
+  return '';
+}
+
+/**
+ * 消费队列（模块级，供 create / followup / onAssistantDone 共享）。
+ * 只发一条，发送成功后结束，等 onAssistantDone 触发下一轮。
+ */
+async function processQueue(logicId: string, host: any): Promise<void> {
+  const state = activeSessions.get(logicId);
+  if (!state || state.status === 'disposed') return;
+  if (state.status === 'busy' || state.status === 'initializing') return;
+  if (state.queue.length === 0) return;
+
+  const item = state.queue[0]; // 不立即出队
+  state.status = 'busy';
+  state._host = host;
+
+  try {
+    // 1) 如果首次（还没有 webId 且没发过系统提示词），先开新对话（导航）
+    if (!state.webId && !state.systemPromptSent) {
+      state.status = 'initializing';
+      if (host && host.navigateWindowToHome) {
+        const ok = await host.navigateWindowToHome(state.id, state.profileId, state.providerId);
+        if (!ok) throw new Error('no window to navigate');
+      }
+    }
+
+    // 2) 构造消息（首次合并系统提示词）
+    let messageText = item.text;
+    if (!state.systemPromptSent) {
+      if (host && host.buildSystemPrompt) {
+        const sysPrompt = host.buildSystemPrompt(state.projectDir || '', state.providerId || '');
+        messageText = sysPrompt + '\n\n---\n\n' + item.text;
+      }
+      state.systemPromptSent = true;
+    }
+
+    // 3) 发送消息
+    if (host && host.sendUserMessage) {
+      const ok = host.sendUserMessage(state.id, state.profileId, messageText);
+      if (!ok) throw new Error('send failed');
+    }
+
+    // 4) 发送成功，出队
+    state.queue.shift();
+
+    // 4.5) 如果此时拿到了 webId（比如页面刷新后），立刻绑定
+    if (!state.webId && host && host.getCurrentSession) {
+      const cur = host.getCurrentSession();
+      if (cur && cur.id) {
+        state.webId = cur.id;
+        if (host.logicIdMap) host.logicIdMap.bind(state.id as any, cur.id as any);
+      }
+    }
+
+    // 4.6) 持久化剩余队列
+    if (host && host.setSessionQueue) {
+      try { host.setSessionQueue(state.id, state.queue); } catch (_) { /* ignore */ }
+    }
+
+    // 5) 等 onAssistantDone 来触发下一轮
+  } catch (err: any) {
+    console.error('[Cuckoo AgentSession] processQueue 失败:', err.message);
+    state.status = 'idle';
+    // 发送失败，丢弃这条并尝试下一条
+    state.queue.shift();
+
+    // 【选 B】队列空了才唤醒
+    if (state.queue.length === 0) {
+      notifyIdleWaiters(logicId);
+    }
+    void processQueue(logicId, host);
+  }
+}
+
+/** 入队并触发处理 */
+function handleFollowup(logicId: string, text: string, source: any): void {
+  const state = activeSessions.get(logicId);
+  if (!state) throw new Error('session not found: ' + logicId);
+  if (state.status === 'disposed') throw new Error('session disposed: ' + logicId);
+
+  // 入队
+  state.queue.push({ text, source });
+
+  // 持久化队列
+  if (state._host && state._host.setSessionQueue) {
+    try { state._host.setSessionQueue(state.id, state.queue); } catch (_) { /* ignore */ }
+  }
+
+  // 触发处理
+  if (state._host) {
+    void processQueue(logicId, state._host);
+  }
+}
 
 /**
  * AI 回复完成时调用（由 harness 层在 assistant-done 时触发）。
- * 把所有 busy 的会话标记为 idle，唤醒 waiter。
+ * 把所有 busy 的会话标记为 idle，并消费队列。
  */
 function onAssistantDone(): void {
   for (const [id, s] of activeSessions) {
     if (s.status === 'busy') {
       s.status = 'idle';
-      const w = waiters.get(id);
-      if (w) { waiters.delete(id); try { w(); } catch (_) { /* ignore */ } }
+
+      const host = s._host;
+      if (host) {
+        // 本轮 AI 回复完成，广播 turn/end
+        try { if (host.broadcastTurnEnd) host.broadcastTurnEnd(id, 'completed'); } catch (_) { /* ignore */ }
+        // 继续消费队列
+        void processQueue(id, host);
+      }
+
+      // 【选 B】只有整个队列空了，才唤醒 whenIdle 的等待者
+      if (s.queue.length === 0) {
+        notifyIdleWaiters(id);
+      }
     }
   }
 }
@@ -67,9 +191,8 @@ function createAgents(host: any): any {
           projectDir: state.projectDir,
           append: (type: string, data: any) => {
             if (type === 'session/title' && data && data.title) {
-              // 只能通过 setSessionTitleForId（支持 webId 为 null 时走 pending）
               if (host && host.setSessionTitleForId) {
-                host.setSessionTitleForId(state.webId, data.title);
+                host.setSessionTitleForId(state.id, data.title);
               }
             }
           },
@@ -78,7 +201,16 @@ function createAgents(host: any): any {
           const text = extractText(msg);
           handleFollowup(s.id, text, msg && msg.source);
         },
-        whenIdle: () => waitForIdle(s.id),
+        whenIdle: () => new Promise<void>((resolve) => {
+          const st = activeSessions.get(s.id);
+          if (!st || st.status === 'idle' || st.status === 'disposed') {
+            resolve();
+            return;
+          }
+          const list = idleWaiters.get(s.id) || [];
+          list.push(resolve);
+          idleWaiters.set(s.id, list);
+        }),
       };
     }
     // 没有活动 session（历史会话），返回只读视图
@@ -90,111 +222,20 @@ function createAgents(host: any): any {
     };
   }
 
-  function extractText(msg: any): string {
-    if (!msg) return '';
-    if (typeof msg.content === 'string') return msg.content;
-    if (Array.isArray(msg.content)) {
-      return msg.content.map((c: any) => (c && c.type === 'text' ? c.text : '')).join('');
-    }
-    return '';
-  }
-
-  function handleFollowup(logicId: string, text: string, source: any): void {
-    const state = activeSessions.get(logicId);
-    if (!state) throw new Error('session not found: ' + logicId);
-    if (state.status === 'disposed') throw new Error('session disposed: ' + logicId);
-
-    // 入队并触发处理
-    state.queue.push({ text, source });
-    void processQueue(logicId);
-  }
-
-  async function processQueue(logicId: string): Promise<void> {
-    const state = activeSessions.get(logicId);
-    if (!state || state.status === 'disposed') return;
-    if (state.status === 'busy' || state.status === 'initializing') return;
-
-    while (state.queue.length > 0) {
-      const item = state.queue.shift()!;
-      state.status = 'busy';
-
-      try {
-        // 1) 如果是首次，并且还没有 webId（说明是全新会话），先开对话
-        if (!state.webId && !state.systemPromptSent) {
-          state.status = 'initializing';
-          if (host && host.navigateWindowToHome) {
-            const ok = await host.navigateWindowToHome(state.id, state.profileId, state.providerId);
-            if (!ok) throw new Error('no window to navigate');
-          }
-          // 导航内部已等 did-finish-load，这里不需要再 waitForIdle
-        }
-
-        // 2) 构造消息（首次合并系统提示词）
-        let messageText = item.text;
-        if (!state.systemPromptSent) {
-          if (host && host.buildSystemPrompt) {
-            const sysPrompt = host.buildSystemPrompt(state.projectDir || '', state.providerId || '');
-            messageText = sysPrompt + '\n\n---\n\n' + item.text;
-          }
-          state.systemPromptSent = true;
-        }
-
-        // 3) 发送消息
-        if (host && host.sendUserMessage) {
-          const ok = host.sendUserMessage(state.id, state.profileId, messageText);
-          if (!ok) throw new Error('send failed');
-        }
-
-        // 4) 等待 AI 回复完成（状态变 idle）
-        await waitForIdle(state.id);
-
-        // 4.5) 从当前会话拿新 webId（followup 后 URL 已变成新会话）
-        try {
-          if (!state.webId && host && host.getCurrentSession) {
-            const cur = host.getCurrentSession();
-            if (cur && cur.id) {
-              state.webId = cur.id;
-              if (host.logicIdMap) {
-                host.logicIdMap.bind(state.id as any, cur.id as any);
-              }
-            }
-          }
-        } catch (_) { /* ignore */ }
-
-        // 4.6) 广播 session/event.turn/end（dsh-tasks 监听这个）
-        try {
-          if (host && host.broadcastTurnEnd) host.broadcastTurnEnd(state.id, 'completed');
-        } catch (_) { /* ignore */ }
-      } catch (err: any) {
-        console.error('[Cuckoo AgentSession] followup 失败:', err.message);
-      } finally {
-        state.status = 'idle';
-      }
-    }
-  }
-
-  function waitForIdle(logicId: string): Promise<void> {
-    return new Promise((resolve) => {
-      const s = activeSessions.get(logicId);
-      if (!s || s.status === 'idle' || s.status === 'disposed') { resolve(); return; }
-      waiters.set(logicId, resolve);
-    });
-  }
-
   return {
-    /** 按 id 取 agent（找不到返回 undefined） */
+    /** 按 id 取 agent */
     get(id: string): CuckooAgent | undefined {
       if (!host || !host.getSession) return undefined;
       const s = host.getSession(id);
       return s ? sessionToAgent(s) : undefined;
     },
-    /** 当前 agent（当前会话） */
+    /** 当前 agent */
     current(): CuckooAgent | null {
       if (!host || !host.getCurrentSession) return null;
       const s = host.getCurrentSession();
       return s && s.id ? sessionToAgent(s) : null;
     },
-    /** 所有 agent（所有会话） */
+    /** 所有 agent */
     list(): CuckooAgent[] {
       if (!host || !host.listSessions) return [];
       return host.listSessions().map(sessionToAgent);
@@ -221,10 +262,11 @@ function createAgents(host: any): any {
         status: 'idle',
         systemPromptSent: false,
         queue: [],
+        _host: host,
       };
       activeSessions.set(logicId, state);
 
-      // 记目录（若 host 提供）
+      // 记目录
       if (projectDir && host && host.saveSessionDirMapping) {
         try { host.saveSessionDirMapping(logicId, projectDir); } catch (_) { /* ignore */ }
       }
@@ -241,11 +283,63 @@ function createAgents(host: any): any {
   };
 }
 
-/** 供外部更新 webId（当前流程不再需要，保留以兼容） */
+/** 供外部更新 webId（保留以兼容） */
 function updateAgentWebId(logicId: string, webId: string): void {
   const s = activeSessions.get(logicId);
   if (s) s.webId = webId;
 }
 
-export { createAgents, updateAgentWebId, onAssistantDone };
+/**
+ * 启动时恢复队列：
+ * 遍历所有已落盘的 webId，如果有 pendingMessages，就恢复到 activeSessions 并继续消费。
+ */
+function restorePendingQueues(host: any): void {
+  if (!host || !host.listSessions) return;
+  const sessions = host.listSessions();
+  for (const s of sessions) {
+    const webId = s.id;
+    if (!webId) continue;
+    // 跳过没有 pendingMessages 的
+    let queue: any[] = [];
+    try {
+      if (host.getSessionQueue) queue = host.getSessionQueue(webId);
+    } catch (_) { continue; }
+    if (!Array.isArray(queue) || queue.length === 0) continue;
+
+    // 看是否已经有活跃会话（避免重复恢复）
+    let logicId = webId;
+    if (host.logicIdMap && host.logicIdMap.logicIdOf) {
+      const lid = host.logicIdMap.logicIdOf(webId);
+      if (lid) logicId = lid;
+    }
+
+    if (activeSessions.has(logicId)) {
+      // 已有活跃，合并队列
+      const existing = activeSessions.get(logicId)!;
+      existing.queue.push(...queue);
+    } else {
+      // 新建状态
+      const state: AgentSessionState = {
+        id: logicId,
+        webId,
+        projectDir: s.projectDir || null,
+        profileId: null,
+        providerId: null,
+        status: 'idle',
+        systemPromptSent: true, // 能落盘说明已经发过系统提示词
+        queue: [...queue],
+        _host: host,
+      };
+      activeSessions.set(logicId, state);
+    }
+
+    // 清空已恢复的 pendingMessages
+    try { host.setSessionQueue(logicId, []); } catch (_) { /* ignore */ }
+
+    // 触发消费
+    void processQueue(logicId, host);
+  }
+}
+
+export { createAgents, updateAgentWebId, onAssistantDone, restorePendingQueues };
 export type { CuckooAgent };

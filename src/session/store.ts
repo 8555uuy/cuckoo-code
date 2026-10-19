@@ -5,20 +5,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getProviderByUrl } from '../providers/registry.js';
-import type { WebId } from './ids.js';
+import type { WebId, LogicId } from './ids.js';
 
 /** Session store 对外接口（参数用 WebId，强制调用方翻译） */
 interface SessionStoreApi {
   readSessionStore(): any;
   writeSessionStore(store: any): void;
-  getSessionMeta(webId: WebId): any;
-  getProjectDirBySessionId(webId: WebId): any;
-  saveSessionDirMapping(webId: WebId, projectDir: any): void;
-  updateSessionTitle(webId: WebId, title: string): void;
+  getSessionMeta(logicId: LogicId): any;
+  getProjectDirBySessionId(logicId: LogicId): any;
+  saveSessionDirMapping(logicId: LogicId, projectDir: any): void;
+  updateSessionTitle(logicId: LogicId, title: string): void;
   setSessionTitle(title: string): any;
-  setSessionLineage(webId: WebId, lineage: { parentId?: string | null; kind?: string | null; agentName?: string | null }): void;
-  supersedeSession(webId: WebId): void;
-  setSessionArchived(webId: WebId, archived: boolean): void;
+  setSessionLineage(logicId: LogicId, lineage: { parentId?: string | null; kind?: string | null; agentName?: string | null }): void;
+  supersedeSession(logicId: LogicId): void;
+  setSessionArchived(logicId: LogicId, archived: boolean): void;
   getArchivedProjects(): string[];
   setProjectArchived(dir: string, archived: boolean): void;
   extractSessionIdFromUrl(url: string): WebId | null;
@@ -34,7 +34,7 @@ interface SessionStoreApi {
  * @param windowState window 管理模块引用
  * @param opts.noPersist 为 true 时纯内存态（子代理窗口用，不落盘）
  */
-function createSessionStore(profileId: string, storeDir: string, windowState: any, opts: any = {}): SessionStoreApi {
+function createSessionStore(profileId: string, storeDir: string, windowState: any, opts: { noPersist?: boolean, logicIdMap?: any } = {}): SessionStoreApi {
   const STORE_FILE = path.join(storeDir, 'session-dir-map-' + profileId + '.json');
   // 子代理窗口：内存态，不读写盘（临时窗口，关了就弃）
   const noPersist = opts && opts.noPersist === true;
@@ -66,10 +66,10 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
    * 取会话元数据（统一为对象结构）。
    * 兼容旧格式（值直接是 projectDir 字符串）→ 归一化为 { projectDir }。
    */
-  function getSessionMeta(webId: WebId): any {
-    if (!webId) return null;
+  function getSessionMeta(logicId: LogicId): any {
+    if (!logicId) return null;
     const store = readSessionStore();
-    const v = store[webId];
+    const v = store[logicId];
     if (v == null) return null;
     if (typeof v === 'string') return { projectDir: v, title: null, createdAt: null, updatedAt: null, archived: false, parentId: null, kind: null, agentName: null, superseded: false };
     return {
@@ -86,8 +86,8 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
     };
   }
 
-  function getProjectDirBySessionId(webId: WebId): any {
-    const meta = getSessionMeta(webId);
+  function getProjectDirBySessionId(logicId: LogicId): any {
+    const meta = getSessionMeta(logicId);
     return meta ? meta.projectDir : null;
   }
 
@@ -96,22 +96,22 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
    * 新结构：{ projectDir, title, createdAt, updatedAt }。
    * 兼容旧数据：若旧值是字符串，就地升级为对象（createdAt 保持 null，不补记时间）。
    */
-  function saveSessionDirMapping(webId: WebId, projectDir: any): void {
-    if (!webId) return;
+  function saveSessionDirMapping(logicId: LogicId, projectDir: any): void {
+    if (!logicId) return;
     const store = readSessionStore();
-    const old = store[webId];
+    const old = store[logicId];
     const now = new Date().toISOString();
     if (old == null) {
       // 新会话：记录创建/更新时间
-      store[webId] = { projectDir, title: null, createdAt: now, updatedAt: now };
+      store[logicId] = { projectDir, title: null, createdAt: now, updatedAt: now };
     } else if (typeof old === 'string') {
       // 旧数据升级：不补记时间（老数据不记录时间）
-      store[webId] = { projectDir, title: null, createdAt: null, updatedAt: null };
+      store[logicId] = { projectDir, title: null, createdAt: null, updatedAt: null };
     } else {
       old.projectDir = projectDir;
       // 仅"新数据"（已有 createdAt）更新时间；老数据升级来的保持无时间
       if (old.createdAt != null) old.updatedAt = now;
-      store[webId] = old;
+      store[logicId] = old;
     }
     writeSessionStore(store);
   }
@@ -141,43 +141,43 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
   }
 
   /** 归档/取消归档会话 */
-  function setSessionArchived(webId: WebId, archived: boolean): void {
-    if (!webId) return;
+  function setSessionArchived(logicId: LogicId, archived: boolean): void {
+    if (!logicId) return;
     const store = readSessionStore();
-    const old = store[webId];
+    const old = store[logicId];
     if (old == null) return;
     if (typeof old === 'string') {
-      store[webId] = { projectDir: old, title: null, createdAt: null, updatedAt: null, archived: archived === true };
+      store[logicId] = { projectDir: old, title: null, createdAt: null, updatedAt: null, archived: archived === true };
     } else {
       old.archived = archived === true;
-      store[webId] = old;
+      store[logicId] = old;
     }
     writeSessionStore(store);
   }
 
   /** 更新会话标题（AI 命名对话 / 网页标题抓取）。条目不存在时新建。 */
-  function updateSessionTitle(webId: WebId, title: string): void {
-    if (!webId || !title) return;
+  function updateSessionTitle(logicId: LogicId, title: string): void {
+    if (!logicId || !title) return;
     const store = readSessionStore();
-    const old = store[webId];
+    const old = store[logicId];
     const now = new Date().toISOString();
     if (old == null) {
-      store[webId] = { projectDir: state.selectedProjectDir || null, title, createdAt: now, updatedAt: now };
+      store[logicId] = { projectDir: state.selectedProjectDir || null, title, createdAt: now, updatedAt: now };
     } else if (typeof old === 'string') {
       // 老数据升级：不补记时间（与 saveSessionDirMapping 一致）
-      store[webId] = { projectDir: old, title, createdAt: null, updatedAt: null };
+      store[logicId] = { projectDir: old, title, createdAt: null, updatedAt: null };
     } else {
       old.title = title;
       // 仅"新数据"更新时间；老数据升级来的保持无时间
       if (old.createdAt != null) old.updatedAt = now;
-      store[webId] = old;
+      store[logicId] = old;
     }
     writeSessionStore(store);
   }
 
   /**
    * 设置当前会话标题。
-   * 若尚无会话 ID（新对话首条消息还没生成 URL），先暂存，等会话 ID 出现后自动绑定。
+   * 因为新建窗口时一定会有 logicId，所以这里直接设置，不再需要 pendingTitle。
    */
   function setSessionTitle(title: string): any {
     const t = String(title || '').trim();
@@ -186,20 +186,18 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
       updateSessionTitle(state.currentSessionId, t);
       return { success: true };
     }
-    state.pendingTitle = t;
-    console.log('[Cuckoo Code][' + profileId + '] 暂存对话标题，等待会话ID出现后绑定: ' + t);
-    return { success: true, pending: true };
+    return { success: false, error: '无会话ID' };
   }
 
   /**
    * 设置会话血缘（子代理/压缩来源）。条目不存在时新建。
    * @param lineage { parentId, kind, agentName }（只改传入的字段）
    */
-  function setSessionLineage(webId: WebId, lineage: { parentId?: string | null; kind?: string | null; agentName?: string | null }): void {
-    if (!webId) return;
+  function setSessionLineage(logicId: LogicId, lineage: { parentId?: string | null; kind?: string | null; agentName?: string | null }): void {
+    if (!logicId) return;
     const store = readSessionStore();
     const now = new Date().toISOString();
-    let entry: any = store[webId];
+    let entry: any = store[logicId];
     if (entry == null) {
       entry = { projectDir: state.selectedProjectDir || null, title: null, createdAt: now, updatedAt: now };
     } else if (typeof entry === 'string') {
@@ -208,7 +206,7 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
     if (lineage.parentId !== undefined) entry.parentId = lineage.parentId || null;
     if (lineage.kind !== undefined) entry.kind = lineage.kind || null;
     if (lineage.agentName !== undefined) entry.agentName = lineage.agentName || null;
-    store[webId] = entry;
+    store[logicId] = entry;
     // 压缩：旧版（父）标记"被取代"，不再作为当前版展示
     if (lineage.kind === 'compaction' && lineage.parentId) {
       const p = store[lineage.parentId];
@@ -216,23 +214,23 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
       else if (typeof p === 'string') { store[lineage.parentId] = { projectDir: p, title: null, createdAt: null, updatedAt: null, superseded: true }; }
     }
     writeSessionStore(store);
-    console.log('[Cuckoo Code][' + profileId + '] 已记血缘: ' + webId + ' <- ' + (lineage.parentId || '?') + ' (' + (lineage.kind || '?') + ')');
+    console.log('[Cuckoo Code][' + profileId + '] 已记血缘: ' + logicId + ' <- ' + (lineage.parentId || '?') + ' (' + (lineage.kind || '?') + ')');
   }
 
   /** 标记会话"已被取代"（压缩后，旧版不再作为当前版展示） */
-  function supersedeSession(webId: WebId): void {
-    if (!webId) return;
+  function supersedeSession(logicId: LogicId): void {
+    if (!logicId) return;
     const store = readSessionStore();
-    const old = store[webId];
+    const old = store[logicId];
     if (old == null) return;
     if (typeof old === 'string') {
-      store[webId] = { projectDir: old, title: null, createdAt: null, updatedAt: null, superseded: true };
+      store[logicId] = { projectDir: old, title: null, createdAt: null, updatedAt: null, superseded: true };
     } else {
       old.superseded = true;
-      store[webId] = old;
+      store[logicId] = old;
     }
     writeSessionStore(store);
-    console.log('[Cuckoo Code][' + profileId + '] 已标记旧版(被取代): ' + webId);
+    console.log('[Cuckoo Code][' + profileId + '] 已标记旧版(被取代): ' + logicId);
   }
 
   function extractSessionIdFromUrl(url: string): WebId | null {
@@ -250,8 +248,6 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
   const state: any = {
     currentSessionId: null,
     selectedProjectDir: null,
-    pendingProjectDir: null,
-    pendingTitle: null,
     /** 待绑定的血缘（会话ID 出现时自动写入）：{ parentId, kind, agentName } */
     pendingLineage: null,
   };
@@ -276,47 +272,49 @@ function createSessionStore(profileId: string, storeDir: string, windowState: an
   }
 
   function handleUrlChange(url: string, targetView?: any): void {
-    const sessionId = extractSessionIdFromUrl(url);
+    const webId = extractSessionIdFromUrl(url);
     const view = resolveView(targetView);
     const wc = view && view.webContents ? view.webContents : null;
     const canSend = wc && !wc.isDestroyed();
 
-    if (sessionId) {
-      state.currentSessionId = sessionId;
-      console.log('[Cuckoo Code][' + profileId + '] 当前会话ID: ' + sessionId);
+    if (webId) {
+      // 拿到 webId 后，通过 logicIdMap 翻译成 logicId。
+      let mappedLogicId: LogicId | null = null;
+      
+      if (opts && opts.logicIdMap) {
+        // 1) 检查这个 webId 是否已经绑定了某个 logicId（插件触发的场景）
+        mappedLogicId = opts.logicIdMap.logicIdOf(webId);
+        
+        // 2) 如果没有，看看当前窗口是不是有一个“等待绑定”的临时 logicId
+        if (!mappedLogicId && state.currentSessionId && state.currentSessionId.startsWith('local-')) {
+          mappedLogicId = state.currentSessionId as LogicId;
+          opts.logicIdMap.bind(mappedLogicId, webId);
+        }
+        
+        // 3) 如果还没有（老会话或手动新建但没生成 tempId），则走 ensureLogicId
+        if (!mappedLogicId) {
+          mappedLogicId = opts.logicIdMap.ensureLogicId(webId);
+        }
+      } else {
+        mappedLogicId = webId as unknown as LogicId;
+      }
+      
+      const logicId = mappedLogicId as LogicId;
+      state.currentSessionId = logicId;
+      console.log('[Cuckoo Code][' + profileId + '] 当前会话ID(逻辑): ' + logicId);
 
       // 会话 ID 出现 → 绑定暂存的血缘（子代理/压缩来源）
       if (state.pendingLineage) {
-        setSessionLineage(sessionId, state.pendingLineage);
+        setSessionLineage(logicId, state.pendingLineage);
         state.pendingLineage = null;
       }
-      // 会话 ID 出现 → 绑定暂存的对话标题（AI 命名可能在首条消息时就调用）
-      if (state.pendingTitle) {
-        updateSessionTitle(sessionId, state.pendingTitle);
-        state.pendingTitle = null;
-        try {
-          const ctx = windowState && windowState.getContextByWebContents ? windowState.getContextByWebContents(wc) : null;
-          if (ctx && ctx.win && !ctx.win.isDestroyed()) ctx.win.webContents.send('shell-sessions-changed');
-        } catch (_) { /* ignore */ }
-      }
-
-      if (state.pendingProjectDir) {
-        saveSessionDirMapping(sessionId, state.pendingProjectDir);
-        state.selectedProjectDir = state.pendingProjectDir;
-        state.pendingProjectDir = null;
-        if (canSend) {
-          emitProjectDir(wc, state.selectedProjectDir);
-          wc.send('session-restored', { sessionId, projectDir: state.selectedProjectDir });
-        }
-        console.log('[Cuckoo Code][' + profileId + '] 暂存目录已绑定');
-        return;
-      }
-
-      const restoredDir = getProjectDirBySessionId(sessionId);
+      // （pendingTitle 和 pendingProjectDir 已废弃，现在直接绑在 logicId 上）
+      
+      const restoredDir = getProjectDirBySessionId(logicId);
       if (restoredDir) {
         state.selectedProjectDir = restoredDir;
         if (canSend) {
-          wc.send('session-restored', { sessionId, projectDir: restoredDir });
+          wc.send('session-restored', { sessionId: logicId, projectDir: restoredDir });
           emitProjectDir(wc, restoredDir);
         }
       } else {

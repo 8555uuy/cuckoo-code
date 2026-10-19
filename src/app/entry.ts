@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import * as windowState from './window.js';
 import * as profileManager from './profile.js';
 import { createSessionStore } from '../session/store.js';
+import { createLogicIdMap } from '../session/logic-id-map.js';
 import { getProvider } from '../providers/registry.js';
 import * as updater from '../updater/index.js';
 import * as mcpConfig from '../mcp/config.js';
@@ -35,6 +36,9 @@ try {
 }
 app.setPath('userData', USER_DATA_DIR);
 console.log('[Cuckoo Code] Session 数据目录:', app.getPath('userData'));
+
+/** 全局唯一的 logicId ↔ webId 翻译层 */
+const globalLogicIdMap = createLogicIdMap(app.getPath('userData'));
 
 // 渲染进程日志输出目录（仅开发环境持久化；打包版不写日志文件）
 const RENDERER_LOG_DIR = app.isPackaged
@@ -110,7 +114,15 @@ function createWindow(profile: any) {
   const profileData = profile || profileManager.getDefaultProfile();
   const provider = getProvider(profileData.providerId) || null;
   const storeDir = app.getPath('userData');
-  const sessionStore = createSessionStore(profileData.id, storeDir, windowState);
+  const sessionStore = createSessionStore(profileData.id, storeDir, windowState, { logicIdMap: globalLogicIdMap });
+
+  // 新窗口诞生时，立刻分配一个临时 logicId，并创建“新建对话”的记录。
+  // 这样在 webId 出现之前，所有的操作（绑目录、设标题、发消息）都有明确的 logicId。
+  const tempLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
+  sessionStore.updateSessionTitle(tempLogicId, '新建对话');
+  if (!sessionStore.state) sessionStore.state = {};
+  sessionStore.state.currentSessionId = tempLogicId;
+
   const hasExplicitProfile = !!profile;
   // providerId 已确定 → 直接打开；未确定 → 显示平台选择页
   const providerChosen = !!profileData.providerId;
@@ -1317,12 +1329,17 @@ if (!gotSingleInstanceLock) {
     import('../plugins/cuckoo-plugins/index.js').then((m: any) => {
       import('../tools/index.js').then((t: any) => {
         import('./cuckoo-host.js').then((h: any) => {
-        m.loadEnabledPlugins(t.registry, h.buildCuckooHost({ storeDir: app.getPath('userData') })).then((r: any) => {
-          if (r.loaded.length || r.failed.length) {
-            console.log('[Cuckoo Plugin] 已加载: ' + (r.loaded.join(' | ') || '(无)') +
-              (r.failed.length ? '；失败: ' + r.failed.map((f: any) => f.id + ':' + f.error).join(' | ') : ''));
-          }
-        }).catch((e: any) => console.error('[Cuckoo Plugin] 加载失败:', e && e.message));
+          const host = h.buildCuckooHost({ storeDir: app.getPath('userData'), logicIdMap: globalLogicIdMap });
+          m.loadEnabledPlugins(t.registry, host).then((r: any) => {
+            if (r.loaded.length || r.failed.length) {
+              console.log('[Cuckoo Plugin] 已加载: ' + (r.loaded.join(' | ') || '(无)') +
+                (r.failed.length ? '；失败: ' + r.failed.map((f: any) => f.id + ':' + f.error).join(' | ') : ''));
+            }
+            // 恢复所有待发队列（重启续跑）
+            import('../plugins/dsh-compat/agents-service.js').then((ag: any) => {
+              if (ag.restorePendingQueues) ag.restorePendingQueues(host);
+            }).catch(() => {});
+          }).catch((e: any) => console.error('[Cuckoo Plugin] 加载失败:', e && e.message));
         }).catch(() => {});
       });
     }).catch(() => {});

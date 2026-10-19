@@ -82,9 +82,9 @@ function allSessions(): Array<{ id: string; title?: string; projectDir?: string 
 }
 
 /** 构造 CuckooHost（供 DSH 插件 ctx 使用） */
-function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
+function buildCuckooHost(opts?: { storeDir?: string; logicIdMap?: any }): CuckooHost {
   const storeDir = opts?.storeDir || '';
-  const logicIdMap = storeDir ? createLogicIdMap(storeDir) : null;
+  const logicIdMap = opts?.logicIdMap || (storeDir ? createLogicIdMap(storeDir) : null);
   return {
     logicIdMap: logicIdMap ? {
       webIdOf: (logicId: LogicId) => logicIdMap.webIdOf(logicId),
@@ -104,34 +104,22 @@ function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
     attachSessionToWorkspace: (logicId: string, projectDir: string) => {
       if (!logicId || !projectDir) return false;
 
-      // 1. 先查 logicIdMap：是否已经能翻译出 webId
-      const webId = logicIdMap ? logicIdMap.webIdOf(logicId as any) : null;
-
-      // 2. 找到对应的窗口 store
-      //    （如果有 webId，按 webId 找；否则按"当前窗口"或任务指定的 profileId 找）
+      // 找到哪个 store 里有这个 logicId（新窗口刚建的，会在最后一个 store 里）
       let store: any = null;
       for (const ctx of windowState.getAllContexts()) {
         if (!ctx.sessionStore) continue;
-        if (webId) {
+        try {
           const all = ctx.sessionStore.readSessionStore();
-          if (all && all[webId] !== undefined) { store = ctx.sessionStore; break; }
-        }
+          if (all && all[logicId] !== undefined) { store = ctx.sessionStore; break; }
+        } catch (_) { /* ignore */ }
       }
       if (!store) {
-        // 新会话尚未落盘，或找不到匹配：用最后一个窗口的 store
         const ctxs = windowState.getAllContexts();
         store = ctxs.length > 0 ? ctxs[ctxs.length - 1].sessionStore : null;
       }
       if (!store) return false;
 
-      // 3. 核心逻辑：有 webId 直接绑；没有 webId 走 pending，绝不能污染旧会话
-      if (webId) {
-        store.saveSessionDirMapping(webId, projectDir);
-        return true;
-      } else {
-        store.state.pendingProjectDir = projectDir;
-        return true;
-      }
+      try { store.saveSessionDirMapping(logicId, projectDir); return true; } catch (_) { return false; }
     },
     getSession: (id: string) => {
       const found = allSessions().find((s) => s.id === id);
@@ -278,17 +266,46 @@ function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
         return true;
       } catch (_) { return false; }
     },
+    getSessionQueue: (logicId: string): any[] => {
+      for (const ctx of windowState.getAllContexts()) {
+        const store = ctx && ctx.sessionStore;
+        if (!store) continue;
+        try {
+          const all = store.readSessionStore();
+          const meta = all && all[logicId];
+          if (meta && Array.isArray(meta.pendingMessages)) return meta.pendingMessages;
+        } catch (_) { /* ignore */ }
+      }
+      return [];
+    },
+    setSessionQueue: (logicId: string, queue: any[]): void => {
+      for (const ctx of windowState.getAllContexts()) {
+        const store = ctx && ctx.sessionStore;
+        if (!store) continue;
+        try {
+          const all = store.readSessionStore();
+          const meta = all && all[logicId];
+          if (meta) {
+            if (typeof meta === 'string') {
+              all[logicId] = { projectDir: meta, title: null, createdAt: null, updatedAt: null, pendingMessages: queue };
+            } else {
+              meta.pendingMessages = queue;
+              all[logicId] = meta;
+            }
+            store.writeSessionStore(all);
+            return;
+          }
+        } catch (_) { /* ignore */ }
+      }
+    },
     saveSessionDirMapping: (logicId: string, projectDir: string): boolean => {
-      // 严格按 logicIdMap 翻译，绝不能拿 store.state.currentSessionId（那是旧会话！）
-      const webId = logicIdMap ? logicIdMap.webIdOf(logicId as any) : null;
-
       let store: any = null;
       for (const ctx of windowState.getAllContexts()) {
         if (!ctx.sessionStore) continue;
-        if (webId) {
+        try {
           const all = ctx.sessionStore.readSessionStore();
-          if (all && all[webId] !== undefined) { store = ctx.sessionStore; break; }
-        }
+          if (all && all[logicId] !== undefined) { store = ctx.sessionStore; break; }
+        } catch (_) { /* ignore */ }
       }
       if (!store) {
         const ctxs = windowState.getAllContexts();
@@ -296,12 +313,7 @@ function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
       }
       if (!store) return false;
 
-      if (webId) {
-        try { store.saveSessionDirMapping(webId, projectDir); return true; } catch (_) { return false; }
-      } else {
-        store.state.pendingProjectDir = projectDir;
-        return true;
-      }
+      try { store.saveSessionDirMapping(logicId, projectDir); return true; } catch (_) { return false; }
     },
     broadcastTurnEnd: (logicId: string, reason: 'completed' | 'error' | 'max-tokens' | 'aborted'): void => {
       // 构造 session 对象（dsh-tasks 用 session.id 匹配 trackedRuns）
@@ -317,28 +329,23 @@ function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
         })
         .catch(() => { /* ignore */ });
     },
-    setSessionTitleForId: (webId: string | null, title: string): void => {
-      // 有 webId 且存在 → 直接更新
-      if (webId) {
-        for (const ctx of windowState.getAllContexts()) {
-          const store = ctx && ctx.sessionStore;
-          if (!store) continue;
-          try {
-            const all = store.readSessionStore();
-            if (all && all[webId] !== undefined) {
-              store.updateSessionTitle(webId as any, title);
-              return;
-            }
-          } catch (_) { /* ignore */ }
-        }
+    setSessionTitleForId: (logicId: string, title: string): void => {
+      for (const ctx of windowState.getAllContexts()) {
+        const store = ctx && ctx.sessionStore;
+        if (!store) continue;
+        try {
+          const all = store.readSessionStore();
+          if (all && all[logicId] !== undefined) {
+            store.updateSessionTitle(logicId as any, title);
+            return;
+          }
+        } catch (_) { /* ignore */ }
       }
-      // 没有 webId（还没出现），或没找到：塞 pendingTitle（绑当前窗口，等 URL 变化）
+      // 如果没有找到（说明是刚创建还没落盘的极端情况），直接用当前窗口 store 写
       const ctxs = windowState.getAllContexts();
       const cur = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
       const store = cur && cur.sessionStore;
-      if (store && store.state) {
-        store.state.pendingTitle = title;
-      }
+      if (store) store.updateSessionTitle(logicId as any, title);
     },
     // ===== C8 =====
     mcpCall: async (server: string, tool: string, args?: any) => {

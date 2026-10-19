@@ -183,10 +183,14 @@ interface CuckooHost {
   sendUserMessage?: (logicId: string, profileId: string | null, text: string) => boolean;
   /** DSH agents.create 用：保存"会话 → 目录"映射 */
   saveSessionDirMapping?: (logicId: string, projectDir: string) => boolean;
-  /** 按 webId 设置会话标题（agents-service 用，webId 为 null 时走 pending） */
-  setSessionTitleForId?: (webId: string | null, title: string) => void;
+  /** 按 logicId 设置会话标题 */
+  setSessionTitleForId?: (logicId: string, title: string) => void;
   /** 广播 session/event.turn/end（dsh-tasks 监听） */
   broadcastTurnEnd?: (logicId: string, reason: 'completed' | 'error' | 'max-tokens' | 'aborted') => void;
+  /** 读会话的待发消息队列 */
+  getSessionQueue?: (logicId: string) => any[];
+  /** 写会话的待发消息队列 */
+  setSessionQueue?: (logicId: string, queue: any[]) => void;
   /** 当前窗口（DSH agentDefaultModel 用） */
   getCurrentWindow?: () => { id: string; name: string; providerId: string } | null;
   // ===== C6 =====
