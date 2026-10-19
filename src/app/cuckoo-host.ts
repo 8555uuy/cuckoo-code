@@ -26,25 +26,36 @@ function currentSession(): { id: string | null; projectDir: string | null } {
   };
 }
 
-/** 所有窗口（profileId → name 从 profile-list 读） */
+/**
+ * 所有窗口（从 profile-list.json 读，含"未打开"的窗口）。
+ * ⚠️ 不要用 windowState.getAllContexts（只返回已打开的）。
+ */
 function listWindows(): Array<{ id: string; name: string; providerId: string }> {
-  const byId: Record<string, any> = {};
-  for (const p of readProfiles()) byId[p.id] = p;
-  return windowState.getAllContexts()
-    .filter((c: any) => !c.isSubagent)  // 子代理窗口不算独立窗口
-    .map((c: any) => {
-      const p = byId[c.profileId];
-      return { id: String(c.profileId || ''), name: (p && p.name) || String(c.profileId || ''), providerId: String(c.providerId || '') };
-    });
+  return readProfiles()
+    .filter((p: any) => !p.isSubagent)  // 子代理不算独立窗口
+    .map((p: any) => ({
+      id: String(p.id || ''),
+      name: String(p.name || p.id || ''),
+      providerId: String(p.providerId || ''),
+    }));
 }
 
-/** 当前窗口（最后一个活跃窗口） */
+/**
+ * 当前窗口（优先"最后活跃且已打开"的窗口；无则回退 profile-list 第一个）。
+ */
 function getCurrentWindow(): { id: string; name: string; providerId: string } | null {
+  // 1) 优先：已打开的窗口（最后一个）
   const ctxs = windowState.getAllContexts().filter((c: any) => !c.isSubagent);
   const c = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
-  if (!c) return null;
-  const p = readProfiles().find((x: any) => x.id === c.profileId);
-  return { id: String(c.profileId || ''), name: (p && p.name) || String(c.profileId || ''), providerId: String(c.providerId || '') };
+  if (c) {
+    const p = readProfiles().find((x: any) => x.id === c.profileId);
+    return { id: String(c.profileId || ''), name: (p && p.name) || String(c.profileId || ''), providerId: String(c.providerId || '') };
+  }
+  // 2) 回退：profile-list 第一个
+  const all = readProfiles().filter((p: any) => !p.isSubagent);
+  if (!all.length) return null;
+  const p = all[0];
+  return { id: String(p.id || ''), name: String(p.name || p.id || ''), providerId: String(p.providerId || '') };
 }
 
 /** 所有会话（合并各窗口的 sessionStore；带 projectDir，供 workspaceRegistry 用） */

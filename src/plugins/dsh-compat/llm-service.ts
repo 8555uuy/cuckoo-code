@@ -24,6 +24,10 @@ const PROVIDER_NAMES: Record<string, string> = {
   deepseek: 'DeepSeek',
   claude: 'Claude',
   chatgpt: 'ChatGPT',
+  zhipu: '智谱',
+  kimi: 'Kimi',
+  qwen: '通义千问',
+  doubao: '豆包',
 };
 
 /** provider 显示名（未知 id 直接用 id；空串 = 未选平台） */
