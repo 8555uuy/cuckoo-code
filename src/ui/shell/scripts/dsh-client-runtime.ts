@@ -785,10 +785,30 @@ function installFetchInterceptor(): void {
   //   /C:/d/.../src/ui/dsh-market/xxx  （file:// 页面 + new URL 后的形态）
   //   /api/xxx
   //   /plugin* /xxx
-  const API_MARKERS = ['/dsh-market/', '/api/', '/plugin'];
+  // 插件 HTTP 路由前缀（内置 + 动态从主进程拉：所有已注册的动态路由）
+  const API_MARKERS = ['/dsh-market/', '/dsh-tasks/', '/api/', '/plugin'];
+  let DYNAMIC_ROUTE_PATHS: string[] = [];
+  let DYNAMIC_LOADED = false;
+  // 从主进程拉动态路由（懒加载一次；插件注册后调用 refreshDynamicRoutes 更新）
+  const refreshDynamicRoutes = async () => {
+    try {
+      const api = (window as any).shellAPI;
+      if (!api || typeof api.webRoutes !== 'function') return;
+      const r = await api.webRoutes();
+      if (r && r.success && Array.isArray(r.routes)) {
+        DYNAMIC_ROUTE_PATHS = r.routes.map((x: any) => String(x && x.path ? x.path : '')).filter(Boolean);
+        DYNAMIC_LOADED = true;
+      }
+    } catch (_) { /* ignore */ }
+  };
+  (window as any).__ckRefreshDynamicRoutes = refreshDynamicRoutes;
+  // 首次拉一次（不阻塞 fetch）
+  refreshDynamicRoutes();
   const isPluginApi = (u: string) => {
     if (!u) return false;
     for (const mk of API_MARKERS) { if (u.indexOf(mk) >= 0) return true; }
+    // 动态路由（任意插件注册的 path，如 /dsh-ssh/api）
+    for (const p of DYNAMIC_ROUTE_PATHS) { if (p && u.indexOf(p) >= 0) return true; }
     return false;
   };
   w.fetch = async (input: any, init?: any) => {
@@ -817,11 +837,14 @@ function installFetchInterceptor(): void {
             const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
             if (m) raw = '/' + m[1];
           }
+          // 取最早出现的 marker 位置（保留完整前缀，如 /dsh-tasks/api）
           let pathname = '';
+          let bestIdx = -1;
           for (const mk of API_MARKERS) {
             const idx = raw.indexOf(mk);
-            if (idx >= 0) { pathname = raw.slice(idx); break; }
+            if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) bestIdx = idx;
           }
+          if (bestIdx >= 0) pathname = raw.slice(bestIdx);
           if (!pathname) pathname = raw.startsWith('/') ? raw : '/' + raw;
           input = httpBaseCache + pathname;
           // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）

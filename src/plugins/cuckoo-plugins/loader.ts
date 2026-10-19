@@ -18,7 +18,8 @@ import { PluginStorage } from './plugin-storage.js';
 import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
 import { createC8Services } from '../dsh-compat/c8-services.js';
-import { createStorageDomain, createAgentDefaultModel, createConnection } from '../dsh-compat/storage-service.js';
+import { createStorageDomain, createConnection } from '../dsh-compat/storage-service.js';
+import { createLlm, createAgentDefaultModelFromWindow } from '../dsh-compat/llm-service.js';
 import { CHILD_PROCESS_SHIM_CODE } from '../dsh-compat/cp-shim-code.js';
 import { getProfileDir, getProfilePatchPath, ensureProfile, DEFAULT_PROFILE, listProfilePluginEntries } from '../profile/index.js';
 import { getPnpmInvocation } from '../profile/pnpm.js';
@@ -164,10 +165,16 @@ interface CuckooHost {
   setPluginConfig?: (pluginId: string, values: Record<string, any>) => boolean;
   /** 当前会话（id + 项目目录） */
   getCurrentSession?: () => { id: string | null; projectDir: string | null };
-  /** 所有会话列表 */
-  listSessions?: () => Array<{ id: string; title?: string }>;
+  /** 所有会话列表（带 projectDir） */
+  listSessions?: () => Array<{ id: string; title?: string; projectDir?: string | null }>;
+  /** 把会话关联到某工作区（DSH workspace.attachSession） */
+  attachSessionToWorkspace?: (sessionId: string, projectDir: string) => boolean;
   /** 某会话 */
   getSession?: (id: string) => { id: string; title?: string } | null;
+  /** 所有窗口（DSH llm 服务用：provider=平台, model=窗口） */
+  listWindows?: () => Array<{ id: string; name: string; providerId: string }>;
+  /** 当前窗口（DSH agentDefaultModel 用） */
+  getCurrentWindow?: () => { id: string; name: string; providerId: string } | null;
   // ===== C6 =====
   listSkills?: () => Array<{ name: string; description?: string; source?: string }>;
   listCommands?: () => Array<{ id: string; title: string }>;
@@ -340,15 +347,39 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
           list: () => (host && host.listSessions ? host.listSessions().map((s: any) => ({ id: s.id, title: s.title })) : []),
         };
       }
-      // workspaceRegistry：工作区注册表（简化为"当前项目目录"）
+      // workspaceRegistry：工作区注册表（按"会话的 projectDir"聚合；DSH 契约）
       if (key === 'workspaceRegistry') {
-        return {
-          list: () => {
-            const dir = (host && host.getCurrentSession) ? host.getCurrentSession().projectDir : null;
-            if (!dir) return [];
+        // 每个工作区对象带 attachSession（DSH 是 workspace 实例方法，不是 registry 的）
+        const listWorkspaces = (): Array<{ id: string; path: string; name: string; title: string; attachSession: (sessionId: string) => boolean }> => {
+          const dirs = new Set<string>();
+          const sessions = (host && host.listSessions) ? host.listSessions() : [];
+          for (const s of sessions) { if (s.projectDir) dirs.add(String(s.projectDir)); }
+          const cur = (host && host.getCurrentSession) ? host.getCurrentSession().projectDir : null;
+          if (cur) dirs.add(String(cur));
+          return [...dirs].map((dir) => {
             const name = String(dir).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || dir;
-            return [{ id: dir, path: dir, name }];
+            return {
+              id: dir, path: dir, name, title: name,
+              /** 会话关联到此工作区（DSH workspace.attachSession） */
+              attachSession(sessionId: string): boolean {
+                try {
+                  return !!(host && typeof host.attachSessionToWorkspace === 'function'
+                    ? host.attachSessionToWorkspace(sessionId, dir)
+                    : false);
+                } catch (_) { return false; }
+              },
+            };
+          });
+        };
+        return {
+          list: () => listWorkspaces(),
+          /** DSH 契约：按 id 取工作区（不存在返回 undefined） */
+          get(id: string) {
+            if (!id) return undefined;
+            return listWorkspaces().find((w) => w.id === id);
           },
+          /** 列出所有工作区（同 list） */
+          entries() { return listWorkspaces(); },
         };
       }
       // ===== profileContext：DSH profile 上下文（对齐 DSH 的 ProfileContext）=====
@@ -376,10 +407,11 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
       }
       // sessionProjectionCache：DSH 内部缓存，暂不提供
       if (key === 'sessionProjectionCache') return undefined;
-      // C9：storageDomain / agentDefaultModel / connection
+      // C9：storageDomain / agentDefaultModel / connection / llm
       if (key === 'storageDomain') return base.storageDomain;
       if (key === 'agentDefaultModel') return base.agentDefaultModel;
       if (key === 'connection') return base.connection;
+      if (key === 'llm') return base.llm;
       return undefined;
     },
     // inject 回调传 ctx 自身（带 stub 兜底），插件拿到 projectionCtx.sessionProjections 等不报错
@@ -401,7 +433,10 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     },
     // C9：storageDomain / agentDefaultModel / connection（dsh-tasks 等用）
     storageDomain: createStorageDomain(pluginName),
-    agentDefaultModel: createAgentDefaultModel(),
+    // agentDefaultModel：= 当前窗口（provider=平台, model=窗口 id）
+    agentDefaultModel: createAgentDefaultModelFromWindow(() => (host && typeof host.getCurrentWindow === 'function' ? host.getCurrentWindow() : null)),
+    // llm：一级=provider，二级=窗口（通用，任何插件都能用）
+    llm: createLlm(() => (host && typeof host.listWindows === 'function' ? host.listWindows() : [])),
     connection: createConnection(),
     // UI 槽位（对标 DSH slots）：ctx.ui.slot.register({ slot, id, order, ...内容 })
     ui: {

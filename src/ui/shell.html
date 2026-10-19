@@ -30396,11 +30396,30 @@ body {
     if (w.__ckFetchPatched) return;
     w.__ckFetchPatched = true;
     const origFetch = w.fetch.bind(w);
-    const API_MARKERS = ["/dsh-market/", "/api/", "/plugin"];
+    const API_MARKERS = ["/dsh-market/", "/dsh-tasks/", "/api/", "/plugin"];
+    let DYNAMIC_ROUTE_PATHS = [];
+    let DYNAMIC_LOADED = false;
+    const refreshDynamicRoutes = async () => {
+      try {
+        const api2 = window.shellAPI;
+        if (!api2 || typeof api2.webRoutes !== "function") return;
+        const r = await api2.webRoutes();
+        if (r && r.success && Array.isArray(r.routes)) {
+          DYNAMIC_ROUTE_PATHS = r.routes.map((x) => String(x && x.path ? x.path : "")).filter(Boolean);
+          DYNAMIC_LOADED = true;
+        }
+      } catch (_) {
+      }
+    };
+    window.__ckRefreshDynamicRoutes = refreshDynamicRoutes;
+    refreshDynamicRoutes();
     const isPluginApi = (u) => {
       if (!u) return false;
       for (const mk of API_MARKERS) {
         if (u.indexOf(mk) >= 0) return true;
+      }
+      for (const p of DYNAMIC_ROUTE_PATHS) {
+        if (p && u.indexOf(p) >= 0) return true;
       }
       return false;
     };
@@ -30433,13 +30452,12 @@ body {
               if (m) raw = "/" + m[1];
             }
             let pathname = "";
+            let bestIdx = -1;
             for (const mk of API_MARKERS) {
               const idx = raw.indexOf(mk);
-              if (idx >= 0) {
-                pathname = raw.slice(idx);
-                break;
-              }
+              if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) bestIdx = idx;
             }
+            if (bestIdx >= 0) pathname = raw.slice(bestIdx);
             if (!pathname) pathname = raw.startsWith("/") ? raw : "/" + raw;
             input2 = httpBaseCache + pathname;
             if (shellTokenCache) {

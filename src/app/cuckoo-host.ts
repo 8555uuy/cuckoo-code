@@ -13,6 +13,7 @@ import { getTotal as getTokenTotal } from './token-stats.js';
 import type { CuckooHost } from '../plugins/cuckoo-plugins/loader.js';
 import { registerPluginSlot, unregisterPluginSlot } from './ipc/plugin.js';
 import { registerDynamicRoute } from './ipc/webserver.js';
+import { readProfiles } from './profile.js';
 
 /** 取"当前会话"（优先最后一个活跃窗口） */
 function currentSession(): { id: string | null; projectDir: string | null } {
@@ -25,9 +26,30 @@ function currentSession(): { id: string | null; projectDir: string | null } {
   };
 }
 
-/** 所有会话（合并各窗口的 sessionStore） */
-function allSessions(): Array<{ id: string; title?: string }> {
-  const out: Array<{ id: string; title?: string }> = [];
+/** 所有窗口（profileId → name 从 profile-list 读） */
+function listWindows(): Array<{ id: string; name: string; providerId: string }> {
+  const byId: Record<string, any> = {};
+  for (const p of readProfiles()) byId[p.id] = p;
+  return windowState.getAllContexts()
+    .filter((c: any) => !c.isSubagent)  // 子代理窗口不算独立窗口
+    .map((c: any) => {
+      const p = byId[c.profileId];
+      return { id: String(c.profileId || ''), name: (p && p.name) || String(c.profileId || ''), providerId: String(c.providerId || '') };
+    });
+}
+
+/** 当前窗口（最后一个活跃窗口） */
+function getCurrentWindow(): { id: string; name: string; providerId: string } | null {
+  const ctxs = windowState.getAllContexts().filter((c: any) => !c.isSubagent);
+  const c = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+  if (!c) return null;
+  const p = readProfiles().find((x: any) => x.id === c.profileId);
+  return { id: String(c.profileId || ''), name: (p && p.name) || String(c.profileId || ''), providerId: String(c.providerId || '') };
+}
+
+/** 所有会话（合并各窗口的 sessionStore；带 projectDir，供 workspaceRegistry 用） */
+function allSessions(): Array<{ id: string; title?: string; projectDir?: string | null }> {
+  const out: Array<{ id: string; title?: string; projectDir?: string | null }> = [];
   const seen = new Set<string>();
   for (const ctx of windowState.getAllContexts()) {
     const store = ctx && ctx.sessionStore;
@@ -38,7 +60,7 @@ function allSessions(): Array<{ id: string; title?: string }> {
         if (seen.has(id)) continue;
         seen.add(id);
         const meta = typeof store.getSessionMeta === 'function' ? store.getSessionMeta(id) : {};
-        out.push({ id, title: (meta && meta.title) || undefined });
+        out.push({ id, title: (meta && meta.title) || undefined, projectDir: (meta && meta.projectDir) ?? null });
       }
     } catch (_) { /* ignore */ }
   }
@@ -53,6 +75,28 @@ function buildCuckooHost(): CuckooHost {
     setPluginConfig: (pluginId: string, values: Record<string, any>) => setPluginConfig(pluginId, values),
     getCurrentSession: () => currentSession(),
     listSessions: () => allSessions(),
+    listWindows: () => listWindows(),
+    getCurrentWindow: () => getCurrentWindow(),
+    attachSessionToWorkspace: (sessionId: string, projectDir: string) => {
+      if (!sessionId || !projectDir) return false;
+      // 找到"当前会话所在的窗口"（按 sessionId 匹配 sessionStore）
+      for (const ctx of windowState.getAllContexts()) {
+        const store = ctx && ctx.sessionStore;
+        if (!store || typeof store.readSessionStore !== 'function') continue;
+        try {
+          const all = store.readSessionStore();
+          if (all && all[sessionId] !== undefined) {
+            if (typeof store.saveSessionDirMapping === 'function') { store.saveSessionDirMapping(sessionId, projectDir); return true; }
+          }
+        } catch (_) { /* ignore */ }
+      }
+      // 没找到会话（新会话尚未落盘）：用"当前窗口"的 sessionStore 落盘
+      const ctxs = windowState.getAllContexts();
+      const c = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      const store = c && c.sessionStore;
+      if (store && typeof store.saveSessionDirMapping === 'function') { try { store.saveSessionDirMapping(sessionId, projectDir); return true; } catch (_) {} }
+      return false;
+    },
     getSession: (id: string) => {
       const found = allSessions().find((s) => s.id === id);
       return found || null;

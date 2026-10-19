@@ -88,17 +88,7 @@ export function createStorageDomain(pluginId: string): any {
   };
 }
 
-/** 创建 agentDefaultModel 兼容层（最小实现：返回默认 selection） */
-export function createAgentDefaultModel(): any {
-  return {
-    /** DSH 契约：当前默认模型选择（返回 { id, model, ... } 或 undefined） */
-    currentSelection() { return undefined; },
-    /** 列出可选模型 */
-    list() { return []; },
-    /** 订阅变化（空实现） */
-    subscribe(_cb: any) { return () => {}; },
-  };
-}
+// （agentDefaultModel 已移至 llm-service.ts：需要"当前窗口"信息）
 
 /** 创建 connection 兼容层（requestRejection：Host/Origin 检查） */
 export function createConnection(): any {

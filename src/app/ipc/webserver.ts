@@ -52,6 +52,11 @@ const SHELL_TOKEN = require('node:crypto').randomBytes(24).toString('hex');
 /** 暴露给 preload（壳页面取令牌用） */
 function getShellToken(): string { return SHELL_TOKEN; }
 
+/** 列出当前所有动态路由的 path（壳页面 fetch 拦截器用：动态判断"哪些 URL 是插件 API"） */
+function listDynamicRoutes(): Array<{ path: string; kind: 'exact' | 'prefix' }> {
+  return dynamicRoutes.map((r) => ({ path: r.path, kind: r.kind }));
+}
+
 /** 注册一个动态路由（返回 disposer）。插件宿主侧在主进程执行，handler 直接挂进 http server。 */
 function registerDynamicRoute(pluginId: string, spec: { kind?: string; path: string; handler: (req: any, res: any) => any }): () => void {
   const kind = spec && spec.kind === 'prefix' ? 'prefix' : 'exact';
@@ -144,6 +149,11 @@ function ensureServer(): Promise<number> {
 }
 
 function registerWebServerIpc(): void {
+  // 列出所有动态路由（壳页面 fetch 拦截器用）
+  ipcMain.handle('plugin-web-routes', async () => {
+    try { return { success: true, routes: listDynamicRoutes() }; }
+    catch (err: any) { return { success: false, routes: [], error: err && err.message ? err.message : String(err) }; }
+  });
   // 插件注册一个静态路由
   ipcMain.handle('plugin-webserver-serve', async (_event: any, { pluginId, prefix, dir }: any = {}) => {
     try {
@@ -179,4 +189,4 @@ function registerWebServerIpc(): void {
   });
 }
 
-export { registerWebServerIpc, registerDynamicRoute };
+export { registerWebServerIpc, registerDynamicRoute, listDynamicRoutes };
