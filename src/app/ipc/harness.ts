@@ -217,6 +217,12 @@ function registerHarnessIpc(): void {
     try {
       import('../../plugins/cuckoo-plugins/event-bridge.js').then((m: any) => m.dispatchHarnessPayload(payload)).catch(() => {});
     } catch (_) { /* ignore */ }
+    // AI 回复完成 → 通知 agents-service（唤醒 whenIdle 等）
+    if (payload && payload.type === 'assistant-done') {
+      try {
+        import('../../plugins/dsh-compat/agents-service.js').then((m: any) => m.onAssistantDone()).catch(() => {});
+      } catch (_) { /* ignore */ }
+    }
     const hv = (ctx as any).harnessView;
     if (hv && !hv.webContents.isDestroyed()) {
       hv.webContents.send('harness-event', payload);

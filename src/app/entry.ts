@@ -1317,7 +1317,7 @@ if (!gotSingleInstanceLock) {
     import('../plugins/cuckoo-plugins/index.js').then((m: any) => {
       import('../tools/index.js').then((t: any) => {
         import('./cuckoo-host.js').then((h: any) => {
-        m.loadEnabledPlugins(t.registry, h.buildCuckooHost()).then((r: any) => {
+        m.loadEnabledPlugins(t.registry, h.buildCuckooHost({ storeDir: app.getPath('userData') })).then((r: any) => {
           if (r.loaded.length || r.failed.length) {
             console.log('[Cuckoo Plugin] 已加载: ' + (r.loaded.join(' | ') || '(无)') +
               (r.failed.length ? '；失败: ' + r.failed.map((f: any) => f.id + ':' + f.error).join(' | ') : ''));

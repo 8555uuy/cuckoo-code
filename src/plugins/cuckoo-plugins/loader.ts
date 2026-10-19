@@ -173,6 +173,20 @@ interface CuckooHost {
   getSession?: (id: string) => { id: string; title?: string } | null;
   /** 所有窗口（DSH llm 服务用：provider=平台, model=窗口） */
   listWindows?: () => Array<{ id: string; name: string; providerId: string }>;
+  /** 逻辑 ID 翻译层（logicId ↔ webId） */
+  logicIdMap?: { webIdOf(logicId: any): any; logicIdOf(webId: any): any; bind(logicId: any, webId: any): void; ensureLogicId(webId: any): any; has(logicId: any): boolean };
+  /** DSH agents.create 用：把会话窗口导航到首页并等页面就绪（按 profileId 找窗口） */
+  navigateWindowToHome?: (logicId: string, profileId: string | null, providerId: string | null) => Promise<boolean>;
+  /** DSH agents.create 用：构建系统提示词（providerId 决定模板） */
+  buildSystemPrompt?: (projectDir: string, providerId: string) => string;
+  /** DSH agents.create 用：往会话窗口发用户消息（按 profileId 找窗口） */
+  sendUserMessage?: (logicId: string, profileId: string | null, text: string) => boolean;
+  /** DSH agents.create 用：保存"会话 → 目录"映射 */
+  saveSessionDirMapping?: (logicId: string, projectDir: string) => boolean;
+  /** 按 webId 设置会话标题（agents-service 用，webId 为 null 时走 pending） */
+  setSessionTitleForId?: (webId: string | null, title: string) => void;
+  /** 广播 session/event.turn/end（dsh-tasks 监听） */
+  broadcastTurnEnd?: (logicId: string, reason: 'completed' | 'error' | 'max-tokens' | 'aborted') => void;
   /** 当前窗口（DSH agentDefaultModel 用） */
   getCurrentWindow?: () => { id: string; name: string; providerId: string } | null;
   // ===== C6 =====

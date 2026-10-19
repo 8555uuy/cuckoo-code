@@ -247,7 +247,7 @@ function registerPluginIpc(): void {
       try {
         console.log('[HMR] set-enabled: pkg=' + pkgName + ' id=' + pid + ' on=' + on);
         const { buildCuckooHost } = await import('../cuckoo-host.js');
-        const host = buildCuckooHost();
+        const host = buildCuckooHost({ storeDir: app.getPath('userData') });
         if (on) {
           const r = await reloadPlugin(pid, toolRegistry, host);
           hmrOk = r.ok;

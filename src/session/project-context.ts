@@ -7,6 +7,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import * as windowState from '../app/window.js';
 import { buildPrompt, PROMPT_DIR } from './prompt-builder.js';
+import type { WebId } from './ids.js';
 
 const require = createRequire(import.meta.url);
 const { app, dialog } = require('electron');
@@ -126,7 +127,7 @@ async function initProject(skipPrompt: boolean = false, windowContext: any = nul
       console.log(`[Cuckoo Code] 已保存会话 ${sessionStore.state.currentSessionId} -> ${selectedDir}`);
     } else {
       // 如果未能获取会话ID，尝试从当前URL提取
-      let sessionId: string | null = null;
+      let sessionId: WebId | null = null;
       if (view && view.webContents && !view.webContents.isDestroyed()) {
         const url = view.webContents.getURL();
         sessionId = sessionStore.extractSessionIdFromUrl(url);

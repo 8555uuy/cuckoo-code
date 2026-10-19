@@ -14,6 +14,9 @@ import type { CuckooHost } from '../plugins/cuckoo-plugins/loader.js';
 import { registerPluginSlot, unregisterPluginSlot } from './ipc/plugin.js';
 import { registerDynamicRoute } from './ipc/webserver.js';
 import { readProfiles } from './profile.js';
+import { getProvider } from '../providers/registry.js';
+import { createLogicIdMap } from '../session/logic-id-map.js';
+import type { WebId, LogicId } from '../session/ids.js';
 
 /** 取"当前会话"（优先最后一个活跃窗口） */
 function currentSession(): { id: string | null; projectDir: string | null } {
@@ -79,8 +82,18 @@ function allSessions(): Array<{ id: string; title?: string; projectDir?: string 
 }
 
 /** 构造 CuckooHost（供 DSH 插件 ctx 使用） */
-function buildCuckooHost(): CuckooHost {
+function buildCuckooHost(opts?: { storeDir?: string }): CuckooHost {
+  const storeDir = opts?.storeDir || '';
+  const logicIdMap = storeDir ? createLogicIdMap(storeDir) : null;
   return {
+    logicIdMap: logicIdMap ? {
+      webIdOf: (logicId: LogicId) => logicIdMap.webIdOf(logicId),
+      logicIdOf: (webId: WebId) => logicIdMap.logicIdOf(webId),
+      bind: (logicId: LogicId, webId: WebId) => logicIdMap.bind(logicId, webId),
+      ensureLogicId: (webId: WebId) => logicIdMap.ensureLogicId(webId),
+      has: (logicId: LogicId) => logicIdMap.has(logicId),
+    } : undefined,
+    
     getToolNames: () => (registry && typeof registry.listNames === 'function') ? registry.listNames() : [],
     getPluginConfig: (pluginId: string, defaults?: any) => getPluginConfig(pluginId, defaults),
     setPluginConfig: (pluginId: string, values: Record<string, any>) => setPluginConfig(pluginId, values),
@@ -88,25 +101,37 @@ function buildCuckooHost(): CuckooHost {
     listSessions: () => allSessions(),
     listWindows: () => listWindows(),
     getCurrentWindow: () => getCurrentWindow(),
-    attachSessionToWorkspace: (sessionId: string, projectDir: string) => {
-      if (!sessionId || !projectDir) return false;
-      // 找到"当前会话所在的窗口"（按 sessionId 匹配 sessionStore）
+    attachSessionToWorkspace: (logicId: string, projectDir: string) => {
+      if (!logicId || !projectDir) return false;
+
+      // 1. 先查 logicIdMap：是否已经能翻译出 webId
+      const webId = logicIdMap ? logicIdMap.webIdOf(logicId as any) : null;
+
+      // 2. 找到对应的窗口 store
+      //    （如果有 webId，按 webId 找；否则按"当前窗口"或任务指定的 profileId 找）
+      let store: any = null;
       for (const ctx of windowState.getAllContexts()) {
-        const store = ctx && ctx.sessionStore;
-        if (!store || typeof store.readSessionStore !== 'function') continue;
-        try {
-          const all = store.readSessionStore();
-          if (all && all[sessionId] !== undefined) {
-            if (typeof store.saveSessionDirMapping === 'function') { store.saveSessionDirMapping(sessionId, projectDir); return true; }
-          }
-        } catch (_) { /* ignore */ }
+        if (!ctx.sessionStore) continue;
+        if (webId) {
+          const all = ctx.sessionStore.readSessionStore();
+          if (all && all[webId] !== undefined) { store = ctx.sessionStore; break; }
+        }
       }
-      // 没找到会话（新会话尚未落盘）：用"当前窗口"的 sessionStore 落盘
-      const ctxs = windowState.getAllContexts();
-      const c = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
-      const store = c && c.sessionStore;
-      if (store && typeof store.saveSessionDirMapping === 'function') { try { store.saveSessionDirMapping(sessionId, projectDir); return true; } catch (_) {} }
-      return false;
+      if (!store) {
+        // 新会话尚未落盘，或找不到匹配：用最后一个窗口的 store
+        const ctxs = windowState.getAllContexts();
+        store = ctxs.length > 0 ? ctxs[ctxs.length - 1].sessionStore : null;
+      }
+      if (!store) return false;
+
+      // 3. 核心逻辑：有 webId 直接绑；没有 webId 走 pending，绝不能污染旧会话
+      if (webId) {
+        store.saveSessionDirMapping(webId, projectDir);
+        return true;
+      } else {
+        store.state.pendingProjectDir = projectDir;
+        return true;
+      }
     },
     getSession: (id: string) => {
       const found = allSessions().find((s) => s.id === id);
@@ -176,11 +201,144 @@ function buildCuckooHost(): CuckooHost {
         const store = ctx && ctx.sessionStore;
         if (!store) continue;
         try {
-          const meta = store.getSessionMeta(id);
+          const meta = store.getSessionMeta(id as any);
           if (meta) return { id, title: meta.title, projectDir: meta.projectDir ?? null };
         } catch (_) { /* ignore */ }
       }
       return null;
+    },
+    // ===== DSH agents.create 用 =====
+    navigateWindowToHome: async (logicId: string, profileId: string | null, providerId: string | null): Promise<boolean> => {
+      // 按 profileId 找窗口（dsh-tasks 的 model = profileId）
+      let ctx: any = null;
+      if (profileId) {
+        ctx = windowState.getWindowByProfileId(profileId);
+      }
+      if (!ctx) {
+        // 回退：当前窗口（最后一个）
+        const ctxs = windowState.getAllContexts();
+        ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      }
+      if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return false;
+      const pid = providerId || ctx.providerId;
+      const provider = pid ? getProvider(pid) : null;
+      const homeUrl = provider && provider.homeUrl ? provider.homeUrl : null;
+      if (!homeUrl) return false;
+      const wc = ctx.view.webContents;
+      // 如果已经在首页，直接返回
+      try {
+        const cur = wc.getURL();
+        if (cur && cur.startsWith(homeUrl.split('?')[0])) return true;
+      } catch (_) { /* ignore */ }
+      // 导航 + 等 did-finish-load + 等 2 秒（bridge 就绪）
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+        const done = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          try { wc.off('did-finish-load', onLoad); } catch (_) { /* ignore */ }
+          resolve(ok);
+        };
+        const onLoad = () => {
+          setTimeout(() => done(true), 2000);
+        };
+        wc.once('did-finish-load', onLoad);
+        wc.loadURL(homeUrl).catch(() => done(false));
+        setTimeout(() => done(false), 15000);  // 15 秒兜底
+      });
+    },
+    buildSystemPrompt: (projectDir: string, providerId: string): string => {
+      try {
+        // 动态导入 buildPrompt（避免循环依赖）
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const mod = require('../session/prompt-builder.js');
+        // 若调用方没给 providerId，从"当前窗口"补
+        let pid = providerId;
+        if (!pid) {
+          const ctxs = windowState.getAllContexts();
+          const cur = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+          pid = (cur && cur.providerId) || '';
+        }
+        const built = mod.buildPrompt({ providerId: pid, selectedDir: projectDir });
+        return built && !built.error ? built.prompt : '';
+      } catch (_) { return ''; }
+    },
+    sendUserMessage: (logicId: string, profileId: string | null, text: string): boolean => {
+      let ctx: any = null;
+      if (profileId) {
+        ctx = windowState.getWindowByProfileId(profileId);
+      }
+      if (!ctx) {
+        const ctxs = windowState.getAllContexts();
+        ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      }
+      if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return false;
+      try {
+        ctx.view.webContents.send('harness-user-message', { text });
+        return true;
+      } catch (_) { return false; }
+    },
+    saveSessionDirMapping: (logicId: string, projectDir: string): boolean => {
+      // 严格按 logicIdMap 翻译，绝不能拿 store.state.currentSessionId（那是旧会话！）
+      const webId = logicIdMap ? logicIdMap.webIdOf(logicId as any) : null;
+
+      let store: any = null;
+      for (const ctx of windowState.getAllContexts()) {
+        if (!ctx.sessionStore) continue;
+        if (webId) {
+          const all = ctx.sessionStore.readSessionStore();
+          if (all && all[webId] !== undefined) { store = ctx.sessionStore; break; }
+        }
+      }
+      if (!store) {
+        const ctxs = windowState.getAllContexts();
+        store = ctxs.length > 0 ? ctxs[ctxs.length - 1].sessionStore : null;
+      }
+      if (!store) return false;
+
+      if (webId) {
+        try { store.saveSessionDirMapping(webId, projectDir); return true; } catch (_) { return false; }
+      } else {
+        store.state.pendingProjectDir = projectDir;
+        return true;
+      }
+    },
+    broadcastTurnEnd: (logicId: string, reason: 'completed' | 'error' | 'max-tokens' | 'aborted'): void => {
+      // 构造 session 对象（dsh-tasks 用 session.id 匹配 trackedRuns）
+      const session = {
+        id: logicId,
+        // DSH Session 的简化视图（dsh-tasks 只用 id）
+      };
+      const event = { type: 'turn/end', data: { reason } };
+      // 动态 import event-bridge（避免循环依赖）
+      import('../plugins/cuckoo-plugins/event-bridge.js')
+        .then((m: any) => {
+          try { m.broadcastDshEvent('session/event', session, event); } catch (_) { /* ignore */ }
+        })
+        .catch(() => { /* ignore */ });
+    },
+    setSessionTitleForId: (webId: string | null, title: string): void => {
+      // 有 webId 且存在 → 直接更新
+      if (webId) {
+        for (const ctx of windowState.getAllContexts()) {
+          const store = ctx && ctx.sessionStore;
+          if (!store) continue;
+          try {
+            const all = store.readSessionStore();
+            if (all && all[webId] !== undefined) {
+              store.updateSessionTitle(webId as any, title);
+              return;
+            }
+          } catch (_) { /* ignore */ }
+        }
+      }
+      // 没有 webId（还没出现），或没找到：塞 pendingTitle（绑当前窗口，等 URL 变化）
+      const ctxs = windowState.getAllContexts();
+      const cur = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      const store = cur && cur.sessionStore;
+      if (store && store.state) {
+        store.state.pendingTitle = title;
+      }
     },
     // ===== C8 =====
     mcpCall: async (server: string, tool: string, args?: any) => {
