@@ -9,6 +9,7 @@ import * as windowState from './window.js';
 import * as profileManager from './profile.js';
 import { createSessionStore } from '../session/store.js';
 import { createLogicIdMap } from '../session/logic-id-map.js';
+import { initDatabase, migrateLegacyData } from '../session/db.js';
 import { getProvider } from '../providers/registry.js';
 import * as updater from '../updater/index.js';
 import * as mcpConfig from '../mcp/config.js';
@@ -37,8 +38,14 @@ try {
 app.setPath('userData', USER_DATA_DIR);
 console.log('[Cuckoo Code] Session 数据目录:', app.getPath('userData'));
 
+// 初始化 SQLite 数据库
+const globalDb = initDatabase(app.getPath('userData'));
+// 迁移老 JSON 数据
+migrateLegacyData(globalDb, app.getPath('userData'));
+
 /** 全局唯一的 logicId ↔ webId 翻译层 */
-const globalLogicIdMap = createLogicIdMap(app.getPath('userData'));
+const globalLogicIdMap = createLogicIdMap(globalDb);
+(global as any).__globalLogicIdMap = globalLogicIdMap;
 
 // 渲染进程日志输出目录（仅开发环境持久化；打包版不写日志文件）
 const RENDERER_LOG_DIR = app.isPackaged
@@ -113,8 +120,7 @@ function clampBounds(b: any) {
 function createWindow(profile: any) {
   const profileData = profile || profileManager.getDefaultProfile();
   const provider = getProvider(profileData.providerId) || null;
-  const storeDir = app.getPath('userData');
-  const sessionStore = createSessionStore(profileData.id, storeDir, windowState, { logicIdMap: globalLogicIdMap });
+  const sessionStore = createSessionStore(profileData.id, globalDb, windowState, { logicIdMap: globalLogicIdMap });
 
   // 新窗口诞生时，立刻分配一个临时 logicId，并创建“新建对话”的记录。
   // 这样在 webId 出现之前，所有的操作（绑目录、设标题、发消息）都有明确的 logicId。

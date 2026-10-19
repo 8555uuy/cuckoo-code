@@ -21,6 +21,7 @@ import { initThemePresenter } from './theme-presenter.js';
 import { mountShellFrame, registerPage } from './shell-frame.js';
 import { mountStatusBar } from './statusbar.js';
 import { loadDshClients } from './dsh-client-runtime.js';
+import { bindInitPrompt } from './init-prompt.js';
 import { HomePage } from './pages/home-react.js';
 import { AboutPage } from './pages/about-react.js';
 import { SkillsPage } from './pages/skills-react.js';
@@ -60,6 +61,7 @@ try {
   registerPage('plugins', PluginsPage);
   mountShellFrame();
   mountStatusBar();
+  bindInitPrompt();
   // 加载 DSH 插件 client 入口（异步，失败不影响壳）
   loadDshClients().catch((e: any) => console.error('[dsh-client] 加载失败', e));
 } catch (e) { console.error('[react-shell] 挂载失败', e); }

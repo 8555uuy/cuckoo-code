@@ -20,6 +20,7 @@ import { getProvider } from '../../providers/registry.js';
 import { resetTodosCache } from './tool.js';
 import { cdpAttach } from './cdp-attach.js';
 import { initProject } from '../../session/project-context.js';
+import { buildPrompt } from '../../session/prompt-builder.js';
 
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
@@ -190,20 +191,111 @@ function prepareNewConversation(ctx: any): void {
 }
 
 function registerHarnessIpc(): void {
-  // 用户在 harness 输入 → 转给 AI 页面（bridge 会调 sendToChat）
-  ipcMain.handle('harness-send', (event: any, payload: any) => {
-    console.log('[Cuckoo Harness] 收到用户消息，长度=' + ((payload && payload.text) || '').length);
+  // 壳页面发送消息（触发 AI 回复）
+  ipcMain.handle('shell-send-message', async (event: any, payload: any) => {
     const text = (payload && payload.text) || '';
     const ctx = findContext(event.sender);
     if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) {
       return { success: false, error: 'no-ai-view' };
     }
+    try {
+      resetTodosCache();
+      const hv = (ctx as any).harnessView;
+      if (hv && !hv.webContents.isDestroyed()) hv.webContents.send('harness-event', { type: 'plan', todos: [] });
+    } catch (_) { /* ignore */ }
+    // 发给网页（原版模式），bridge 收到后会调 sendToChat
+    ctx.view.webContents.send('harness-user-message', { text });
+    return { success: true };
+  });
+
+  // 壳页面点取消 → 通知网页把横幅重新显示出来
+  ipcMain.on('cancel-init-prompt', (event: any) => {
+    const ctx = findContext(event.sender);
+    if (ctx && ctx.view && !ctx.view.webContents.isDestroyed()) {
+      ctx.view.webContents.send('cuckoo-show-first-time-dialog');
+    }
+  });
+
+  // 网页请求显示初始化弹窗
+  ipcMain.on('shell-show-init-prompt-direct', (event: any) => {
+    console.log('[Cuckoo] 收到网页端的初始化弹窗请求');
+    const ctx = findContext(event.sender);
+    if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+      console.log('[Cuckoo] 成功转发给壳页面');
+      ctx.win.webContents.send('shell-show-init-prompt');
+    } else {
+      console.log('[Cuckoo] 没找到窗口上下文，转发失败');
+    }
+  });
+
+  // 原版模式初始化输入框：合并系统提示词
+  ipcMain.handle('merge-system-prompt', async (event: any, payload: any) => {
+    const ctx = findContext(event.sender);
+    if (!ctx) return { success: false, error: 'no-context' };
+    const sessionStore = ctx.sessionStore;
+    const logicId = sessionStore ? sessionStore.state.currentSessionId : null;
+    const projectDir = sessionStore ? sessionStore.state.selectedProjectDir : null;
+    
+    let text = payload?.text || '';
+    
+    if (logicId && projectDir && sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
+      const hasSent = sessionStore.getSystemPromptSent(logicId);
+      if (!hasSent) {
+        try {
+          const providerId = ctx.providerId || '';
+          const built = buildPrompt({ providerId, selectedDir: projectDir });
+          if (built && !built.error && built.prompt) {
+            text = built.prompt + '\n\n---\n\n' + text;
+            sessionStore.setSystemPromptSent(logicId, true);
+            console.log('[Cuckoo Harness] merge-system-prompt 合并完成，最终长度=' + text.length);
+          }
+        } catch (e: any) {
+          console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
+        }
+      }
+    }
+    return { success: true, text };
+  });
+
+  // 用户在 harness 输入 → 转给 AI 页面（bridge 会调 sendToChat）
+  ipcMain.handle('harness-send', (event: any, payload: any) => {
+    let text = (payload && payload.text) || '';
+    console.log('[Cuckoo Harness] 收到用户消息，长度=' + text.length);
+    const ctx = findContext(event.sender);
+    if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) {
+      return { success: false, error: 'no-ai-view' };
+    }
+    
+    const sessionStore = ctx.sessionStore;
+    const logicId = sessionStore ? sessionStore.state.currentSessionId : null;
+    const projectDir = sessionStore ? sessionStore.state.selectedProjectDir : null;
+    
+    // 判断是否首次发送，且是否有项目目录
+    if (logicId && projectDir && sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
+      const hasSent = sessionStore.getSystemPromptSent(logicId);
+      if (!hasSent) {
+        console.log('[Cuckoo Harness] 首次发送消息，合并系统提示词...');
+        try {
+          const providerId = ctx.providerId || '';
+          const built = buildPrompt({ providerId, selectedDir: projectDir });
+          if (built && !built.error && built.prompt) {
+            text = built.prompt + '\n\n---\n\n' + text;
+            sessionStore.setSystemPromptSent(logicId, true);
+            console.log('[Cuckoo Harness] 合并完成，最终长度=' + text.length);
+          }
+        } catch (e: any) {
+          console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
+        }
+      }
+    }
+
     // 新用户消息 = 新任务：清空旧计划（否则旧 todoWrite 结果一直挂着）
     try {
       resetTodosCache();
       const hv = (ctx as any).harnessView;
       if (hv && !hv.webContents.isDestroyed()) hv.webContents.send('harness-event', { type: 'plan', todos: [] });
     } catch (_) { /* ignore */ }
+    
     ctx.view.webContents.send('harness-user-message', { text: text });
     return { success: true };
   });

@@ -286,7 +286,7 @@ export function mountShellFrame(): void {
   if (!sidebar.dataset.ckOldRemoved) {
     // 1a) 先把"通用弹窗"移出到 body（ckPrompt/ckAlert 等依赖，不能删）
     //     它们在 partials/modals.html 里，本被包在侧栏内。
-    ['ck-dialog', 'input-modal', 'wg-modal'].forEach((id) => {
+    ['ck-dialog', 'input-modal', 'wg-modal', 'init-prompt-modal', 'snip-modal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentNode !== document.body) { try { document.body.appendChild(el); } catch (_) {} }
     });

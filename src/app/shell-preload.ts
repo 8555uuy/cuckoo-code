@@ -13,6 +13,13 @@ const platform = platformArg ? platformArg.slice('--cuckoo-platform='.length) : 
 
 const shellAPI = {
   platform,
+  selectProjectDir: () => ipcRenderer.invoke('select-project-dir'),
+  cancelInitPrompt: () => ipcRenderer.send('cancel-init-prompt'),
+  mergeSystemPrompt: (text: string) => ipcRenderer.invoke('merge-system-prompt', { text }),
+  sendUserMessage: (text: string) => ipcRenderer.invoke('shell-send-message', { text }),
+  onShowInitPrompt: (cb: () => void) => {
+    ipcRenderer.on('shell-show-init-prompt', () => cb());
+  },
   navigate: (url: string) => ipcRenderer.invoke('shell-navigate', { url }),
   back: () => ipcRenderer.invoke('shell-back'),
   forward: () => ipcRenderer.invoke('shell-forward'),

@@ -14,6 +14,16 @@ export interface ShellAPI {
   toggleSidebar?: (width: number) => void;
   /** 隐藏/显示 AI 视图（弹窗盖过 AI 区域时用） */
   setAiViewVisible?: (visible: boolean) => Promise<any>;
+  /** 选择项目目录 */
+  selectProjectDir?: () => Promise<{ success: boolean; message: string; dir?: string }>;
+  /** 取消初始化 */
+  cancelInitPrompt?: () => void;
+  /** 合并系统提示词 */
+  mergeSystemPrompt?: (text: string) => Promise<{ success: boolean; text?: string; error?: string }>;
+  /** 发送用户消息 */
+  sendUserMessage?: (text: string) => Promise<any>;
+  /** 监听主进程：显示初始化输入弹窗 */
+  onShowInitPrompt?: (cb: () => void) => void;
   startSidebarDrag?: () => void;
   endSidebarDrag?: () => void;
   onSidebarDrag?: (cb: (width: number) => void) => void;

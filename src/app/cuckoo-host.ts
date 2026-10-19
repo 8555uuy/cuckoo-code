@@ -82,9 +82,8 @@ function allSessions(): Array<{ id: string; title?: string; projectDir?: string 
 }
 
 /** 构造 CuckooHost（供 DSH 插件 ctx 使用） */
-function buildCuckooHost(opts?: { storeDir?: string; logicIdMap?: any }): CuckooHost {
-  const storeDir = opts?.storeDir || '';
-  const logicIdMap = opts?.logicIdMap || (storeDir ? createLogicIdMap(storeDir) : null);
+function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
+  const logicIdMap = opts?.logicIdMap || null;
   return {
     logicIdMap: logicIdMap ? {
       webIdOf: (logicId: LogicId) => logicIdMap.webIdOf(logicId),
