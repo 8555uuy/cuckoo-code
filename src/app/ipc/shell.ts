@@ -209,14 +209,12 @@ function registerShellIpc(): void {
       
       // 清空当前会话状态，回归纯净的新对话状态
       if (ctx && ctx.sessionStore) {
-        ctx.sessionStore.state.currentSessionId = null;
         ctx.sessionStore.state.selectedProjectDir = null;
         ctx.sessionStore.state.pendingProjectDir = null;
         ctx.sessionStore.state.initialPromptSent = false;
         
-        // 强制生成一个新的临时 logicId，作为新对话的唯一主键
+        // 强制生成一个新的临时 logicId 存在于内存，但不落库（防止产生垃圾数据）
         const tempLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
-        ctx.sessionStore.updateSessionTitle(tempLogicId, '新建对话');
         ctx.sessionStore.state.currentSessionId = tempLogicId;
       }
       

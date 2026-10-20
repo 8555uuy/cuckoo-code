@@ -266,37 +266,23 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
     const canSend = wc && !wc.isDestroyed();
 
     if (webId) {
-      // 尝试直接从数据库里查这个 webId（如果是老窗口，logic_id 和 web_id 相同）
-      let logicId: LogicId | null = null;
-      if (!noPersist) {
-        const row = db.prepare('SELECT logic_id FROM sessions WHERE web_id = ? OR logic_id = ?').get(webId, webId) as any;
-        if (row) logicId = row.logic_id;
-      }
-
-      if (!logicId) {
-        // 如果库里没有，说明是新窗口或插件：
-        // 优先看是不是有临时 logicId 绑过去
-        if (opts && opts.logicIdMap) {
+      let logicId: LogicId;
+      
+      if (opts && opts.logicIdMap) {
+        // 只认内存！如果内存里有正在用的 logicId（不管是 local-xxx 还是插件的），强制绑定
+        if (state.currentSessionId) {
+          logicId = state.currentSessionId as LogicId;
+          opts.logicIdMap.bind(logicId, webId);
+        } else {
+          // 内存没有，说明是打开历史会话或老数据兜底
           let mappedLogicId = opts.logicIdMap.logicIdOf(webId);
-          
-          // 没绑定过，且当前窗口有临时 logicId，强制绑定
-          if (!mappedLogicId && state.currentSessionId && state.currentSessionId.startsWith('local-')) {
-            mappedLogicId = state.currentSessionId as LogicId;
-            opts.logicIdMap.bind(mappedLogicId, webId);
-            
-            // 如果存在双写产生的脏数据，删掉 webId 对应的多余记录
-            if (opts.logicIdMap.remove && mappedLogicId !== webId) {
-              opts.logicIdMap.remove(webId as unknown as LogicId);
-            }
-          }
-          
           if (!mappedLogicId) {
             mappedLogicId = opts.logicIdMap.ensureLogicId(webId);
           }
           logicId = mappedLogicId;
-        } else {
-          logicId = webId as unknown as LogicId;
         }
+      } else {
+        logicId = webId as unknown as LogicId;
       }
       
       state.currentSessionId = logicId;
@@ -344,7 +330,23 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         if (canSend) emitProjectDir(wc, null);
       }
     } else {
-      state.currentSessionId = null;
+      // URL 没有 webId，说明在首页。
+      // 检查 URL 是否带入了 cuckoo_logic_id（插件入口）
+      let urlLogicId: string | null = null;
+      try {
+        const u = new URL(url);
+        urlLogicId = u.searchParams.get('cuckoo_logic_id');
+      } catch (_) { /* ignore */ }
+      
+      if (urlLogicId) {
+        // 插件带了 logicId，缓存在内存里
+        state.currentSessionId = urlLogicId as LogicId;
+        console.log('[Cuckoo Code][' + profileId + '] 从 URL 缓存插件 LogicId: ' + urlLogicId);
+      } else {
+        // 没有带参数，说明是用户手动新建，清空内存
+        state.currentSessionId = null;
+      }
+      
       state.selectedProjectDir = null;
       state.initialPromptSent = false;
       if (canSend) emitProjectDir(wc, null);

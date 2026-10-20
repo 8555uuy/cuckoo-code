@@ -211,12 +211,27 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
       const provider = pid ? getProvider(pid) : null;
       const homeUrl = provider && provider.homeUrl ? provider.homeUrl : null;
       if (!homeUrl) return false;
+      
       const wc = ctx.view.webContents;
-      // 如果已经在首页，直接返回
+      let targetUrl = homeUrl;
+      
+      // 给插件场景生成带 logicId 的 URL
+      if (logicId && logicId !== 'undefined') {
+        try {
+          const u = new URL(homeUrl);
+          u.searchParams.set('cuckoo_logic_id', logicId);
+          targetUrl = u.toString();
+        } catch (_) {
+          targetUrl = homeUrl + (homeUrl.includes('?') ? '&' : '?') + 'cuckoo_logic_id=' + encodeURIComponent(logicId);
+        }
+      }
+
+      // 如果已经是目标 URL，直接返回
       try {
         const cur = wc.getURL();
-        if (cur && cur.startsWith(homeUrl.split('?')[0])) return true;
+        if (cur === targetUrl) return true;
       } catch (_) { /* ignore */ }
+
       // 导航 + 等 did-finish-load + 等 2 秒（bridge 就绪）
       return new Promise<boolean>((resolve) => {
         let settled = false;
@@ -230,7 +245,7 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
           setTimeout(() => done(true), 2000);
         };
         wc.once('did-finish-load', onLoad);
-        wc.loadURL(homeUrl).catch(() => done(false));
+        wc.loadURL(targetUrl).catch(() => done(false));
         setTimeout(() => done(false), 15000);  // 15 秒兜底
       });
     },
