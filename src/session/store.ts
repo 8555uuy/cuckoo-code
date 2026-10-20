@@ -236,7 +236,9 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
   const state: any = {
     currentSessionId: null,
     selectedProjectDir: null,
+    pendingProjectDir: null,
     pendingLineage: null,
+    initialPromptSent: false,
   };
 
   function resolveView(targetView?: any): any {
@@ -276,10 +278,18 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         // 优先看是不是有临时 logicId 绑过去
         if (opts && opts.logicIdMap) {
           let mappedLogicId = opts.logicIdMap.logicIdOf(webId);
+          
+          // 没绑定过，且当前窗口有临时 logicId，强制绑定
           if (!mappedLogicId && state.currentSessionId && state.currentSessionId.startsWith('local-')) {
             mappedLogicId = state.currentSessionId as LogicId;
             opts.logicIdMap.bind(mappedLogicId, webId);
+            
+            // 如果存在双写产生的脏数据，删掉 webId 对应的多余记录
+            if (opts.logicIdMap.remove && mappedLogicId !== webId) {
+              opts.logicIdMap.remove(webId as unknown as LogicId);
+            }
           }
+          
           if (!mappedLogicId) {
             mappedLogicId = opts.logicIdMap.ensureLogicId(webId);
           }
@@ -291,6 +301,30 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
       
       state.currentSessionId = logicId;
       console.log('[Cuckoo Code][' + profileId + '] 当前会话ID(逻辑): ' + logicId);
+
+      // 处理新窗口暂存的项目目录
+      if (state.pendingProjectDir) {
+        saveSessionDirMapping(logicId!, state.pendingProjectDir);
+        state.selectedProjectDir = state.pendingProjectDir;
+        state.pendingProjectDir = null;
+        if (canSend) {
+          emitProjectDir(wc, state.selectedProjectDir);
+          wc.send('session-restored', { sessionId: logicId, projectDir: state.selectedProjectDir });
+        }
+        console.log('[Cuckoo Code] 暂存目录已成功绑定到数据库:', logicId);
+        
+        // 通知壳页面刷新侧边栏工作区
+        const ctx = windowState && windowState.getContextByWebContents ? windowState.getContextByWebContents(wc) : null;
+        if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+          ctx.win.webContents.send('shell-sessions-changed');
+        }
+      }
+
+      // 处理临时标记（新窗口在首页发送了系统提示词）
+      if (state.initialPromptSent) {
+        setSystemPromptSent(logicId!, true);
+        state.initialPromptSent = false;
+      }
 
       // 绑定暂存的血缘
       if (state.pendingLineage) {
@@ -312,14 +346,8 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
     } else {
       state.currentSessionId = null;
       state.selectedProjectDir = null;
+      state.initialPromptSent = false;
       if (canSend) emitProjectDir(wc, null);
-      
-      // 🔥 主进程直管：发现是首页，直接通知壳页面弹窗
-      const ctx = windowState && windowState.getContextByWebContents ? windowState.getContextByWebContents(wc) : null;
-      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
-        // 通知壳页面，可以弹窗了（壳页面内部会做去重）
-        ctx.win.webContents.send('shell-show-init-prompt');
-      }
     }
   }
 

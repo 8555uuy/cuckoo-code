@@ -205,10 +205,28 @@ function registerShellIpc(): void {
     const url = provider && provider.homeUrl ? provider.homeUrl : '';
     if (!url) return { success: false, error: 'no-home-url' };
     try {
-      // 这里曾只做 loadURL —— AI 网页换了新会话，但 harness 视图完全不知道，
-      // 于是消息流/计划/目标/附件全留在屏幕上（"新对话"后满屏残留）。
       prepareNewConversation(ctx);
+      
+      // 清空当前会话状态，回归纯净的新对话状态
+      if (ctx && ctx.sessionStore) {
+        ctx.sessionStore.state.currentSessionId = null;
+        ctx.sessionStore.state.selectedProjectDir = null;
+        ctx.sessionStore.state.pendingProjectDir = null;
+        ctx.sessionStore.state.initialPromptSent = false;
+        
+        // 强制生成一个新的临时 logicId，作为新对话的唯一主键
+        const tempLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
+        ctx.sessionStore.updateSessionTitle(tempLogicId, '新建对话');
+        ctx.sessionStore.state.currentSessionId = tempLogicId;
+      }
+      
       await view.webContents.loadURL(url);
+      
+      // 直接通知壳页面准备弹窗（不用等 URL 变化）
+      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+        ctx.win.webContents.send('shell-show-init-prompt');
+      }
+      
       return { success: true };
     }
     catch (err: any) { return { success: false, error: err.message }; }

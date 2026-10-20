@@ -238,20 +238,38 @@ function registerHarnessIpc(): void {
     
     let text = payload?.text || '';
     
-    if (logicId && projectDir && sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
-      const hasSent = sessionStore.getSystemPromptSent(logicId);
-      if (!hasSent) {
-        try {
-          const providerId = ctx.providerId || '';
-          const built = buildPrompt({ providerId, selectedDir: projectDir });
-          if (built && !built.error && built.prompt) {
-            text = built.prompt + '\n\n---\n\n' + text;
+    console.log('[Cuckoo Merge] 收到合并请求: logicId=' + logicId + ', projectDir=' + projectDir);
+    
+    let shouldMerge = false;
+
+    if (projectDir) {
+      if (!logicId) {
+        // 没有 logicId，说明是新窗口（无会话），检查有没有内存标记
+        shouldMerge = !(sessionStore && sessionStore.state && sessionStore.state.initialPromptSent);
+      } else if (sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
+        // 有 logicId，检查数据库
+        shouldMerge = !sessionStore.getSystemPromptSent(logicId);
+      }
+    }
+
+    if (shouldMerge) {
+      try {
+        const providerId = ctx.providerId || '';
+        const built = buildPrompt({ providerId, selectedDir: projectDir });
+        if (built && !built.error && built.prompt) {
+          text = built.prompt + '\n\n---\n\n' + text;
+          
+          // 标记已发
+          if (logicId && sessionStore && typeof sessionStore.setSystemPromptSent === 'function') {
             sessionStore.setSystemPromptSent(logicId, true);
-            console.log('[Cuckoo Harness] merge-system-prompt 合并完成，最终长度=' + text.length);
+          } else if (sessionStore && sessionStore.state) {
+            sessionStore.state.initialPromptSent = true;
           }
-        } catch (e: any) {
-          console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
+          
+          console.log('[Cuckoo Harness] merge-system-prompt 合并完成，最终长度=' + text.length);
         }
+      } catch (e: any) {
+        console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
       }
     }
     return { success: true, text };
@@ -270,22 +288,32 @@ function registerHarnessIpc(): void {
     const logicId = sessionStore ? sessionStore.state.currentSessionId : null;
     const projectDir = sessionStore ? sessionStore.state.selectedProjectDir : null;
     
-    // 判断是否首次发送，且是否有项目目录
-    if (logicId && projectDir && sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
-      const hasSent = sessionStore.getSystemPromptSent(logicId);
-      if (!hasSent) {
-        console.log('[Cuckoo Harness] 首次发送消息，合并系统提示词...');
-        try {
-          const providerId = ctx.providerId || '';
-          const built = buildPrompt({ providerId, selectedDir: projectDir });
-          if (built && !built.error && built.prompt) {
-            text = built.prompt + '\n\n---\n\n' + text;
+    // 判断是否首次发送，且是否有项目目录（不依赖 logicId）
+    let shouldMerge = false;
+    if (projectDir && sessionStore) {
+      if (!logicId) {
+        shouldMerge = !sessionStore.state.initialPromptSent;
+      } else if (typeof sessionStore.getSystemPromptSent === 'function') {
+        shouldMerge = !sessionStore.getSystemPromptSent(logicId);
+      }
+    }
+
+    if (shouldMerge) {
+      console.log('[Cuckoo Harness] 首次发送消息，合并系统提示词...');
+      try {
+        const providerId = ctx.providerId || '';
+        const built = buildPrompt({ providerId, selectedDir: projectDir });
+        if (built && !built.error && built.prompt) {
+          text = built.prompt + '\n\n---\n\n' + text;
+          if (logicId) {
             sessionStore.setSystemPromptSent(logicId, true);
-            console.log('[Cuckoo Harness] 合并完成，最终长度=' + text.length);
+          } else {
+            sessionStore.state.initialPromptSent = true;
           }
-        } catch (e: any) {
-          console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
+          console.log('[Cuckoo Harness] 合并完成，最终长度=' + text.length);
         }
+      } catch (e: any) {
+        console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
       }
     }
 

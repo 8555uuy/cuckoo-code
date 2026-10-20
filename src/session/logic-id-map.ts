@@ -7,6 +7,7 @@ interface LogicIdMap {
   bind(logicId: LogicId, webId: WebId): void;
   ensureLogicId(webId: WebId): LogicId;
   has(logicId: LogicId): boolean;
+  remove(logicId: LogicId): void;
 }
 
 /**
@@ -58,6 +59,11 @@ function createLogicIdMap(db: DatabaseSync): LogicIdMap {
       if (!logicId) return false;
       const row = db.prepare('SELECT 1 FROM sessions WHERE logic_id = ?').get(logicId);
       return !!row;
+    },
+
+    remove(logicId: LogicId): void {
+      if (!logicId) return;
+      try { db.prepare('DELETE FROM sessions WHERE logic_id = ?').run(logicId); } catch (_) {}
     },
   };
 }
