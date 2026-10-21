@@ -20,35 +20,31 @@ import { registerWindowGroupsIpc, onSwitchShareResult } from './window-groups.js
 import { registerMemoryIpc } from './memory.js';
 import { registerSnapshotIpc } from './snapshot.js';
 import { setupPluginControl } from './plugin-control.js';
-import { captureHandlers } from './registry.js';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
 
 function registerIpcHandlers(): void {
-  // 窗口组切换：AI 页面分享回执（ipcMain.on，不抓取）
+  // 窗口组切换：AI 页面分享回执
   ipcMain.on('cuckoo-switch-share-result', onSwitchShareResult);
-  // 抓取所有 ipcMain.handle 注册的 handler（供手机端壳页桥内部调用）
-  captureHandlers(() => {
-    registerProjectIpc();
-    registerSessionIpc();
-    registerCommandIpc();
-    registerToolIpc();
-    registerRendererIpc();
-    registerShellIpc();
-    registerSubagentIpc();
-    registerHarnessIpc();
-    registerSnippetsIpc();
-    registerSettingsIpc();
-    registerFeishuIpc();
-    registerPluginIpc();
-    registerWebServerIpc();
-    registerThemeIpc();
-    registerWindowGroupsIpc();
-    registerMemoryIpc();
-    registerSnapshotIpc();
-  });
+  registerProjectIpc();
+  registerSessionIpc();
+  registerCommandIpc();
+  registerToolIpc();
+  registerRendererIpc();
+  registerShellIpc();
+  registerSubagentIpc();
+  registerHarnessIpc();
+  registerSnippetsIpc();
+  registerSettingsIpc();
+  registerFeishuIpc();
+  registerPluginIpc();
+  registerWebServerIpc();
+  registerThemeIpc();
+  registerWindowGroupsIpc();
+  registerMemoryIpc();
+  registerSnapshotIpc();
   setupPluginControl();
 }
 

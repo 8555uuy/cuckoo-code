@@ -24,7 +24,6 @@ import { loadConversations } from './pages/conversations.js';
 import { loadPlugins } from './pages/plugins.js';
 import { loadMemories } from './pages/memories.js';
 import { loadSnapshots } from './pages/snapshots.js';
-import { loadBlank } from './pages/blank.js';
 import { initPluginShell } from './plugin-shell.js';
 import { initThemePresenter } from './theme-presenter.js';
 
@@ -44,7 +43,6 @@ registerTab('conversations', loadConversations);
 registerTab('plugins', loadPlugins);
 registerTab('memories', loadMemories);
 registerTab('snapshots', loadSnapshots);
-registerTab('blank', loadBlank);
 
 // 预加载：工作区（默认页）+ 提示词 + 自动压缩配置
 try { loadWorkspaces(); } catch (_) { /* ignore */ }
