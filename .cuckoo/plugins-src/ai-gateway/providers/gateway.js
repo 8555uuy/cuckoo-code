@@ -345,7 +345,15 @@ async function handle(req, res) {
   if (p.startsWith('/api/')) {
     if (!authAdmin(req)) return json(res, 401, { success: false, error: '未登录' });
 
-    if (p === '/api/keys' && req.method === 'GET') return json(res, 200, { success: true, keys: keystore.loadKeys() });
+    if (p === '/api/keys' && req.method === 'GET') {
+      // 列表只返回脱敏前缀；操作标识用密文 key（与存储一致）
+      const list = keystore.loadKeys().map(function (k) {
+        const plain = (typeof k.__plain === 'string' && k.__plain) || '';
+        const masked = plain ? (plain.slice(0, 14) + '…') : '(已加密)';
+        return { key: k.key, masked: masked, note: k.note, createdAt: k.createdAt, enabled: k.enabled, calls: k.calls, lastUsedAt: k.lastUsedAt };
+      });
+      return json(res, 200, { success: true, keys: list });
+    }
     if (p === '/api/keys' && req.method === 'POST') {
       const body = await readBody(req); let b = {};
       try { b = JSON.parse(body || '{}'); } catch (e) {}

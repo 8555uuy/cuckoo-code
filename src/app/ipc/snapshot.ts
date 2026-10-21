@@ -36,7 +36,7 @@ function registerSnapshotIpc(): void {
   ipcMain.handle('restore-snapshot', async (_event: any, { id }: any) => {
     try {
       const r = restoreSnapshot(id);
-      return { success: true, restored: r.restored, projectDir: r.projectDir };
+      return { success: true, restored: r.restored, projectDir: r.projectDir, rollbackId: r.rollbackId };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
