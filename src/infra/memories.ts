@@ -78,24 +78,16 @@ function saveMemories(list: any): boolean {
   }
 }
 
-/** 单条记忆最大字符数（超出截断，防 prompt 膨胀） */
-const MAX_MEMORY_LEN = 500;
-/** 注入提示词的记忆章节总长上限（字符） */
-const MAX_SECTION_LEN = 4000;
-/** 记忆条数上限（超出时丢弃最旧的） */
-const MAX_MEMORIES = 200;
+/* 不再限制单条长度 / 章节总长 / 总条数（用户要求去掉硬限制） */
 
 /**
  * 新增一条记忆，返回新记忆。
  * - text 为空返回 null
  * - 重复内容（忽略首尾空白后完全相同）不重复添加，返回已存在的那条
- * - 超长截断到 MAX_MEMORY_LEN
- * - 超过 MAX_MEMORIES 时丢弃最旧的
  */
 function addMemory(text: string): Memory | null {
-  let t = typeof text === 'string' ? text.trim() : '';
+  const t = typeof text === 'string' ? text.trim() : '';
   if (!t) return null;
-  if (t.length > MAX_MEMORY_LEN) t = t.slice(0, MAX_MEMORY_LEN);
 
   const list = listMemories();
   // 去重：内容完全相同则不重复添加
@@ -110,11 +102,6 @@ function addMemory(text: string): Memory | null {
     updatedAt: now,
   };
   list.push(mem);
-  // 超上限时丢弃最旧的（按 createdAt 升序删前面的）
-  while (list.length > MAX_MEMORIES) {
-    list.sort((a, b) => a.createdAt - b.createdAt);
-    list.shift();
-  }
   return saveMemories(list) ? mem : null;
 }
 
@@ -124,6 +111,23 @@ function removeMemory(id: string): boolean {
   const next = list.filter((m) => m.id !== id);
   if (next.length === list.length) return false;
   return saveMemories(next);
+}
+/**
+ * 按 id 修改一条记忆的正文（保留 id / createdAt，刷新 updatedAt）。
+ * 返回修改后的记忆；id 不存在或 text 为空时返回 null。
+ */
+function updateMemory(id: string, text: string): Memory | null {
+  const sid = typeof id === 'string' ? id.trim() : '';
+  const t = typeof text === 'string' ? text.trim() : '';
+  if (!sid || !t) return null;
+  const list = listMemories();
+  const idx = list.findIndex((m) => m.id === sid);
+  if (idx < 0) return null;
+  // 与其他条目去重（改后与另一条完全相同 → 拒绝，避免歧义）
+  const dup = list.find((m, i) => i !== idx && m.text === t);
+  if (dup) return dup;
+  list[idx] = { ...list[idx], text: t, updatedAt: Date.now() };
+  return saveMemories(list) ? list[idx] : null;
 }
 
 /**
@@ -136,11 +140,7 @@ function buildMemorySection(): string {
   const list = listMemories();
   if (!list.length) return '';
   const lines = list.map((m) => '- ' + m.text.replace(/\n/g, ' '));
-  let body = lines.join('\n');
-  // 章节总长上限，超出截断并提示（防 prompt 膨胀）
-  if (body.length > MAX_SECTION_LEN) {
-    body = body.slice(0, MAX_SECTION_LEN) + '\n- ...（更多记忆已省略）';
-  }
+  const body = lines.join('\n');
   return [
     '## 用户记忆',
     '',
@@ -150,4 +150,4 @@ function buildMemorySection(): string {
   ].join('\n');
 }
 
-export { listMemories, saveMemories, addMemory, removeMemory, buildMemorySection, getMemoriesFile };
+export { listMemories, saveMemories, addMemory, removeMemory, updateMemory, buildMemorySection, getMemoriesFile };

@@ -33,6 +33,21 @@ export const apiMetas: ToolApiMeta[] = [
     returnsDoc: '确认消息',
     throws: 'id 为空或记忆不存在时抛出异常',
   },
+  {
+    order: 19,
+    feature: 'memories',
+    category: '记忆',
+    name: 'updateMemory',
+    doc: '按 id 原地修改一条长期记忆的内容（当用户要求更正、补充或精简某条记忆时用）。可用 listMemories 查看现有记忆及其 id。',
+    params: 'id: string, text: string',
+    returns: 'Promise<{ id: string, message: string }>',
+    paramDocs: {
+      id: '要修改的记忆 id',
+      text: '新的内容（整条替换）',
+    },
+    returnsDoc: '{ id: string, message: string }',
+    throws: 'id 或 text 为空、记忆不存在时抛出异常',
+  },
 ];
 
 /** 记忆存储接口（由 app 层注入，避免 tools → app 反向依赖） */
@@ -40,6 +55,7 @@ export interface MemoryStore {
   add: (text: string) => { id: string } | null;
   remove: (id: string) => boolean;
   list: () => Array<{ id: string; text: string }>;
+  update: (id: string, text: string) => { id: string } | null;
 }
 
 let _store: MemoryStore | null = null;
@@ -134,6 +150,44 @@ class ForgetMemoryTool extends Tool {
   }
 }
 
+class UpdateMemoryTool extends Tool {
+  constructor() {
+    super(
+      'updateMemory',
+      '按 id 修改一条长期记忆的内容（整条替换）',
+      {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: '要修改的记忆 id' },
+          text: { type: 'string', description: '新的内容（整条替换）' },
+        },
+        required: ['id', 'text'],
+        additionalProperties: false,
+      },
+      'updateMemory(id, text)'
+    );
+  }
+
+  isEnabled() {
+    return isMemoriesEnabled();
+  }
+
+  async execute(params: any): Promise<ToolResult> {
+    if (!isMemoriesEnabled()) return ToolResult.error('记忆功能已关闭（可在侧边栏「记忆」页开启）');
+    const id = String(params.id || '').trim();
+    const text = String(params.text || '').trim();
+    if (!id) return ToolResult.error('id 为空');
+    if (!text) return ToolResult.error('内容为空');
+    if (!_store) return ToolResult.error('记忆存储未初始化');
+    try {
+      const r = _store.update(id, text);
+      if (!r) return ToolResult.error('记忆不存在: ' + id);
+      return ToolResult.success({ id: r.id, message: '已更新记忆: ' + text });
+    } catch (err: any) {
+      return ToolResult.error('更新记忆失败: ' + err.message);
+    }
+  }
+}
 /** JsRunner 沙箱注入 */
 export function bootstrap(__call: any): void {
   (globalThis as any).remember = async function (text: any) {
@@ -142,6 +196,9 @@ export function bootstrap(__call: any): void {
   (globalThis as any).forgetMemory = async function (id: any) {
     return await __call('forgetMemory', { id: id });
   };
+  (globalThis as any).updateMemory = async function (id: any, text: any) {
+    return await __call('updateMemory', { id: id, text: text });
+  };
 }
 
-export { RememberTool, ForgetMemoryTool };
+export { RememberTool, ForgetMemoryTool, UpdateMemoryTool };

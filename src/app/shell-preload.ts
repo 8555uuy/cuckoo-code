@@ -207,6 +207,7 @@ const shellAPI = {
   saveMemories: (memories: any) => ipcRenderer.invoke('save-memories', { memories }),
   addMemory: (text: string) => ipcRenderer.invoke('add-memory', { text }),
   deleteMemory: (id: string) => ipcRenderer.invoke('delete-memory', { id }),
+  updateMemory: (id: string, text: string) => ipcRenderer.invoke('update-memory', { id, text }),
   onMemoriesChanged: (cb: () => void) => {
     ipcRenderer.on('shell-memories-changed', () => cb());
   },

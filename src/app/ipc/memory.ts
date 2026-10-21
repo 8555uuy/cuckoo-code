@@ -8,7 +8,7 @@
  */
 import { createRequire } from 'node:module';
 import * as windowState from '../window.js';
-import { listMemories, saveMemories, addMemory, removeMemory } from '../../infra/memories.js';
+import { listMemories, saveMemories, addMemory, removeMemory, updateMemory } from '../../infra/memories.js';
 import { isMemoriesEnabled, setMemoriesEnabled } from '../../infra/config.js';
 
 const require = createRequire(import.meta.url);
@@ -42,6 +42,11 @@ function registerMemoryIpc(): void {
     return { success: !!m, memory: m, error: m ? null : '内容为空' };
   });
 
+  ipcMain.handle('update-memory', async (_event: any, { id, text }: any) => {
+    const m = updateMemory(id, text);
+    if (m) broadcastChanged();
+    return { success: !!m, memory: m, error: m ? null : '记忆不存在或内容为空' };
+  });
   ipcMain.handle('delete-memory', async (_event: any, { id }: any) => {
     const ok = removeMemory(id);
     if (ok) broadcastChanged();

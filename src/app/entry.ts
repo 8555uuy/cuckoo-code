@@ -73,7 +73,7 @@ import { isSubagentWindow, pushGoalDone } from './goal.js';
 import { injectSessionTitleSetter } from '../tools/impl/name-conversation.js';
 import { injectMemoryStore } from '../tools/impl/remember.js';
 import { injectSnapshotStore } from '../tools/impl/snapshot.js';
-import { addMemory, removeMemory, listMemories } from '../infra/memories.js';
+import { addMemory, removeMemory, updateMemory, listMemories } from '../infra/memories.js';
 import { createSnapshot, listSnapshots, restoreSnapshot } from './snapshots.js';
 import { pushUrlState } from './ipc/shell.js';
 import { pushHarnessState, stopGeneration } from './ipc/harness.js';
@@ -850,6 +850,7 @@ injectMemoryStore({
   add: (text: string) => { const m = addMemory(text); return m ? { id: m.id } : null; },
   remove: (id: string) => removeMemory(id),
   list: () => listMemories().map((m) => ({ id: m.id, text: m.text })),
+  update: (id: string, text: string) => { const m = updateMemory(id, text); return m ? { id: m.id } : null; },
 });
 // 给 createSnapshot/listSnapshots/restoreSnapshot 工具注入快照存储
 injectSnapshotStore({

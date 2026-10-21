@@ -25,3 +25,12 @@ declare function remember(text: string): Promise<{ id: string, message: string }
  * @throws id 为空或记忆不存在时抛出异常
  */
 declare function forgetMemory(id: string): Promise<string>;
+
+/**
+ * 按 id 原地修改一条长期记忆的内容（当用户要求更正、补充或精简某条记忆时用）。可用 listMemories 查看现有记忆及其 id。
+ * @param id 要修改的记忆 id
+ * @param text 新的内容（整条替换）
+ * @returns { id: string, message: string }
+ * @throws id 或 text 为空、记忆不存在时抛出异常
+ */
+declare function updateMemory(id: string, text: string): Promise<{ id: string, message: string }>;

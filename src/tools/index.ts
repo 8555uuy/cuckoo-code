@@ -24,7 +24,7 @@ import { McpListServersTool, McpGetToolsTool } from './impl/mcp-query.js';
 import { RunAgentTool, RunAgentsTool } from './impl/run-agent.js';
 import { GoalDoneTool } from './impl/goal-done.js';
 import { NameConversationTool } from './impl/name-conversation.js';
-import { RememberTool, ForgetMemoryTool } from './impl/remember.js';
+import { RememberTool, ForgetMemoryTool, UpdateMemoryTool } from './impl/remember.js';
 import { CreateSnapshotTool, ListSnapshotsTool, RestoreSnapshotTool } from './impl/snapshot.js';
 
 // 创建全局工具注册表

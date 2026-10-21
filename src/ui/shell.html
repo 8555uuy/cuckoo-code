@@ -1267,9 +1267,6 @@
           <button class="ck-ab-item" data-tab="feishu" title="飞书同步（手机）">
             <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
           </button>
-          <button class="ck-ab-item" data-tab="blank" title="空白测试页">
-            <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
-          </button>
           <button class="ck-ab-item" data-tab="settings" title="设置">
             <svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -1578,6 +1575,7 @@
                   <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   <span>新建记忆</span>
                 </button>
+                <input class="ck-input" id="mem-search" type="search" placeholder="搜索记忆…" style="flex:1;min-width:0;margin-left:8px" />
                 <button class="ck-icon-btn" id="mem-refresh" title="刷新">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                 </button>
@@ -1588,12 +1586,11 @@
                   <span>启用记忆功能（关闭后不注入提示词、不捕获标记、不可调用）</span>
                 </label>
               </div>
-              <p class="ck-about-tip">记忆会随系统提示词发给模型，让 AI 了解你的习惯（跨项目保留）。</p>
+              <p class="ck-about-tip">记忆会随系统提示词发给模型，让 AI 了解你的习惯（跨项目保留）。无条数/长度限制。</p>
               <div class="ck-list" id="mem-list">
                 <div class="ck-list-empty">加载中…</div>
               </div>
             </div>
-
             <!-- ===== 快照 ===== -->
             <div class="ck-tab" data-panel="snapshots">
               <div class="ck-actions">
@@ -1892,17 +1889,6 @@
               <div class="ck-about-group">
                 <div class="ck-about-group-title">QQ 群：1104042537</div>
                 <img class="ck-about-qr" id="about-qq" alt="QQ 群" />
-              </div>
-            </div>
-
-            <!-- ===== 空白测试页 ===== -->
-            <div class="ck-tab" data-panel="blank">
-              <div class="ck-actions">
-                <span class="ck-set-group-title" style="flex:1;">空白测试页</span>
-              </div>
-              <div style="padding:24px 16px;color:var(--ck-text-dim);font-size:13px;line-height:1.8">
-                这是一个空白页面。<br>
-                用于测试快照、主题等功能。
               </div>
             </div>
 
@@ -5079,6 +5065,17 @@
   // src/ui/shell/scripts/pages/memories.ts
   init_shared();
   var memories = [];
+  var keyword = "";
+  function fmtTime(ts) {
+    if (!ts) return "";
+    try {
+      const d = new Date(ts);
+      const pad = (n) => n < 10 ? "0" + n : String(n);
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    } catch (_) {
+      return "";
+    }
+  }
   async function loadEnabledState() {
     const cb = document.getElementById("mem-enabled");
     if (!cb || !api.getMemoriesEnabled) return;
@@ -5100,15 +5097,24 @@
     }
     renderMemories();
   }
+  function filtered2() {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return memories;
+    return memories.filter((m) => String(m.text || "").toLowerCase().indexOf(k) >= 0);
+  }
   function renderMemories() {
     const listEl2 = document.getElementById("mem-list");
     if (!listEl2) return;
-    if (!memories.length) {
-      listEl2.innerHTML = '<div class="ck-list-empty">\u8FD8\u6CA1\u6709\u8BB0\u5FC6\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA\uFF0C\u6216\u8BA9 AI \u7528 remember \u5DE5\u5177\u8BB0</div>';
+    const list = filtered2();
+    if (!list.length) {
+      const msg = keyword ? "\u6CA1\u6709\u5339\u914D\u7684\u8BB0\u5FC6" : "\u8FD8\u6CA1\u6709\u8BB0\u5FC6\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA\uFF0C\u6216\u8BA9 AI \u7528 remember \u5DE5\u5177";
+      listEl2.innerHTML = "<div class=ck-list-empty>" + msg + "</div>";
       return;
     }
-    listEl2.innerHTML = memories.map((m) => {
-      return '<div class="ck-snip-item" data-id="' + escapeAttr(m.id) + '"><div class="ck-snip-top"><span class="ck-snip-name">' + escapeHtml(m.text) + '</span><div class="ck-snip-actions"><button class="ck-snip-icon-btn" data-edit="' + escapeAttr(m.id) + '" title="\u7F16\u8F91"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button><button class="ck-snip-icon-btn danger" data-del="' + escapeAttr(m.id) + '" title="\u5220\u9664"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></div></div>';
+    listEl2.innerHTML = list.map((m) => {
+      const t = fmtTime(m.updatedAt || m.createdAt);
+      const timeLine = t ? "<div style=font-size:11px;opacity:.55>\u66F4\u65B0\u4E8E " + escapeHtml(t) + "</div>" : "";
+      return "<div class=ck-snip-item data-id=" + escapeAttr(m.id) + "><div class=ck-snip-top><span class=ck-snip-name style=white-space:pre-wrap;word-break:break-word>" + escapeHtml(m.text) + "</span><div class=ck-snip-actions><button class=ck-snip-icon-btn data-edit=" + escapeAttr(m.id) + " title=\u7F16\u8F91>&#9998;</button><button class=ck-snip-icon-btn danger data-del=" + escapeAttr(m.id) + " title=\u5220\u9664>&#128465;</button></div></div>" + timeLine + "</div>";
     }).join("");
     listEl2.querySelectorAll("[data-edit]").forEach((btn) => {
       btn.addEventListener("click", async (e) => {
@@ -5122,14 +5128,19 @@
           await ckAlert("\u5185\u5BB9\u4E0D\u80FD\u4E3A\u7A7A");
           return;
         }
-        memories = memories.map((x) => x.id === m.id ? { ...x, text: t } : x);
-        if (api.saveMemories) {
+        if (api.updateMemory) {
+          try {
+            await api.updateMemory(m.id, t);
+          } catch (_) {
+          }
+        } else if (api.saveMemories) {
+          memories = memories.map((x) => x.id === m.id ? { ...x, text: t, updatedAt: Date.now() } : x);
           try {
             await api.saveMemories(memories);
           } catch (_) {
           }
         }
-        renderMemories();
+        await loadMemories();
       });
     });
     listEl2.querySelectorAll("[data-del]").forEach((btn) => {
@@ -5137,7 +5148,9 @@
         e.stopPropagation();
         const id = btn.dataset.del;
         const m = memories.filter((x) => x.id === id)[0];
-        if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BB0\u5FC6\u300C" + (m ? m.text : "") + "\u300D\uFF1F")) return;
+        const label = m ? m.text : "";
+        const ok = await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BB0\u5FC6\u300C" + label + "\u300D\uFF1F");
+        if (!ok) return;
         if (api.deleteMemory) {
           try {
             await api.deleteMemory(id);
@@ -5165,6 +5178,10 @@
     await loadMemories();
   });
   document.getElementById("mem-refresh")?.addEventListener("click", loadMemories);
+  document.getElementById("mem-search")?.addEventListener("input", (e) => {
+    keyword = String(e.target.value || "");
+    renderMemories();
+  });
   document.getElementById("mem-enabled")?.addEventListener("change", async (e) => {
     if (!api.setMemoriesEnabled) return;
     try {
@@ -5201,7 +5218,7 @@
     }
     renderSnapshots();
   }
-  function fmtTime(ts) {
+  function fmtTime2(ts) {
     try {
       return new Date(ts).toLocaleString("zh-CN");
     } catch (_) {
@@ -5221,7 +5238,7 @@
       return;
     }
     listEl2.innerHTML = snapshots.map((s) => {
-      return '<div class="ck-snip-item" data-id="' + escapeAttr(s.id) + '"><div class="ck-snip-top"><span class="ck-snip-name">' + escapeHtml(s.name) + '</span><div class="ck-snip-actions"><button class="ck-snip-icon-btn" data-restore="' + escapeAttr(s.id) + '" title="\u6062\u590D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button><button class="ck-snip-icon-btn danger" data-del="' + escapeAttr(s.id) + '" title="\u5220\u9664"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></div><span class="ck-snip-preview">' + s.fileCount + " \u4E2A\u6587\u4EF6 \xB7 " + fmtSize2(s.totalBytes || 0) + " \xB7 " + fmtTime(s.createdAt) + (s.description ? " \xB7 " + escapeHtml(s.description) : "") + "</span></div>";
+      return '<div class="ck-snip-item" data-id="' + escapeAttr(s.id) + '"><div class="ck-snip-top"><span class="ck-snip-name">' + escapeHtml(s.name) + '</span><div class="ck-snip-actions"><button class="ck-snip-icon-btn" data-restore="' + escapeAttr(s.id) + '" title="\u6062\u590D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button><button class="ck-snip-icon-btn danger" data-del="' + escapeAttr(s.id) + '" title="\u5220\u9664"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></div><span class="ck-snip-preview">' + s.fileCount + " \u4E2A\u6587\u4EF6 \xB7 " + fmtSize2(s.totalBytes || 0) + " \xB7 " + fmtTime2(s.createdAt) + (s.description ? " \xB7 " + escapeHtml(s.description) : "") + "</span></div>";
     }).join("");
     listEl2.querySelectorAll("[data-restore]").forEach((btn) => {
       btn.addEventListener("click", async (e) => {
@@ -5290,10 +5307,6 @@
     await loadSnapshots();
   });
   document.getElementById("snap-refresh")?.addEventListener("click", loadSnapshots);
-
-  // src/ui/shell/scripts/pages/blank.ts
-  async function loadBlank() {
-  }
 
   // src/ui/shell/scripts/plugin-shell.ts
   init_shared();
@@ -5611,7 +5624,6 @@
   registerTab("plugins", loadPlugins);
   registerTab("memories", loadMemories);
   registerTab("snapshots", loadSnapshots);
-  registerTab("blank", loadBlank);
   try {
     loadWorkspaces();
   } catch (_) {
