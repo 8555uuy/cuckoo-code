@@ -21,6 +21,8 @@ export interface SubagentConfig {
   projectDir: string | null;
   /** 网关模式：task 是纯用户消息（不加"任务"框架），让 AI 自由用工具 */
   isGateway?: boolean;
+  /** B 模式：不注入 Cuckoo 提示词，跳过工具块解析，收到回复直接返回 */
+  noCuckooPrompt?: boolean;
 }
 
 /** 从 process.argv 解析子代理配置（无则 null） */
@@ -90,6 +92,13 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
   onInterceptedResponse((text: string) => {
     const raw = (text || '').trim();
     if (!raw) return;
+    // B 模式：不解析工具块，任何回复都视为最终结果（平台原生回复）
+    if (cfg.noCuckooPrompt) {
+      console.log('[Cuckoo Code][子代理] B模式收到回复，长度=' + raw.length);
+      pushProgress({ status: 'done', text: raw, done: true });
+      ipcRenderer.invoke('subagent-response', { text: raw, done: true }).catch(() => {});
+      return;
+    }
     const blocks = extractJsToolBlocks(raw);
     if (blocks.length === 0) {
       console.log('[Cuckoo Code][子代理] 收到最终回复，长度=' + raw.length + '，上报主进程');
@@ -115,7 +124,7 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
   const extraPrompt = buildSubagentPrompt(cfg);
   setTimeout(async () => {
     try {
-      await (window as any).electronAPI.initProject(cfg.projectDir || null, false, extraPrompt, true);
+      await (window as any).electronAPI.initProject(cfg.projectDir || null, false, extraPrompt, true, null, !!cfg.noCuckooPrompt);
       console.log('[Cuckoo Code][子代理] 已调 initProject（复用初始化流程）');
     } catch (e: any) {
       console.error('[Cuckoo Code][子代理] initProject 失败: ' + (e && e.message));

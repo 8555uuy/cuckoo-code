@@ -255,7 +255,9 @@ export async function runGatewayQuery(opts: {
   text: string;
   parentWindowId: number;
   onChunk?: (chunk: { think?: string; text?: string; done?: boolean }) => void;
-  timeoutMs?: number;
+  timeoutMs?: number; // 保留原行尾
+  /** B 模式：不注入 Cuckoo 提示词，平台原生回复 */
+  noCuckooPrompt?: boolean;
 }): Promise<{ ok: boolean; text?: string; error?: string }> {
   if (!_createWindow || !_profileManager) return { ok: false, error: '子代理依赖未注入' };
   if (gatewayActive >= GATEWAY_MAX_CONCURRENT) {
@@ -276,6 +278,7 @@ export async function runGatewayQuery(opts: {
     maxTurns: null,
     projectDir: projectDir || null,
     isGateway: true, // 纯用户消息（不加"任务"框架），让 AI 自由用工具
+    noCuckooPrompt: opts.noCuckooPrompt === true,
   };
   gatewayActive++;
   const windowId = _createWindow(subProfile);
@@ -291,7 +294,7 @@ export async function runGatewayQuery(opts: {
     if (text === '__SUBAGENT_TIMEOUT__' || text === '__GATEWAY_HARD_TIMEOUT__') {
       return { ok: false, error: '等待回复超时' };
     }
-    return { ok: true, text };
+    return { ok: true, text: String(text) };
   } catch (err: any) {
     return { ok: false, error: (err && err.message) ? err.message : String(err) };
   } finally {

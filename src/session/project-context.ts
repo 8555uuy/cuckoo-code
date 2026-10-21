@@ -57,7 +57,7 @@ function logWithFile(providerId: string, msg: string): void {
  * @param extraPrompt 追加到提示词末尾的额外内容（子代理用它带上"代理系统提示 + 任务"）
  * @param noDialog 为 true 时不弹目录选择框（子代理场景：目录取不到就用空值继续）
  */
-async function initProject(skipPrompt: boolean = false, windowContext: any = null, presetDir: string | null = null, isCompaction: boolean = false, extraPrompt: string = '', noDialog: boolean = false, parentSessionId: string | null = null): Promise<any> {
+async function initProject(skipPrompt: boolean = false, windowContext: any = null, presetDir: string | null = null, isCompaction: boolean = false, extraPrompt: string = '', noDialog: boolean = false, parentSessionId: string | null = null, noCuckooPrompt: boolean = false): Promise<any> {
   const ctx = windowContext || windowState.getMainContext();
   const mainWindow = ctx ? ctx.win : windowState.getMainWindow();
   // AI 页面在 WebContentsView 中（壳窗口的 win.webContents 是地址栏壳页面）
@@ -165,10 +165,27 @@ async function initProject(skipPrompt: boolean = false, windowContext: any = nul
   }
   stepLog('提示词组装完成');
 
-  let combined = built.prompt;
-  // 子代理等场景：在完整系统提示词末尾追加"代理系统提示 + 任务"
-  if (extraPrompt) {
-    combined += '\n\n---\n\n' + extraPrompt;
+  let combined: string;
+  if (noCuckooPrompt) {
+    // B 模式（平台原生）：不注入 Cuckoo 提示词，只发用户消息
+    combined = extraPrompt || '';
+    if (!combined) {
+      return { success: false, message: 'B 模式需要非空的用户消息' };
+    }
+    stepLog('B 模式：跳过 Cuckoo 提示词，只发用户消息');
+  } else {
+    // 组装 Cuckoo 提示词（模板读取 + 占位符填充 + MCP/平台/项目章节）
+    const built = buildPrompt({ providerId, selectedDir, isCompaction });
+    if (built.error) {
+      return { success: false, message: built.error };
+    }
+    stepLog('提示词组装完成');
+
+    combined = built.prompt;
+    // 子代理等场景：在完整系统提示词末尾追加"代理系统提示 + 任务"
+    if (extraPrompt) {
+      combined += '\n\n---\n\n' + extraPrompt;
+    }
   }
   console.log('[Cuckoo Code] 准备发送初始提示（不含目录树），长度:', combined.length);
   if (view && view.webContents && !view.webContents.isDestroyed()) {

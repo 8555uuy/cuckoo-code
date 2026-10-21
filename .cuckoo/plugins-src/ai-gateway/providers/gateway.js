@@ -55,7 +55,7 @@ function getLanIPs() {
 }
 
 function readConfig() {
-  const out = { port: 18900, host: '127.0.0.1', adminPassword: '', requireKey: true, autoStart: true, enabled: true };
+  const out = { port: 18900, host: '127.0.0.1', adminPassword: '', requireKey: true, autoStart: true, enabled: true, nativeMode: false };
   try {
     const file = configFile();
     if (fs.existsSync(file)) {
@@ -68,6 +68,7 @@ function readConfig() {
       if (c.autoStart === false) out.autoStart = false;
       if (c.enabled === false) out.enabled = false;
       if (c.prankMode === true) out.prankMode = true;
+      if (c.nativeMode === true) out.nativeMode = true;
     }
   } catch (e) {}
   return out;
@@ -214,6 +215,7 @@ async function handleChat(req, res, bodyText) {
     const r = await run({
       text: text,
       parentWindowId: parentWindowId,
+      noCuckooPrompt: cfg.nativeMode === true,
       onChunk: function (c) {
         try {
           const raw = (c && c.text) || '';
@@ -262,12 +264,13 @@ async function handleChat(req, res, bodyText) {
   }
 
   // 非流式
-  const r = await run({ text: text, parentWindowId: parentWindowId });
+  const r = await run({ text: text, parentWindowId: parentWindowId, noCuckooPrompt: cfg.nativeMode === true });
   if (!r.ok) {
     addLog({ type: 'chat', model, stream, ok: false, error: r.error });
     return json(res, 500, { error: { message: r.error || '未知错误' } });
   }
-  const clean = stripToolBlocks(r.text || '');
+  // B 模式（平台原生）：不剥离代码块，原样返回
+  const clean = cfg.nativeMode === true ? (r.text || '') : stripToolBlocks(r.text || '');
   addLog({ type: 'chat', model, stream, ok: true, replyLen: clean.length });
   return json(res, 200, chatCompletion(id, model, clean));
 }
@@ -471,6 +474,7 @@ try {
       lanIPs: getLanIPs(),
       keyCount: keystore.loadKeys().length,
       prankMode: prankMode,
+    nativeMode: cfg.nativeMode === true,
     };
   };
   table['ai-gateway:prank'] = function (args) {
@@ -479,6 +483,13 @@ try {
     writeConfig({ prankMode: want });
     console.log('[ai-gateway] 整活模式 -> ' + (want ? '开' : '关'));
     return { prankMode: prankMode };
+  };
+  table['ai-gateway:native'] = function (args) {
+    const want = !args || args.enabled !== false;
+    writeConfig({ nativeMode: want });
+    cfg = readConfig();
+    console.log('[ai-gateway] B 模式（平台原生）-> ' + (want ? '开' : '关'));
+    return { nativeMode: want };
   };
   table['ai-gateway:toggle'] = async function (args) {
     const want = !args || args.enabled !== false;

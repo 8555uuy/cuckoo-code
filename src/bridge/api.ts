@@ -13,7 +13,7 @@ let electronAPI: any = {
   executeCommand: (command: any, id: any) => {
     return ipcRenderer.invoke('execute-command', { command, id });
   },
-  initProject: (projectDir: any, isCompaction: any, extraPrompt: any, noDialog: any, parentSessionId: any) => {
+  initProject: (projectDir: any, isCompaction: any, extraPrompt: any, noDialog: any, parentSessionId: any, noCuckooPrompt: any) => {
     return ipcRenderer.invoke('init-project', {
       skipPrompt: false,
       projectDir: projectDir || null,
@@ -21,6 +21,7 @@ let electronAPI: any = {
       extraPrompt: extraPrompt || '',
       noDialog: !!noDialog,
       parentSessionId: parentSessionId || null,
+      noCuckooPrompt: !!noCuckooPrompt,
     });
   },
   updateProjectDir: () => {

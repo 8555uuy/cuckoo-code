@@ -1,0 +1,5 @@
+src/session/project-context.ts
+src/app/ipc/project.ts
+src/bridge/api.ts
+src/bridge/subagent.ts
+src/app/subagent.ts

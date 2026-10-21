@@ -37,6 +37,12 @@
       "label": "自动启动",
       "description": "插件加载时自动启动网关",
       "default": true
+    },
+    "nativeMode": {
+      "type": "boolean",
+      "label": "B 模式（平台原生）",
+      "description": "开启后不注入 Cuckoo 提示词，只发用户消息，让平台用自己的原生能力（深度思考/联网等）。代价：Cuckoo 工具全部不可用。",
+      "default": false
     }
   }
 }

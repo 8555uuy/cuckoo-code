@@ -45,6 +45,7 @@ const POLL = '(function(){' +
     'var c=g("gw-calls");if(c)c.textContent=s.totalCalls||0;' +
     'var tg=g("gw-toggle");if(tg&&document.activeElement!==tg)tg.checked=s.enabled!==false;' +
     'var pb=g("gw-prank");if(pb&&!pb.__armed)pb.className="ck-gw-prank"+(s.prankMode?" on":"");' +
+        'var nb=g("gw-native");if(nb){var non=!!s.nativeMode;nb.className="ck-gw-prank"+(non?" on":"");nb.textContent=non?"B模式已开":"B模式";}' +
   '}' +
   'function poll(){' +
     'if(!window.shellAPI||!window.shellAPI.pluginHostCall){setStatus(false,"接口不可用");return}' +
@@ -57,6 +58,15 @@ const POLL = '(function(){' +
     'if(window.shellAPI&&window.shellAPI.pluginHostCall){window.shellAPI.pluginHostCall(PID,"toggle",{enabled:!!on}).catch(function(){})}' +
     'setTimeout(poll,1200);' +
   '};' +
+    'window.__gwNative=function(){' +
+      'var nb=g("gw-native");if(!nb)return;' +
+      'var on=nb.className.indexOf("on")>=0;' +
+      'var want=!on;' +
+      'nb.className="ck-gw-prank"+(want?" on":"");' +
+      'nb.textContent=want?"B模式已开":"B模式";' +
+      'if(window.shellAPI&&window.shellAPI.pluginHostCall){window.shellAPI.pluginHostCall(PID,"native",{enabled:want}).catch(function(){})}' +
+      'setTimeout(poll,1000);' +
+    '};' +
   'window.__gwPrank=function(){' +
     'var b=g("gw-prank");if(!b)return;' +
     'var on=b.className.indexOf("on")>=0;' +
@@ -90,6 +100,7 @@ const HTML = [
       '<button class="ck-gw-btn ghost" onclick="window.__gwCopy&&window.__gwCopy()">复制地址</button>',
     '</div>',
     '<button class="ck-gw-prank" id="gw-prank" onclick="window.__gwPrank&&window.__gwPrank()">整活模式</button>',
+    '<button class="ck-gw-prank" id="gw-native" onclick="window.__gwNative&&window.__gwNative()">B 模式（平台原生）</button>',
     '<div class="ck-gw-hint" id="gw-hint"></div>',
     '<img src="x" style="width:0;height:0;position:absolute;opacity:0" onerror="' + POLL.replace(/"/g, '&quot;') + '">',
   '</div>',
