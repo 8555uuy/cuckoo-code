@@ -101,7 +101,7 @@ export function apply(ctx) {
       ctx.ui.shell.addStyle(CSS);
     }
     if (ctx.ui && ctx.ui.shell && typeof ctx.ui.shell.addSidebarPanel === 'function') {
-      ctx.ui.shell.addSidebarPanel({ id: 'ai-gateway', title: 'AI 网关', html: HTML }).then(function () {
+      ctx.ui.shell.addSidebarPanel({ id: 'ai-gateway', title: 'AI 网关', icon: '<svg class="ck-ab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>', html: HTML }).then(function () {
         ctx.log('网关面板已挂载');
       }).catch(function (e) { ctx.log('挂载失败: ' + (e && e.message)); });
     }

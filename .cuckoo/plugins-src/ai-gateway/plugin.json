@@ -2,7 +2,7 @@
   "id": "ai-gateway",
   "name": "AI 网关",
   "version": "1.0.0",
-  "description": "把 Cuckoo 的 AI 网页版暴露成 OpenAI 兼容 API（局域网可访问），附管理网站。",
+  "description": "【仅限作者 fork】把 Cuckoo 的 AI 网页版暴露成 OpenAI 兼容 API（局域网可访问）。官方版无法使用——依赖的 __cuckooRunGatewayQuery 尚未合入官方。详见 README。",
   "author": "8555uuy",
   "minAppVersion": "0.8.8",
   "config": {
@@ -17,14 +17,14 @@
     "host": {
       "type": "string",
       "label": "绑定地址",
-      "description": "0.0.0.0 = 局域网可访问；127.0.0.1 = 仅本机",
-      "default": "0.0.0.0"
+      "description": "127.0.0.1 = 仅本机（推荐）；0.0.0.0 = 局域网可访问（有安全风险）",
+      "default": "127.0.0.1"
     },
     "adminPassword": {
       "type": "string",
       "label": "管理密码",
-      "description": "登录管理网站的密码",
-      "default": "admin"
+      "description": "管理网站登录密码；留空则首次启动自动生成随机密码并保存到插件数据目录的 admin-password.txt",
+      "default": ""
     },
     "requireKey": {
       "type": "boolean",

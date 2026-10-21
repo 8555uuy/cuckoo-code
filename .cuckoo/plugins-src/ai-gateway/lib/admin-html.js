@@ -12,10 +12,13 @@ function adminHtml() {
     --bg:#0e1014;--surface:#161a20;--inset:#11151a;--border:#262c35;--border-soft:#1d222a;
     --text:#eef1f5;--text-2:#a8b0bb;--text-3:#6b7482;--text-4:#4d5561;
     --accent:#4c8dff;--accent-h:#5f9bff;--ok:#34d399;--err:#f87171;--warn:#fbbf24;
+    color-scheme:dark;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
   a{color:var(--accent);text-decoration:none}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#7dd3fc}
+  input::placeholder{color:var(--text-4)}
   .wrap{max-width:1000px;margin:0 auto;padding:28px 20px}
   header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
   .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4c8dff,#3b6fd4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff}
@@ -166,13 +169,13 @@ function loadKeys(){
     area.innerHTML = '<table><thead><tr><th>Key</th><th>备注</th><th>状态</th><th>调用</th><th>创建</th><th></th></tr></thead><tbody>' +
       r.keys.map(function(k){
         return '<tr>' +
-          '<td><code class="mono" style="color:#7dd3fc">'+esc(k.masked || '')  +'</code></td>' +
+          '<td><code class="mono" style="color:#7dd3fc">'+esc(k.masked || (k.key || '').slice(0, 14)) +
           '<td>'+esc(k.note||'—')+'</td>' +
           '<td>'+(k.enabled?'<span class="badge on"><span class="dot on"></span>启用</span>':'<span class="badge off"><span class="dot off"></span>停用</span>')+'</td>' +
           '<td class="mono">'+(k.calls||0)+'</td>' +
           '<td class="muted">'+fmtTime(k.createdAt)+'</td>' +
           '<td style="text-align:right;white-space:nowrap">' +
-
+            '' +
             '<button class="btn ghost sm" data-toggle="'+esc(k.key)+'" data-en="'+(k.enabled?'0':'1')+'">'+(k.enabled?'停用':'启用')+'</button> ' +
             '<button class="btn danger sm" data-del="'+esc(k.key)+'">删除</button>' +
           '</td>' +
