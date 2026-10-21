@@ -9,7 +9,7 @@ import path from 'node:path';
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'cuckoo-mem-'));
 process.env.CUCKOO_HOME = TMP;
 
-const { listMemories, saveMemories, addMemory, removeMemory, buildMemorySection } = await import('../../src/infra/memories.js');
+const { listMemories, saveMemories, addMemory, removeMemory, updateMemory, buildMemorySection } = await import('../../src/infra/memories.js');
 const { setMemoriesEnabled } = await import('../../src/infra/config.js');
 
 beforeEach(() => {
@@ -68,7 +68,7 @@ test('buildMemorySection 有记忆返回章节（需开启功能）', () => {
   assert.ok(s.includes('习惯2'));
 });
 
-// ===== 去重 / 截断 / 上限（024 加固）=====
+// ===== 去重 / 无上限（用户要求去掉硬限制）=====
 
 test('addMemory 重复内容不重复添加', () => {
   const a = addMemory('同样的话');
@@ -84,23 +84,53 @@ test('addMemory 首尾空白不同视为重复', () => {
   assert.strictEqual(listMemories().length, 1);
 });
 
-test('addMemory 超长截断到 500 字符', () => {
+test('addMemory 不再截断超长内容', () => {
   const m = addMemory('x'.repeat(800));
-  assert.strictEqual(m.text.length, 500);
+  assert.strictEqual(m.text.length, 800);
 });
 
-test('addMemory 超过 200 条时丢弃最旧', () => {
+test('addMemory 不再丢弃超过 200 条的旧记忆', () => {
   for (let i = 0; i < 205; i++) addMemory('记忆' + i);
   const list = listMemories();
-  assert.strictEqual(list.length, 200);
-  // 最旧的几条已被丢弃
-  assert.ok(!list.some((m) => m.text === '记忆0'));
+  assert.strictEqual(list.length, 205);
+  assert.ok(list.some((m) => m.text === '记忆0'));
 });
 
-test('buildMemorySection 超长时截断并提示（需开启功能）', () => {
+test('buildMemorySection 不再截断（需开启功能）', () => {
   setMemoriesEnabled(true);
   for (let i = 0; i < 100; i++) addMemory('很长的记忆内容' + i + '-' + 'y'.repeat(100));
   const s = buildMemorySection();
-  assert.ok(s.includes('更多记忆已省略'));
-  assert.ok(s.length < 5000);
+  assert.ok(!s.includes('更多记忆已省略'));
+  assert.ok(s.length > 10000);
+});
+
+// ===== updateMemory（原地修改）=====
+
+test('updateMemory 原地修改正文并保留 id/createdAt', () => {
+  const a = addMemory('原始内容');
+  const before = listMemories()[0];
+  const r = updateMemory(a.id, '改后的内容');
+  assert.ok(r);
+  assert.strictEqual(r.id, a.id);
+  assert.strictEqual(r.text, '改后的内容');
+  assert.strictEqual(r.createdAt, before.createdAt);
+  assert.ok(r.updatedAt >= before.updatedAt);
+  assert.strictEqual(listMemories().length, 1);
+});
+
+test('updateMemory 记忆不存在返回 null', () => {
+  assert.strictEqual(updateMemory('mem-not-exist', '内容'), null);
+});
+
+test('updateMemory 内容为空返回 null', () => {
+  const a = addMemory('abc');
+  assert.strictEqual(updateMemory(a.id, '   '), null);
+});
+
+test('updateMemory 改成与另一条相同则返回那条（不产生重复）', () => {
+  const a = addMemory('第一条');
+  const b = addMemory('第二条');
+  const r = updateMemory(b.id, '第一条');
+  assert.strictEqual(r.id, a.id);
+  assert.strictEqual(listMemories().length, 2);
 });
