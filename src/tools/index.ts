@@ -55,6 +55,7 @@ registry.register(new GoalDoneTool());
 registry.register(new NameConversationTool());
 registry.register(new RememberTool());
 registry.register(new ForgetMemoryTool());
+  registry.register(new UpdateMemoryTool());
 registry.register(new CreateSnapshotTool());
 registry.register(new ListSnapshotsTool());
 registry.register(new RestoreSnapshotTool());
