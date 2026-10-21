@@ -13,9 +13,7 @@ let electronAPI: any = {
   executeCommand: (command: any, id: any) => {
     return ipcRenderer.invoke('execute-command', { command, id });
   },
-  mergeSystemPrompt: (text: string) => {
-    return ipcRenderer.invoke('merge-system-prompt', { text });
-  },
+
   selectProjectDir: () => {
     return ipcRenderer.invoke('select-project-dir');
   },

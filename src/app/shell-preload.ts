@@ -15,10 +15,10 @@ const shellAPI = {
   platform,
   selectProjectDir: () => ipcRenderer.invoke('select-project-dir'),
   cancelInitPrompt: () => ipcRenderer.send('cancel-init-prompt'),
-  mergeSystemPrompt: (text: string) => ipcRenderer.invoke('merge-system-prompt', { text }),
-  sendUserMessage: (text: string) => ipcRenderer.invoke('shell-send-message', { text }),
-  onShowInitPrompt: (cb: () => void) => {
-    ipcRenderer.on('shell-show-init-prompt', () => cb());
+  sendNormalMessage: (text: string) => ipcRenderer.invoke('send-normal-message', { text }),
+  sendInitMessage: (text: string, projectDir: string) => ipcRenderer.invoke('send-init-message', { text, projectDir }),
+  onShowInitPrompt: (cb: (data?: any) => void) => {
+    ipcRenderer.on('shell-show-init-prompt', (_e: any, data?: any) => cb(data));
   },
   navigate: (url: string) => ipcRenderer.invoke('shell-navigate', { url }),
   back: () => ipcRenderer.invoke('shell-back'),

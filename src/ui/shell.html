@@ -31765,18 +31765,28 @@ body {
     if (modal.parentElement !== document.body) {
       document.body.appendChild(modal);
     }
-    const triggerShow = async () => {
-      if (!modal.classList.contains("cuckoo-hidden")) return;
-      console.log("[Cuckoo Shell] \u663E\u793A\u521D\u59CB\u5316\u5F39\u7A97");
-      modal.classList.remove("cuckoo-hidden");
-      if (api.setAiViewVisible) {
-        try {
-          await api.setAiViewVisible(false);
-        } catch (_) {
+    const triggerShow = async (data) => {
+      const isVisible = !modal.classList.contains("cuckoo-hidden");
+      if (isVisible && (!data || !data.projectDir)) {
+        return;
+      }
+      if (!isVisible) {
+        console.log("[Cuckoo Shell] \u663E\u793A\u521D\u59CB\u5316\u5F39\u7A97");
+        modal.classList.remove("cuckoo-hidden");
+        if (api.setAiViewVisible) {
+          try {
+            await api.setAiViewVisible(false);
+          } catch (_) {
+          }
         }
       }
-      dirInput.value = "";
-      textarea.value = "";
+      if (data && data.projectDir) {
+        dirInput.value = data.projectDir;
+        textarea.focus();
+      } else if (!isVisible) {
+        dirInput.value = "";
+        textarea.value = "";
+      }
     };
     window.__ckShowInitModal = triggerShow;
     if (api.onShowInitPrompt) {
@@ -31811,12 +31821,11 @@ body {
       sendBtn.disabled = true;
       sendBtn.textContent = "\u53D1\u9001\u4E2D...";
       try {
-        if (!api.mergeSystemPrompt || !api.sendUserMessage) {
+        if (!api.sendInitMessage) {
           throw new Error("\u7F3A\u5C11\u5FC5\u8981\u7684 API");
         }
-        const res = await api.mergeSystemPrompt(text);
-        if (res && res.success && res.text) {
-          await api.sendUserMessage(res.text);
+        const res = await api.sendInitMessage(text, dirInput.value);
+        if (res && res.success) {
           modal.classList.add("cuckoo-hidden");
           if (api.setAiViewVisible) {
             try {

@@ -18,12 +18,12 @@ export interface ShellAPI {
   selectProjectDir?: () => Promise<{ success: boolean; message: string; dir?: string }>;
   /** 取消初始化 */
   cancelInitPrompt?: () => void;
-  /** 合并系统提示词 */
-  mergeSystemPrompt?: (text: string) => Promise<{ success: boolean; text?: string; error?: string }>;
-  /** 发送用户消息 */
-  sendUserMessage?: (text: string) => Promise<any>;
+  /** 发送普通消息 */
+  sendNormalMessage?: (text: string) => Promise<any>;
+  /** 发送初始化消息（带系统提示词） */
+  sendInitMessage?: (text: string, projectDir: string) => Promise<any>;
   /** 监听主进程：显示初始化输入弹窗 */
-  onShowInitPrompt?: (cb: () => void) => void;
+  onShowInitPrompt?: (cb: (data?: any) => void) => void;
   startSidebarDrag?: () => void;
   endSidebarDrag?: () => void;
   onSidebarDrag?: (cb: (width: number) => void) => void;

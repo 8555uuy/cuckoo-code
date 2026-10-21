@@ -18,20 +18,33 @@ export function bindInitPrompt() {
     document.body.appendChild(modal);
   }
 
-  // 将内部显示逻辑提取出来
-  const triggerShow = async () => {
-    // 如果已经显示了，就不要重复弹
-    if (!modal.classList.contains('cuckoo-hidden')) return;
+  // 将内部显示逻辑提取出来，支持接收预设目录
+  const triggerShow = async (data?: any) => {
+    const isVisible = !modal.classList.contains('cuckoo-hidden');
     
-    console.log('[Cuckoo Shell] 显示初始化弹窗');
-    modal.classList.remove('cuckoo-hidden');
-    // 隐藏 AI 视图，防止遮挡
-    if (api.setAiViewVisible) {
-      try { await api.setAiViewVisible(false); } catch (_) {}
+    // 如果弹窗已经打开了，且这次也没有带目录，就直接忽略
+    if (isVisible && (!data || !data.projectDir)) {
+      return;
     }
-    // 默认清空，不自动弹目录框
-    dirInput.value = '';
-    textarea.value = '';
+    
+    if (!isVisible) {
+      console.log('[Cuckoo Shell] 显示初始化弹窗');
+      modal.classList.remove('cuckoo-hidden');
+      // 隐藏 AI 视图，防止遮挡
+      if (api.setAiViewVisible) {
+        try { await api.setAiViewVisible(false); } catch (_) {}
+      }
+    }
+    
+    // 如果有传入的目录，强制覆盖填入
+    if (data && data.projectDir) {
+      dirInput.value = data.projectDir;
+      textarea.focus();
+    } else if (!isVisible) {
+      // 如果是全新打开，且没带目录，则清空
+      dirInput.value = '';
+      textarea.value = '';
+    }
   };
 
   // 暴露给 toolbar 等地方调用
@@ -72,12 +85,11 @@ export function bindInitPrompt() {
     sendBtn.disabled = true;
     sendBtn.textContent = '发送中...';
     try {
-      if (!api.mergeSystemPrompt || !api.sendUserMessage) {
+      if (!api.sendInitMessage) {
         throw new Error('缺少必要的 API');
       }
-      const res = await api.mergeSystemPrompt(text);
-      if (res && res.success && res.text) {
-        await api.sendUserMessage(res.text);
+      const res = await api.sendInitMessage(text, dirInput.value);
+      if (res && res.success) {
         modal.classList.add('cuckoo-hidden');
         if (api.setAiViewVisible) { try { api.setAiViewVisible(true); } catch (_) {} }
       } else {

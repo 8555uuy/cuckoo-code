@@ -4,8 +4,8 @@ import type { WebId, LogicId } from './ids.js';
 interface LogicIdMap {
   webIdOf(logicId: LogicId): WebId | null;
   logicIdOf(webId: WebId): LogicId | null;
-  bind(logicId: LogicId, webId: WebId): void;
-  ensureLogicId(webId: WebId): LogicId;
+  bind(logicId: LogicId, webId: WebId, profileId?: string | null): void;
+  ensureLogicId(webId: WebId, profileId?: string | null): LogicId;
   has(logicId: LogicId): boolean;
   remove(logicId: LogicId): void;
 }
@@ -28,30 +28,41 @@ function createLogicIdMap(db: DatabaseSync): LogicIdMap {
       return row && row.logic_id ? (row.logic_id as LogicId) : null;
     },
 
-    bind(logicId: LogicId, webId: WebId): void {
+    bind(logicId: LogicId, webId: WebId, profileId?: string | null): void {
       if (!logicId || !webId) return;
-      // 看看这两个 id 是不是已经存在
-      const exist = db.prepare('SELECT logic_id, web_id FROM sessions WHERE logic_id = ? OR web_id = ?').get(logicId, webId) as any;
-      if (exist) {
-        // 如果已经存在，更新它的 webId 和 logicId
-        db.prepare('UPDATE sessions SET web_id = ? WHERE logic_id = ?').run(webId, logicId);
-        return;
+      try {
+        // 1. 查一下这个 webId 是否已经被绑过了
+        const existWeb = db.prepare('SELECT logic_id FROM sessions WHERE web_id = ?').get(webId) as any;
+        if (existWeb) {
+          // 如果已经绑过了，且不是当前的 logicId，说明这是一次错误的绑定尝试（比如点开了老会话），直接放弃
+          if (existWeb.logic_id !== logicId) return;
+        }
+
+        // 2. 看看目标 logicId 是否已存在
+        const existLogic = db.prepare('SELECT logic_id FROM sessions WHERE logic_id = ?').get(logicId) as any;
+        if (existLogic) {
+          // 存在则更新 webId
+          db.prepare('UPDATE sessions SET web_id = ?, profile_id = COALESCE(profile_id, ?) WHERE logic_id = ?').run(webId, profileId || null, logicId);
+        } else {
+          // 不存在，新建
+          const now = new Date().toISOString();
+          db.prepare('INSERT INTO sessions (logic_id, web_id, profile_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
+            .run(logicId, webId, profileId || null, now, now);
+        }
+      } catch (e: any) {
+        console.error('[Cuckoo Code] bind 失败:', e.message);
       }
-      // 如果不存在，新建一条记录
-      const now = new Date().toISOString();
-      db.prepare('INSERT INTO sessions (logic_id, web_id, created_at, updated_at) VALUES (?, ?, ?, ?)')
-        .run(logicId, webId, now, now);
     },
 
-    ensureLogicId(webId: WebId): LogicId {
+    ensureLogicId(webId: WebId, profileId?: string | null): LogicId {
       if (!webId) throw new Error('ensureLogicId: webId 为空');
       const row = db.prepare('SELECT logic_id FROM sessions WHERE web_id = ?').get(webId) as any;
       if (row && row.logic_id) return row.logic_id as LogicId;
       
       // 不存在，则 logicId = webId
       const now = new Date().toISOString();
-      db.prepare('INSERT INTO sessions (logic_id, web_id, created_at, updated_at) VALUES (?, ?, ?, ?)')
-        .run(webId, webId, now, now);
+      db.prepare('INSERT INTO sessions (logic_id, web_id, profile_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
+        .run(webId, webId, profileId || null, now, now);
       return webId as unknown as LogicId;
     },
 

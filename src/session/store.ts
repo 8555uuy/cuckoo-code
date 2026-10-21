@@ -17,8 +17,6 @@ interface SessionStoreApi {
   setSessionLineage(logicId: LogicId, lineage: { parentId?: string | null; kind?: string | null; agentName?: string | null }): void;
   supersedeSession(logicId: LogicId): void;
   setSessionArchived(logicId: LogicId, archived: boolean): void;
-  getSystemPromptSent(logicId: LogicId): boolean;
-  setSystemPromptSent(logicId: LogicId, sent: boolean): void;
   getArchivedProjects(): string[];
   setProjectArchived(dir: string, archived: boolean): void;
   extractSessionIdFromUrl(url: string): WebId | null;
@@ -73,6 +71,8 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
     const r = db.prepare('SELECT * FROM sessions WHERE logic_id = ?').get(logicId) as any;
     if (!r) return null;
     return {
+      logicId: r.logic_id,
+      webId: r.web_id,
       projectDir: r.project_dir || null,
       title: r.title || null,
       createdAt: r.created_at || null,
@@ -140,19 +140,6 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
     if (!logicId || noPersist) return;
     const now = new Date().toISOString();
     db.prepare('UPDATE sessions SET archived = ?, updated_at = ? WHERE logic_id = ?').run(archived ? 1 : 0, now, logicId);
-  }
-
-  /** 检查是否已发过系统提示词 */
-  function getSystemPromptSent(logicId: LogicId): boolean {
-    if (!logicId || noPersist) return false;
-    const r = db.prepare('SELECT system_prompt_sent FROM sessions WHERE logic_id = ?').get(logicId) as any;
-    return !!(r && r.system_prompt_sent === 1);
-  }
-
-  /** 标记系统提示词已发 */
-  function setSystemPromptSent(logicId: LogicId, sent: boolean): void {
-    if (!logicId || noPersist) return;
-    db.prepare('UPDATE sessions SET system_prompt_sent = ? WHERE logic_id = ?').run(sent ? 1 : 0, logicId);
   }
 
   /** 更新会话标题 */
@@ -269,17 +256,22 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
       let logicId: LogicId;
       
       if (opts && opts.logicIdMap) {
-        // 只认内存！如果内存里有正在用的 logicId（不管是 local-xxx 还是插件的），强制绑定
-        if (state.currentSessionId) {
-          logicId = state.currentSessionId as LogicId;
-          opts.logicIdMap.bind(logicId, webId);
+        // 1. 先查数据库，这个 webId 是不是已经有主了？
+        const existInDb = opts.logicIdMap.logicIdOf(webId);
+        
+        if (existInDb) {
+          // 有主了，说明用户点开了历史对话！直接用它的 logicId，绝不覆盖
+          logicId = existInDb;
         } else {
-          // 内存没有，说明是打开历史会话或老数据兜底
-          let mappedLogicId = opts.logicIdMap.logicIdOf(webId);
-          if (!mappedLogicId) {
-            mappedLogicId = opts.logicIdMap.ensureLogicId(webId);
+          // 无主，说明是当前新对话正在产生第一条消息
+          if (state.currentSessionId && (state.currentSessionId.startsWith('local-') || state.currentSessionId.startsWith('session-'))) {
+            // 内存有 logicId（新建时的 local-xxx 或插件给的），绑给它
+            logicId = state.currentSessionId as LogicId;
+            try { opts.logicIdMap.bind(logicId, webId, profileId); } catch (_) { /* ignore */ }
+          } else {
+            // 内存没有（比如直接刷新了），走老数据兜底
+            logicId = opts.logicIdMap.ensureLogicId(webId, profileId);
           }
-          logicId = mappedLogicId;
         }
       } else {
         logicId = webId as unknown as LogicId;
@@ -304,12 +296,6 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         if (ctx && ctx.win && !ctx.win.isDestroyed()) {
           ctx.win.webContents.send('shell-sessions-changed');
         }
-      }
-
-      // 处理临时标记（新窗口在首页发送了系统提示词）
-      if (state.initialPromptSent) {
-        setSystemPromptSent(logicId!, true);
-        state.initialPromptSent = false;
       }
 
       // 绑定暂存的血缘
@@ -343,13 +329,36 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         state.currentSessionId = urlLogicId as LogicId;
         console.log('[Cuckoo Code][' + profileId + '] 从 URL 缓存插件 LogicId: ' + urlLogicId);
       } else {
-        // 没有带参数，说明是用户手动新建，清空内存
-        state.currentSessionId = null;
+        // 没有带参数，说明是用户手动新建，或者从老会话退回了首页。
+        // 如果内存里没有以 local- 开头的 ID，说明是网页直接新建的，必须马上生成一个！
+        if (!state.currentSessionId || !state.currentSessionId.startsWith('local-')) {
+          const newLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
+          state.currentSessionId = newLogicId;
+          console.log('[Cuckoo Code][' + profileId + '] 发现首页且无凭证，主动生成新的临时 LogicId: ' + newLogicId);
+        }
       }
       
       state.selectedProjectDir = null;
       state.initialPromptSent = false;
       if (canSend) emitProjectDir(wc, null);
+      
+      // 解析 URL 中是否携带了工作区项目目录
+      let urlProjectDir: string | null = null;
+      try {
+        const u = new URL(url);
+        urlProjectDir = u.searchParams.get('cuckoo-project-dir');
+        if (urlProjectDir) {
+          state.selectedProjectDir = urlProjectDir;
+          state.pendingProjectDir = urlProjectDir; // 补上这句，确保后续能落库
+          if (canSend) emitProjectDir(wc, urlProjectDir);
+        }
+      } catch (_) { /* ignore */ }
+      
+      // 【终极统一】不管是点壳页面按钮、网页按钮还是直接改 URL，只要落到首页，统一通知壳页面弹窗
+      const ctx = windowState && windowState.getContextByWebContents ? windowState.getContextByWebContents(wc) : null;
+      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
+        ctx.win.webContents.send('shell-show-init-prompt', { projectDir: urlProjectDir });
+      }
     }
   }
 
@@ -371,8 +380,6 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
     setSessionLineage,
     supersedeSession,
     setSessionArchived,
-    getSystemPromptSent,
-    setSystemPromptSent,
     getArchivedProjects,
     setProjectArchived,
     extractSessionIdFromUrl,

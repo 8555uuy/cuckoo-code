@@ -182,7 +182,7 @@ function registerSessionIpc(): void {
     }
   });
 
-  // 用指定项目新建对话：导航到首页 + 自动初始化该项目（发系统提示词，不弹目录框）
+  // 用指定项目新建对话：拼参数 + 导航到首页。其余全部交给 handleUrlChange。
   ipcMain.handle('new-conversation-for-project', async (event: any, { projectDir }: any) => {
     const ctx = windowState.getContextByWebContents(event.sender);
     if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return { success: false, error: 'no-view' };
@@ -191,19 +191,20 @@ function registerSessionIpc(): void {
     if (!homeUrl) return { success: false, error: '当前平台无首页地址' };
     const wc = ctx.view.webContents;
     console.log('[Cuckoo Code] 用项目新建对话 → ' + projectDir);
-    // 页面加载完成后再初始化（等输入框就绪）
-    const onLoad = () => {
-      try { wc.off('did-finish-load', onLoad); } catch (_) { /* ignore */ }
-      setTimeout(async () => {
-        try {
-          await initProject(false, ctx, projectDir, false, '', false);
-        } catch (err: any) {
-          console.log('[Cuckoo Code] 新建对话初始化项目失败: ' + (err && err.message));
-        }
-      }, 2000);
-    };
-    try { wc.on('did-finish-load', onLoad); } catch (_) { /* ignore */ }
-    try { await wc.loadURL(homeUrl); } catch (err: any) { return { success: false, error: err.message }; }
+    
+    let targetUrl = homeUrl;
+    if (projectDir) {
+      try {
+        const u = new URL(homeUrl);
+        u.searchParams.set('cuckoo-project-dir', projectDir);
+        targetUrl = u.toString();
+      } catch (_) {
+        targetUrl = homeUrl + (homeUrl.includes('?') ? '&' : '?') + 'cuckoo-project-dir=' + encodeURIComponent(projectDir);
+      }
+    }
+    
+    // 只管导航，触发 handleUrlChange
+    try { await wc.loadURL(targetUrl); } catch (err: any) { return { success: false, error: err.message }; }
     return { success: true };
   });
 
@@ -250,12 +251,22 @@ function registerSessionIpc(): void {
     if (!view || !view.webContents || view.webContents.isDestroyed()) {
       return { success: false, error: '窗口已关闭' };
     }
+    
+    // 【核心修复】查数据库，把 logicId 翻译成真实的 webId
+    let targetWebId = sessionId;
+    if (ctx && ctx.sessionStore) {
+      const meta = ctx.sessionStore.getSessionMeta(sessionId);
+      if (meta && meta.webId) {
+        targetWebId = meta.webId;
+      }
+    }
+    
     // 按当前 provider 拼会话 URL（智谱 cid=、DeepSeek /chat/s/、Claude /chat/）
     let url = null;
     try {
       const provider = getProviderByUrl(view.webContents.getURL());
       if (provider && typeof provider.sessionUrlBase === 'string' && provider.sessionUrlBase) {
-        url = provider.sessionUrlBase + sessionId;
+        url = provider.sessionUrlBase + targetWebId;
       }
     } catch (_) { /* provider 未识别 */ }
     if (!url) return { success: false, error: '无法确定会话 URL（当前平台未提供 sessionUrlBase）' };

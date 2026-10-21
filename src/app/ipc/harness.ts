@@ -191,8 +191,8 @@ function prepareNewConversation(ctx: any): void {
 }
 
 function registerHarnessIpc(): void {
-  // 壳页面发送消息（触发 AI 回复）
-  ipcMain.handle('shell-send-message', async (event: any, payload: any) => {
+  // 发送普通消息（不带系统提示词）
+  ipcMain.handle('send-normal-message', async (event: any, payload: any) => {
     const text = (payload && payload.text) || '';
     const ctx = findContext(event.sender);
     if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) {
@@ -203,7 +203,44 @@ function registerHarnessIpc(): void {
       const hv = (ctx as any).harnessView;
       if (hv && !hv.webContents.isDestroyed()) hv.webContents.send('harness-event', { type: 'plan', todos: [] });
     } catch (_) { /* ignore */ }
-    // 发给网页（原版模式），bridge 收到后会调 sendToChat
+    
+    ctx.view.webContents.send('harness-user-message', { text });
+    return { success: true };
+  });
+
+  // 发送初始化消息（拼接系统提示词 + 绑目录）
+  ipcMain.handle('send-init-message', async (event: any, payload: any) => {
+    const rawText = (payload && payload.text) || '';
+    const projectDir = payload && payload.projectDir;
+    const ctx = findContext(event.sender);
+    if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) {
+      return { success: false, error: 'no-ai-view' };
+    }
+    
+    let text = rawText;
+    if (projectDir) {
+      try {
+        const providerId = ctx.providerId || '';
+        const built = buildPrompt({ providerId, selectedDir: projectDir });
+        if (built && !built.error && built.prompt) {
+          text = built.prompt + '\n\n---\n\n' + text;
+        }
+      } catch (e: any) {
+        console.error('[Cuckoo Init] 合并提示词失败:', e.message);
+      }
+      
+      // 顺手绑定目录
+      if (ctx.sessionStore && ctx.sessionStore.state.currentSessionId) {
+        ctx.sessionStore.saveSessionDirMapping(ctx.sessionStore.state.currentSessionId, projectDir);
+      }
+    }
+
+    try {
+      resetTodosCache();
+      const hv = (ctx as any).harnessView;
+      if (hv && !hv.webContents.isDestroyed()) hv.webContents.send('harness-event', { type: 'plan', todos: [] });
+    } catch (_) { /* ignore */ }
+    
     ctx.view.webContents.send('harness-user-message', { text });
     return { success: true };
   });
@@ -228,96 +265,16 @@ function registerHarnessIpc(): void {
     }
   });
 
-  // 原版模式初始化输入框：合并系统提示词
-  ipcMain.handle('merge-system-prompt', async (event: any, payload: any) => {
-    const ctx = findContext(event.sender);
-    if (!ctx) return { success: false, error: 'no-context' };
-    const sessionStore = ctx.sessionStore;
-    const logicId = sessionStore ? sessionStore.state.currentSessionId : null;
-    const projectDir = sessionStore ? sessionStore.state.selectedProjectDir : null;
-    
-    let text = payload?.text || '';
-    
-    console.log('[Cuckoo Merge] 收到合并请求: logicId=' + logicId + ', projectDir=' + projectDir);
-    
-    let shouldMerge = false;
-
-    if (projectDir) {
-      if (!logicId) {
-        // 没有 logicId，说明是新窗口（无会话），检查有没有内存标记
-        shouldMerge = !(sessionStore && sessionStore.state && sessionStore.state.initialPromptSent);
-      } else if (sessionStore && typeof sessionStore.getSystemPromptSent === 'function') {
-        // 有 logicId，检查数据库
-        shouldMerge = !sessionStore.getSystemPromptSent(logicId);
-      }
-    }
-
-    if (shouldMerge) {
-      try {
-        const providerId = ctx.providerId || '';
-        const built = buildPrompt({ providerId, selectedDir: projectDir });
-        if (built && !built.error && built.prompt) {
-          text = built.prompt + '\n\n---\n\n' + text;
-          
-          // 标记已发
-          if (logicId && sessionStore && typeof sessionStore.setSystemPromptSent === 'function') {
-            sessionStore.setSystemPromptSent(logicId, true);
-          } else if (sessionStore && sessionStore.state) {
-            sessionStore.state.initialPromptSent = true;
-          }
-          
-          console.log('[Cuckoo Harness] merge-system-prompt 合并完成，最终长度=' + text.length);
-        }
-      } catch (e: any) {
-        console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
-      }
-    }
-    return { success: true, text };
-  });
-
-  // 用户在 harness 输入 → 转给 AI 页面（bridge 会调 sendToChat）
+  // 用户在 harness 输入 → 转给 AI 页面（纯净模式的普通发消息）
   ipcMain.handle('harness-send', (event: any, payload: any) => {
-    let text = (payload && payload.text) || '';
+    const text = (payload && payload.text) || '';
     console.log('[Cuckoo Harness] 收到用户消息，长度=' + text.length);
     const ctx = findContext(event.sender);
     if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) {
       return { success: false, error: 'no-ai-view' };
     }
     
-    const sessionStore = ctx.sessionStore;
-    const logicId = sessionStore ? sessionStore.state.currentSessionId : null;
-    const projectDir = sessionStore ? sessionStore.state.selectedProjectDir : null;
-    
-    // 判断是否首次发送，且是否有项目目录（不依赖 logicId）
-    let shouldMerge = false;
-    if (projectDir && sessionStore) {
-      if (!logicId) {
-        shouldMerge = !sessionStore.state.initialPromptSent;
-      } else if (typeof sessionStore.getSystemPromptSent === 'function') {
-        shouldMerge = !sessionStore.getSystemPromptSent(logicId);
-      }
-    }
-
-    if (shouldMerge) {
-      console.log('[Cuckoo Harness] 首次发送消息，合并系统提示词...');
-      try {
-        const providerId = ctx.providerId || '';
-        const built = buildPrompt({ providerId, selectedDir: projectDir });
-        if (built && !built.error && built.prompt) {
-          text = built.prompt + '\n\n---\n\n' + text;
-          if (logicId) {
-            sessionStore.setSystemPromptSent(logicId, true);
-          } else {
-            sessionStore.state.initialPromptSent = true;
-          }
-          console.log('[Cuckoo Harness] 合并完成，最终长度=' + text.length);
-        }
-      } catch (e: any) {
-        console.error('[Cuckoo Harness] 合并提示词失败:', e.message);
-      }
-    }
-
-    // 新用户消息 = 新任务：清空旧计划（否则旧 todoWrite 结果一直挂着）
+    // 纯净模式现在统一只发普通消息（初始化由壳页面弹窗接管）
     try {
       resetTodosCache();
       const hv = (ctx as any).harnessView;

@@ -205,26 +205,10 @@ function registerShellIpc(): void {
     const url = provider && provider.homeUrl ? provider.homeUrl : '';
     if (!url) return { success: false, error: 'no-home-url' };
     try {
+      // 通知 harness 视图重置
       prepareNewConversation(ctx);
-      
-      // 清空当前会话状态，回归纯净的新对话状态
-      if (ctx && ctx.sessionStore) {
-        ctx.sessionStore.state.selectedProjectDir = null;
-        ctx.sessionStore.state.pendingProjectDir = null;
-        ctx.sessionStore.state.initialPromptSent = false;
-        
-        // 强制生成一个新的临时 logicId 存在于内存，但不落库（防止产生垃圾数据）
-        const tempLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
-        ctx.sessionStore.state.currentSessionId = tempLogicId;
-      }
-      
+      // 只负责导航，清理状态和弹窗统一交由 handleUrlChange 处理
       await view.webContents.loadURL(url);
-      
-      // 直接通知壳页面准备弹窗（不用等 URL 变化）
-      if (ctx && ctx.win && !ctx.win.isDestroyed()) {
-        ctx.win.webContents.send('shell-show-init-prompt');
-      }
-      
       return { success: true };
     }
     catch (err: any) { return { success: false, error: err.message }; }

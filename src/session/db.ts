@@ -43,7 +43,6 @@ function initDatabase(userDataDir: string): DatabaseSync {
         parent_id TEXT,
         kind TEXT,
         agent_name TEXT,
-        system_prompt_sent INTEGER DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
       );
@@ -56,13 +55,8 @@ function initDatabase(userDataDir: string): DatabaseSync {
   }
 
   // 如果有历史版本，在此处按顺序写 Migration 逻辑
+  // 版本 2 不再需要 system_prompt_sent，所以不升级，直接跳过。
   if (dbVersion < 2) {
-    try {
-      db.exec("ALTER TABLE sessions ADD COLUMN system_prompt_sent INTEGER DEFAULT 0;");
-      console.log('[DB] 已升级到版本 2：添加 system_prompt_sent 字段');
-    } catch (e: any) {
-      console.error('[DB] 升级到版本 2 失败:', e.message);
-    }
     dbVersion = 2;
   }
 

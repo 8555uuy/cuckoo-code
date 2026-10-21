@@ -12,7 +12,7 @@ import { renderWindowList, openWindowManager, closeWindowManager, handleGenerate
 import { loadMcpConfigToJson, renderMcpList, openMcpManager, closeMcpManager, handleMcpSave } from './panels/mcp-manager.js';
 import { openSettings, closeSettings, resetSettings, saveSettings } from './panels/settings.js';
 import { makeFabDraggable } from './fab.js';
-import { bindInitInputEvents } from './init-input.js';
+
 import { getProviderByUrl } from '../providers/registry.js';
 import { createTpsMeter, formatTps } from './tps.js';
 
@@ -420,7 +420,7 @@ function bindEvents() {
   if (eventsBound) return;
   eventsBound = true;
 
-  bindInitInputEvents();
+
 
   // ===== 左侧活动栏：标签页切换 =====
   const abItems = document.querySelectorAll('.cuckoo-ab-item');
