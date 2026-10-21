@@ -127,10 +127,10 @@ test('updateMemory 内容为空返回 null', () => {
   assert.strictEqual(updateMemory(a.id, '   '), null);
 });
 
-test('updateMemory 改成与另一条相同则返回那条（不产生重复）', () => {
+test('updateMemory 改成与另一条相同则合并（删本条，返回已有那条）', () => {
   const a = addMemory('第一条');
   const b = addMemory('第二条');
   const r = updateMemory(b.id, '第一条');
   assert.strictEqual(r.id, a.id);
-  assert.strictEqual(listMemories().length, 2);
+  assert.strictEqual(listMemories().length, 1);
 });

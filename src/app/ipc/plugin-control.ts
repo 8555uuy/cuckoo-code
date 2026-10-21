@@ -31,7 +31,7 @@ const SHELL_BRIDGE_ALLOW: string[] = [
   // —— 提示词 ——
   'list-snippets', 'save-snippets', 'trigger-snippet',
   // —— 记忆 ——
-  'list-memories', 'save-memories', 'add-memory', 'delete-memory',
+  'list-memories', 'save-memories', 'add-memory', 'update-memory', 'delete-memory',
   'get-memories-enabled', 'set-memories-enabled',
   // —— 快照 ——
   'list-snapshots', 'create-snapshot', 'restore-snapshot', 'delete-snapshot',
