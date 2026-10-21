@@ -368,19 +368,14 @@ function checkPendingInit(): void {
   try { parentSessionId = localStorage.getItem('cuckoo-compact-parent-session'); } catch (_) {}
   console.log('[Cuckoo Compact] 检测到压缩后待初始化，3 秒后执行；项目目录=' + (projectDir || '(无)') + '，压缩前会话=' + (parentSessionId || '(无)'));
   setTimeout(async () => {
+    // 系统提示词 + 交接提示合并为**一条消息**（通过 extraPrompt 追加在系统提示词末尾）。
+    // ⚠️ 不能分两次发：initProject 内部填入后要等 2~4 秒随机延迟才发送，
+    //    若此时再调 sendToChat 发交接提示，会覆盖输入框里未发出的系统提示词（实测 bug）。
     try {
-      await (window as any).electronAPI.initProject(projectDir || null, true, '', false, parentSessionId);
+      await (window as any).electronAPI.initProject(projectDir || null, true, CONTEXT_HANDOFF_INSTRUCTION, false, parentSessionId);
+      console.log('[Cuckoo Compact] 已发送系统提示词 + 上下文交接提示（合并为一条）');
     } catch (err) {
       console.error('[Cuckoo Compact] 压缩后初始化失败:', err);
-    }
-    // 压缩交接：上下文已被摘要截断，注入交接提示让 AI 主动补全上下文
-    // （用户诉求 2026-10-01：压缩后 AI 不知情，盲目相信摘要上下文；要求它主动读文件补全 + 报告完成）
-    try {
-      await new Promise((r) => setTimeout(r, 3000)); // 等首条提示发完
-      sendToChat(CONTEXT_HANDOFF_INSTRUCTION, '压缩-交接', 300);
-      console.log('[Cuckoo Compact] 已注入上下文交接提示');
-    } catch (err) {
-      console.error('[Cuckoo Compact] 交接提示发送失败:', err);
     }
   }, 3000);
 }
