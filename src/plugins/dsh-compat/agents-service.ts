@@ -8,6 +8,8 @@
  * - DSH 的 create 是"内存组合作用域"，Cuckoo 的 create 是"登记一个 AgentSession"
  * - DSH 的 followup 进 inbox，Cuckoo 的 followup 负责"开对话 + 发消息 + 队列持久化"
  */
+import fs from 'node:fs';
+import pathMod from 'node:path';
 
 /** 简化 Agent 视图（DSH Agent 的核心面） */
 interface CuckooAgent {
@@ -250,7 +252,27 @@ function createAgents(host: any): any {
       if (!logicId) throw new Error('create: sessionId required');
       if (activeSessions.has(logicId)) throw new Error('session already exists: ' + logicId);
 
-      const projectDir = options.meta?.cwd || null;
+      // [022] 决策 9.2：meta.cwd 严格校验（对齐 DSH prepare 的 cwd 规则）
+      //   - 传了必须是字符串
+      //   - 传了必须是绝对路径
+      //   - 传了要做 realpath 规范化（与 workspace-registry 的 create(path) 一致，
+      //     否则 attachSession 第 5 道校验 cwd === workspace.path 会失败）
+      let projectDir: string | null = null;
+      const rawCwd = options.meta && options.meta.cwd;
+      if (rawCwd !== undefined && rawCwd !== null) {
+        if (typeof rawCwd !== 'string') {
+          throw new Error('meta.cwd must be a string, got ' + typeof rawCwd);
+        }
+        if (!pathMod.isAbsolute(rawCwd)) {
+          throw new Error('meta.cwd must be an absolute path, got "' + rawCwd + '"');
+        }
+        try {
+          projectDir = fs.realpathSync(rawCwd);
+        } catch (e: any) {
+          throw new Error('meta.cwd does not resolve: "' + rawCwd + '" (' + (e && e.message) + ')');
+        }
+      }
+
       const profileId = (options.agentOptions && options.agentOptions.model) || null;
       const providerId = (options.agentOptions && options.agentOptions.provider) || null;
       const state: AgentSessionState = {
@@ -266,12 +288,18 @@ function createAgents(host: any): any {
       };
       activeSessions.set(logicId, state);
 
-      // 记目录
-      if (projectDir && host && host.saveSessionDirMapping) {
-        try { host.saveSessionDirMapping(logicId, projectDir); } catch (_) { /* ignore */ }
-      }
+      // 记目录（setup 成功后再落库，避免 setup 失败留下脏数据）
+      const persistDirMapping = () => {
+        if (projectDir && host && host.saveSessionDirMapping) {
+          try { host.saveSessionDirMapping(logicId, projectDir); } catch { /* ignore */ }
+        }
+      };
 
-      return {
+      // [022] 决策 9.3：调 setup（若提供），失败则回滚 activeSessions
+      //   agentCtx 最小实现：get 返回 undefined（agentPresets 由 C-light 处理）、
+      //   plugin 返回空 disposer、effect 执行回调
+      //   详见 docs/dsh-compat-decisions.md 9.3
+      const handle: CuckooAgentHandle = {
         agent: sessionToAgent({ id: logicId, title: undefined, projectDir }),
         dispose: async () => {
           const s = activeSessions.get(logicId);
@@ -279,6 +307,27 @@ function createAgents(host: any): any {
           activeSessions.delete(logicId);
         },
       };
+
+      if (typeof options.setup === 'function') {
+        const agentCtx = {
+          get: (_name: string) => undefined,
+          plugin: (_p: any) => () => { /* no-op */ },
+          effect: (fn: any) => {
+            try { fn(); } catch { /* ignore */ }
+            return () => { /* no-op */ };
+          },
+        };
+        try {
+          await options.setup(agentCtx, handle.agent);
+        } catch (e: any) {
+          // 回滚：清 activeSessions，让同 id 可重新 create
+          activeSessions.delete(logicId);
+          throw e;
+        }
+      }
+
+      persistDirMapping();
+      return handle;
     },
   };
 }
