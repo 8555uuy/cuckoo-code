@@ -3,9 +3,9 @@ id: 022
 type: feature
 title: DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）
 status: in_progress
-branch: direct-on-master（直接 master 提交）
+branch: feat/022-dsh-compat-c7
 created: 2026-10-06
-updated: 2026-10-08
+updated: 2026-10-22
 ---
 
 ## 背景
@@ -121,10 +121,35 @@ DSH（DeepSeek Harness）是 DeepSeek 官方的 Agent 框架，生态里已有�
 
 ## C4-C：ctx.agents（`src/plugins/dsh-compat/agents-service.ts`）
 
-- **简化实现**：`get(id) / current() / list() / roots()`——**会话 → agent 视图**（`{ id, session: { id, projectDir } }`）
-- **对比 DSH**：DSH 是"活 agent 注册表 + handle/dispose"；Cuckoo 无 agent registry，用会话映射
+- **只读视图**：`get(id) / current() / list() / roots()`——会话 → agent 视图（`{ id, session: { id, projectDir } }`）
+- **写操作**（`4731e13` 提交新增）：`create(options)` / `followup(msg)` / `whenIdle()`
+  - `create`：登记到 `activeSessions`，返回 `{ agent, dispose }` handle
+  - `followup`：消息入 `state.queue`，异步 `processQueue` 消费（导航首页 + 合并提示词 + 发消息）
+  - `whenIdle`：等 `state.status` 变 `idle`
+  - `onAssistantDone`：AI 回复完成时把 `busy` 状态解锁，推进队列
+- **对比 DSH**：DSH 是 Cordis fiber 驱动的活 agent；Cuckoo 用 `activeSessions` Map + `state.queue` 模拟 Inbox 语义
 
 > **C4 完整**（systemPrompt + fs + agents 全接真）。
+
+## C4-D：ctx.agents 深度对齐（2026-10-22，见决策记录第九章）
+
+**基准**：`dsh-v0.2.0-rc.2`（commit `639ed01539`）
+**详细决策**：见 `docs/dsh-compat-decisions.md` 第九章
+
+本次讨论针对 `@weibaohui/dsh-tasks` 的最小兼容，逐项核对 `ctx.agents` 契约（`CreateAgentOptions` 共 9 字段，dsh-tasks 实际只用 5 项）：
+
+| 步骤 | 决策 | 状态 |
+|---|---|---|
+| 9.1 `create` 只落库，不导航不发消息 | 待实现 | TODO |
+| 9.2 `meta.cwd` 严格校验绝对路径 | 待实现 | TODO |
+| 9.3 `setup` 必调，`agentCtx` 最小实现 | 待实现 | TODO |
+| 9.4 `agentPresets` C-light（诚实映射现状） | 待实现 | TODO |
+| 9.5 `workspaceRegistry` 升级为持久化注册表 | 待实现 | TODO |
+| 9.6 `attachSession` 完整五道校验 | 待实现 | TODO |
+| 9.7 `session.append` 补错误传播 | 待实现 | TODO |
+| 9.8 队列 3 缺陷 + 压缩冲突（记 TODO） | 已记录 | TODO |
+
+**待实现的意义**：以上 8 项是在"讨论阶段"定下的决策，代码改动尚未落地。等实施完成后再把状态改为已完成。
 
 ## C5：插件会话落盘（`src/plugins/cuckoo-plugins/plugin-storage.ts`）
 
@@ -190,11 +215,15 @@ DSH（DeepSeek Harness）是 DeepSeek 官方的 Agent 框架，生态里已有�
 
 ## 未完成
 
-- **C2 落盘**：内存流水**不持久**（重启丢）；DSH 是落盘的——后续可做
-- **更多服务映射**：`ctx.agents`（子代理）/ `ctx.fs` / `ctx.systemPrompt` 等仍 stub
+- **C4-D 的 8 项决策**：见上方 C4-D 章节，需按 `docs/dsh-compat-decisions.md` 第九章逐个实现
+- **队列系统深化**：`state.queue` 是 `4731e13` 为兼容 DSH 而加的（非 Cuckoo 原生需求），存在 3 个已知缺陷 + 压缩冲突（详见 9.8），等真正做队列时一并解决
 - **P2**：TS 转译（npm 插件多是 JS，价值低）、依赖解析（esbuild 已处理）
 - **P3**：UI/命令/主题等 DSH 客户端能力
 - **对照测试固化**：`scripts/compare-dsh.mjs`（方便回归）
+
+> **2026-10-22 已解决**：
+> - ~~C2 落盘~~（C5 已实现 JSONL 落盘）
+> - ~~ctx.agents / ctx.fs / ctx.systemPrompt 仍 stub~~（C4-A/B/C 已接真）
 
 ## 相关
 
