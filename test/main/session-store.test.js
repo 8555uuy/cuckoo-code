@@ -15,7 +15,7 @@ beforeEach(() => {
 
 afterEach(() => {
   while (_dbs.length > 0) {
-    try { _dbs.pop().close(); } catch (_) { /* ignore */ }
+    try { _dbs.pop().close(); } catch { /* ignore */ }
   }
   if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
 });
