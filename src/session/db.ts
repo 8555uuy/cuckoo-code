@@ -5,6 +5,20 @@ import { DatabaseSync } from 'node:sqlite';
 // 当前数据库结构版本（每次改表结构 +1）
 const CURRENT_DB_VERSION = 2;
 
+// [022] workspaces 表 DDL——启动时建表（和 sessions 一致）
+// 决策 9.5：持久化注册表。详见 docs/dsh-compat-decisions.md 9.5
+// 注：workspace-registry.ts 里也有同一 DDL 的兜底副本（供测试用 :memory: 场景）
+const WORKSPACES_DDL = `
+  CREATE TABLE IF NOT EXISTS workspaces (
+    id TEXT PRIMARY KEY,
+    path TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    session_ids TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+`;
+
 /**
  * 初始化并打开 SQLite 数据库。
  * 包含：自动建表、开启 WAL、版本迁移、老 JSON 数据迁移。
@@ -46,6 +60,7 @@ function initDatabase(userDataDir: string): DatabaseSync {
         created_at TEXT,
         updated_at TEXT
       );
+      ${WORKSPACES_DDL}
     `);
     dbVersion = CURRENT_DB_VERSION;
     db.exec(`PRAGMA user_version = ${dbVersion};`);
@@ -64,6 +79,10 @@ function initDatabase(userDataDir: string): DatabaseSync {
   if (dbVersion < CURRENT_DB_VERSION) {
     db.exec(`PRAGMA user_version = ${CURRENT_DB_VERSION};`);
   }
+
+  // [022] 老库补建 workspaces 表（幂等，已在全新安装分支建过则无副作用）
+  // 决策 9.5：workspaces 表随会话表一起在启动时建好，避免"谁用谁建"的补丁感
+  db.exec(WORKSPACES_DDL);
 
   return db;
 }
