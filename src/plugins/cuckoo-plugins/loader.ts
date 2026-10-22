@@ -382,6 +382,18 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
         }
         return createWorkspaceRegistry(host.db);
       }
+      // agentPresets：DSH 的 Agent 预设服务（C-light 简化版）
+      // [022] 决策 9.4：C-light——诚实映射 Cuckoo 现状（默认=全量工具）
+      //   - resolve(id?) → { id: id ?? 'default' }（永不 throw、永不带 broken）
+      //   - mount(ctx, id?) → { id: id ?? 'default' }（空操作，Cuckoo 无 preset 概念）
+      //   - 详见 docs/dsh-compat-decisions.md 9.4
+      //   为什么够用：dsh-tasks 永远 resolve(undefined)，从不指定自定义 preset
+      if (key === 'agentPresets') {
+        return {
+          resolve: async (id?: string) => ({ id: id ?? 'default' }),
+          mount: async (_ctx: any, id?: string) => ({ id: id ?? 'default' }),
+        };
+      }
       // ===== profileContext：DSH profile 上下文（对齐 DSH 的 ProfileContext）=====
       // dsh-market 用它拿"profile 目录"（装插件的位置）+ packageManager（pnpm 命令）
       if (key === 'profileContext') {
