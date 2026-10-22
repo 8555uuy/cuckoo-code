@@ -46,6 +46,7 @@ migrateLegacyData(globalDb, app.getPath('userData'));
 /** 全局唯一的 logicId ↔ webId 翻译层 */
 const globalLogicIdMap = createLogicIdMap(globalDb);
 (global as any).__globalLogicIdMap = globalLogicIdMap;
+(global as any).__globalDb = globalDb;
 
 // 渲染进程日志输出目录（仅开发环境持久化；打包版不写日志文件）
 const RENDERER_LOG_DIR = app.isPackaged
@@ -1335,7 +1336,7 @@ if (!gotSingleInstanceLock) {
     import('../plugins/cuckoo-plugins/index.js').then((m: any) => {
       import('../tools/index.js').then((t: any) => {
         import('./cuckoo-host.js').then((h: any) => {
-          const host = h.buildCuckooHost({ storeDir: app.getPath('userData'), logicIdMap: globalLogicIdMap });
+          const host = h.buildCuckooHost({ db: globalDb, logicIdMap: globalLogicIdMap });
           m.loadEnabledPlugins(t.registry, host).then((r: any) => {
             if (r.loaded.length || r.failed.length) {
               console.log('[Cuckoo Plugin] 已加载: ' + (r.loaded.join(' | ') || '(无)') +

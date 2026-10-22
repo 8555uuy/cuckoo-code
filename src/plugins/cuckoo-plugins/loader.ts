@@ -19,6 +19,7 @@ import { createC6Services } from '../dsh-compat/c6-services.js';
 import { createC7Services } from '../dsh-compat/c7-services.js';
 import { createC8Services } from '../dsh-compat/c8-services.js';
 import { createStorageDomain, createConnection } from '../dsh-compat/storage-service.js';
+import { createWorkspaceRegistry } from '../../session/workspace-registry.js';
 import { createLlm, createAgentDefaultModelFromWindow } from '../dsh-compat/llm-service.js';
 import { CHILD_PROCESS_SHIM_CODE } from '../dsh-compat/cp-shim-code.js';
 import { getProfileDir, getProfilePatchPath, ensureProfile, DEFAULT_PROFILE, listProfilePluginEntries } from '../profile/index.js';
@@ -167,8 +168,6 @@ interface CuckooHost {
   getCurrentSession?: () => { id: string | null; projectDir: string | null };
   /** 所有会话列表（带 projectDir） */
   listSessions?: () => Array<{ id: string; title?: string; projectDir?: string | null }>;
-  /** 把会话关联到某工作区（DSH workspace.attachSession） */
-  attachSessionToWorkspace?: (sessionId: string, projectDir: string) => boolean;
   /** 某会话 */
   getSession?: (id: string) => { id: string; title?: string } | null;
   /** 所有窗口（DSH llm 服务用：provider=平台, model=窗口） */
@@ -191,6 +190,8 @@ interface CuckooHost {
   getSessionQueue?: (logicId: string) => any[];
   /** 写会话的待发消息队列 */
   setSessionQueue?: (logicId: string, queue: any[]) => void;
+  /** [022] SQLite 连接（workspace-registry 用；由 app 层注入） */
+  db?: any;
   /** 当前窗口（DSH agentDefaultModel 用） */
   getCurrentWindow?: () => { id: string; name: string; providerId: string } | null;
   // ===== C6 =====
@@ -365,40 +366,21 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
           list: () => (host && host.listSessions ? host.listSessions().map((s: any) => ({ id: s.id, title: s.title })) : []),
         };
       }
-      // workspaceRegistry：工作区注册表（按"会话的 projectDir"聚合；DSH 契约）
+      // workspaceRegistry：持久化的工作区注册表
+      // [022] 决策 9.5：从"从 session.projectDir 动态聚合"升级为 SQLite 持久化注册表
+      // 详见 docs/requirements/022-dsh-plugin-compat.md C4-D + docs/dsh-compat-decisions.md 9.5
+      // [022] 决策 B：host.db 缺失时返回空壳（静默降级，避免破坏其他插件加载）
       if (key === 'workspaceRegistry') {
-        // 每个工作区对象带 attachSession（DSH 是 workspace 实例方法，不是 registry 的）
-        const listWorkspaces = (): Array<{ id: string; path: string; name: string; title: string; attachSession: (sessionId: string) => boolean }> => {
-          const dirs = new Set<string>();
-          const sessions = (host && host.listSessions) ? host.listSessions() : [];
-          for (const s of sessions) { if (s.projectDir) dirs.add(String(s.projectDir)); }
-          const cur = (host && host.getCurrentSession) ? host.getCurrentSession().projectDir : null;
-          if (cur) dirs.add(String(cur));
-          return [...dirs].map((dir) => {
-            const name = String(dir).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || dir;
-            return {
-              id: dir, path: dir, name, title: name,
-              /** 会话关联到此工作区（DSH workspace.attachSession） */
-              attachSession(sessionId: string): boolean {
-                try {
-                  return !!(host && typeof host.attachSessionToWorkspace === 'function'
-                    ? host.attachSessionToWorkspace(sessionId, dir)
-                    : false);
-                } catch (_) { return false; }
-              },
-            };
-          });
-        };
-        return {
-          list: () => listWorkspaces(),
-          /** DSH 契约：按 id 取工作区（不存在返回 undefined） */
-          get(id: string) {
-            if (!id) return undefined;
-            return listWorkspaces().find((w) => w.id === id);
-          },
-          /** 列出所有工作区（同 list） */
-          entries() { return listWorkspaces(); },
-        };
+        if (!host || !host.db) {
+          dbg('workspaceRegistry: host.db 缺失，返回空壳');
+          return {
+            create: async () => { throw new Error('workspaceRegistry: db not available'); },
+            get: () => undefined,
+            list: () => [],
+            resolveByPath: () => undefined,
+          };
+        }
+        return createWorkspaceRegistry(host.db);
       }
       // ===== profileContext：DSH profile 上下文（对齐 DSH 的 ProfileContext）=====
       // dsh-market 用它拿"profile 目录"（装插件的位置）+ packageManager（pnpm 命令）

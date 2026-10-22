@@ -100,26 +100,9 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
     listSessions: () => allSessions(),
     listWindows: () => listWindows(),
     getCurrentWindow: () => getCurrentWindow(),
-    attachSessionToWorkspace: (logicId: string, projectDir: string) => {
-      if (!logicId || !projectDir) return false;
-
-      // 找到哪个 store 里有这个 logicId（新窗口刚建的，会在最后一个 store 里）
-      let store: any = null;
-      for (const ctx of windowState.getAllContexts()) {
-        if (!ctx.sessionStore) continue;
-        try {
-          const all = ctx.sessionStore.readSessionStore();
-          if (all && all[logicId] !== undefined) { store = ctx.sessionStore; break; }
-        } catch (_) { /* ignore */ }
-      }
-      if (!store) {
-        const ctxs = windowState.getAllContexts();
-        store = ctxs.length > 0 ? ctxs[ctxs.length - 1].sessionStore : null;
-      }
-      if (!store) return false;
-
-      try { store.saveSessionDirMapping(logicId, projectDir); return true; } catch (_) { return false; }
-    },
+    // [022] 决策 9.5：db 注入给插件层，供 workspace-registry 使用
+    // [022] 决策 C：删除旧的 attachSessionToWorkspace——入口唯一（Workspace.attachSession）
+    db: opts?.db,
     getSession: (id: string) => {
       const found = allSessions().find((s) => s.id === id);
       return found || null;
