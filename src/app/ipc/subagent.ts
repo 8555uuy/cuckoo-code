@@ -11,7 +11,14 @@ const { ipcMain } = require('electron');
 function registerSubagentIpc(): void {
   // 子代理 bridge 上报最终文本
   ipcMain.handle('subagent-response', async (event: any, { text }: any) => {
-    const ctx = windowState.getContextByWebContents(event.sender);
+    let ctx = windowState.getContextByWebContents(event.sender);
+    if (!ctx) {
+      const all = windowState.getAllContexts();
+      for (const c of all) {
+        if (c.view && c.view.webContents && c.view.webContents.id === event.sender.id) { ctx = c; break; }
+        if (c.win && c.win.webContents && c.win.webContents.id === event.sender.id) { ctx = c; break; }
+      }
+    }
     if (ctx && ctx.win && !ctx.win.isDestroyed()) {
       onSubagentResponse(ctx.win.id, text || '');
     }
@@ -23,6 +30,9 @@ function registerSubagentIpc(): void {
     const ctx = windowState.getContextByWebContents(event.sender);
     if (!ctx || !ctx.win || ctx.win.isDestroyed()) return;
     // 网关查询窗口：把流式进度（思考/正文）转发给主进程的等待方
+    if (payload.done) {
+      onSubagentResponse(ctx.win.id, payload.text || '');
+    }
     const gwCb = getGatewayStream(ctx.win.id);
     if (gwCb) {
       try { gwCb({ think: payload.think, text: payload.text, preview: payload.preview, done: !!payload.done }); } catch (_) { /* ignore */ }
