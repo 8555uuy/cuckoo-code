@@ -23,6 +23,8 @@ export interface SubagentConfig {
   isGateway?: boolean;
   /** B 模式：不注入 Cuckoo 提示词，跳过工具块解析，收到回复直接返回 */
   noCuckooPrompt?: boolean;
+  /** B 模式工具拦截 */
+  interceptTools?: boolean;
 }
 
 /** 从 process.argv 解析子代理配置（无则 null） */
@@ -97,6 +99,12 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
       console.log('[Cuckoo Code][子代理] B模式收到回复，长度=' + raw.length);
       pushProgress({ status: 'done', text: raw, done: true });
       ipcRenderer.invoke('subagent-response', { text: raw, done: true }).catch(() => {});
+      return;
+    }
+    if (cfg.interceptTools && blocks.length > 0) {
+      console.log('[Cuckoo Code][网关] 拦截到工具块，直接返回不执行');
+      pushProgress({ status: 'done', text: raw, done: true });
+      ipcRenderer.invoke('subagent-response', { text: raw, done: true, intercepted: true }).catch(() => {});
       return;
     }
     const blocks = extractJsToolBlocks(raw);

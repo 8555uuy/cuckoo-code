@@ -163,8 +163,14 @@ async function handleChat(req, res, bodyText) {
   try { body = JSON.parse(bodyText || '{}'); } catch (e) { return json(res, 400, { error: { message: 'Invalid JSON' } }); }
   const messages = body.messages || [];
   const model = body.model || 'cuckoo-default';
-  const stream = body.stream === true;
+  const tools = body.tools || null;
+  const hasTools = Array.isArray(tools) && tools.length > 0;
+  const stream = body.stream === true && !hasTools;
   const text = messagesToText(messages);
+  if (hasTools) {
+    const tPrompt = toolsToPrompt(tools);
+    if (tPrompt) text += "\n\n" + tPrompt;
+  }
   if (!text) return json(res, 400, { error: { message: 'messages 为空' } });
 
   // ===== 整活模式：不管问啥，只回一句整活话 =====
@@ -216,6 +222,7 @@ async function handleChat(req, res, bodyText) {
       text: text,
       parentWindowId: parentWindowId,
       noCuckooPrompt: cfg.nativeMode === true,
+      interceptTools: hasTools,
       onChunk: function (c) {
         try {
           const raw = (c && c.text) || '';
@@ -270,6 +277,13 @@ async function handleChat(req, res, bodyText) {
     return json(res, 500, { error: { message: r.error || '未知错误' } });
   }
   // B 模式（平台原生）：不剥离代码块，原样返回
+  if (hasTools) {
+    const calls = parseToolCalls(r.text || '');
+    if (calls && calls.length > 0) {
+      addLog({ type: 'chat', model, stream: false, ok: true, replyLen: (r.text || '').length, tools: calls.length });
+      return json(res, 200, chatCompletionWithCalls(id, model, r.text || '', calls));
+    }
+  }
   const clean = cfg.nativeMode === true ? (r.text || '') : stripToolBlocks(r.text || '');
   addLog({ type: 'chat', model, stream, ok: true, replyLen: clean.length });
   return json(res, 200, chatCompletion(id, model, clean));

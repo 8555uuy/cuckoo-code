@@ -258,6 +258,8 @@ export async function runGatewayQuery(opts: {
   timeoutMs?: number; // 保留原行尾
   /** B 模式：不注入 Cuckoo 提示词，平台原生回复 */
   noCuckooPrompt?: boolean;
+  /** B 模式工具拦截：发现代码块立刻上报，不执行本地工具 */
+  interceptTools?: boolean;
 }): Promise<{ ok: boolean; text?: string; error?: string }> {
   if (!_createWindow || !_profileManager) return { ok: false, error: '子代理依赖未注入' };
   if (gatewayActive >= GATEWAY_MAX_CONCURRENT) {
@@ -279,6 +281,7 @@ export async function runGatewayQuery(opts: {
     projectDir: projectDir || null,
     isGateway: true, // 纯用户消息（不加"任务"框架），让 AI 自由用工具
     noCuckooPrompt: opts.noCuckooPrompt === true,
+    interceptTools: opts.interceptTools === true,
   };
   gatewayActive++;
   const windowId = _createWindow(subProfile);
