@@ -13,7 +13,7 @@ import { api, ckPrompt } from '../shared.js';
 
 interface Session { sessionId: string; projectDir?: string; title?: string; createdAt?: string; updatedAt?: string; kind?: string; parentId?: string; agentName?: string; superseded?: boolean; archived?: boolean; }
 
-function baseName(dir: string): string { if (!dir) return '未命名'; const parts = String(dir).replace(/[\\/]+$/, '').split(/[\\/]/); return parts[parts.length - 1] || dir; }
+function baseName(dir: string): string { if (!dir) return '未指定工作区'; const parts = String(dir).replace(/[\\/]+$/, '').split(/[\\/]/); return parts[parts.length - 1] || dir; }
 function relTime(iso?: string): string {
   if (!iso) return '';
   const t = Date.parse(iso); if (!Number.isFinite(t)) return '';
@@ -166,16 +166,17 @@ export function WorkspacesPage() {
     const isOpen = dir === curDir || expandedDirs.has(dir);
     const isArchOpen = archivedOpen.has(dir);
     return createElement('div', { key: dir, className: 'ck-ws-group' + (isOpen ? ' open' : ''), 'data-dir': dir },
-      createElement('div', { className: 'ck-ws-group-title', title: dir, onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e: any) => showTip(dir, e.currentTarget), onMouseLeave: () => setTip(null) },
+      createElement('div', { className: 'ck-ws-group-title', title: dir || '未指定工作区', onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e: any) => { if (dir) showTip(dir, e.currentTarget); }, onMouseLeave: () => setTip(null) },
         createElement(Svg, { d: IC.caret, cls: 'ck-ws-caret' }),
         createElement(Svg, { d: IC.folder, cls: 'ck-ws-folder' }),
         createElement('span', { className: 'ck-ws-gname' }, baseName(dir)),
-        createElement('span', { className: 'ck-ws-gacts' },
+        // [022] 空目录（未指定工作区）不渲染操作按钮——不是真实目录，新建/归档无意义
+        dir ? createElement('span', { className: 'ck-ws-gacts' },
           createElement('span', { className: 'ck-ws-gact', title: '用该项目新建对话', onClick: async (e: any) => { e.stopPropagation(); if (api.newConversationForProject) { try { await api.newConversationForProject(dir); } catch (_) {} } } }, createElement(Svg, { d: IC.plus })),
           archivedProjects.includes(dir)
             ? createElement('span', { className: 'ck-ws-gact', title: '取消归档', onClick: async (e: any) => { e.stopPropagation(); if (api.setProjectArchived) { try { await api.setProjectArchived(dir, false); } catch (_) {} load(); } } }, createElement(Svg, { d: IC.unarchiveProj }))
             : createElement('span', { className: 'ck-ws-gact', title: '归档项目', onClick: async (e: any) => { e.stopPropagation(); if (api.setProjectArchived) { try { await api.setProjectArchived(dir, true); } catch (_) {} load(); } } }, createElement(Svg, { d: IC.archiveProj })),
-        ),
+        ) : null,
       ),
       createElement('div', { className: 'ck-ws-items' },
         ...g.active.flatMap((s) => renderConv(s, false)),

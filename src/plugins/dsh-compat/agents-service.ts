@@ -291,7 +291,8 @@ function createAgents(host: any): any {
       // 记目录（setup 成功后再落库，避免 setup 失败留下脏数据）
       const persistDirMapping = () => {
         if (projectDir && host && host.saveSessionDirMapping) {
-          try { host.saveSessionDirMapping(logicId, projectDir); } catch { /* ignore */ }
+          // [022] 传 state.profileId（来自 agentOptions.model），确保会话归属正确的窗口
+          try { host.saveSessionDirMapping(logicId, projectDir, state.profileId); } catch { /* ignore */ }
         }
       };
 

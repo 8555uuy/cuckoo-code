@@ -2,6 +2,7 @@
  * Cuckoo 插件宿主能力：把 app 层的真能力（工具/设置/会话）包成 CuckooHost，
  * 注入给 DSH 兼容插件（plugins 层不能直接依赖 app/session，靠此桥接）。
  */
+import { createRequire } from 'node:module';
 import * as windowState from './window.js';
 import { registry } from '../tools/index.js';
 import { getPluginConfig, setPluginConfig } from '../plugins/plugins-config.js';
@@ -17,6 +18,11 @@ import { readProfiles } from './profile.js';
 import { getProvider } from '../providers/registry.js';
 import { createLogicIdMap } from '../session/logic-id-map.js';
 import type { WebId, LogicId } from '../session/ids.js';
+
+// [022] ESM 模块里用 require 必须先 createRequire（全项目惯例，见 src/app/ipc/*）
+// 漏了这行会导致 buildSystemPrompt 里的 require 抛 ReferenceError，
+// 被 catch 静默吞掉 → 插件任务收到空系统提示词（真机验证发现）
+const require = createRequire(import.meta.url);
 
 /** 取"当前会话"（优先最后一个活跃窗口） */
 function currentSession(): { id: string | null; projectDir: string | null } {
@@ -245,8 +251,16 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
           pid = (cur && cur.providerId) || '';
         }
         const built = mod.buildPrompt({ providerId: pid, selectedDir: projectDir });
-        return built && !built.error ? built.prompt : '';
-      } catch (_) { return ''; }
+        if (built && built.error) {
+          console.error('[Cuckoo Host] buildSystemPrompt 返回错误:', built.error, '| providerId=' + pid + ', projectDir=' + projectDir);
+          return '';
+        }
+        return built ? built.prompt : '';
+      } catch (e: any) {
+        // [022] 不静默吞错——系统提示词丢失会让 AI 完全不知道项目上下文，极难排查
+        console.error('[Cuckoo Host] buildSystemPrompt 抛错:', e && e.message ? e.message : String(e));
+        return '';
+      }
     },
     sendUserMessage: (logicId: string, profileId: string | null, text: string): boolean => {
       let ctx: any = null;
@@ -295,22 +309,33 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
         } catch (_) { /* ignore */ }
       }
     },
-    saveSessionDirMapping: (logicId: string, projectDir: string): boolean => {
-      let store: any = null;
-      for (const ctx of windowState.getAllContexts()) {
-        if (!ctx.sessionStore) continue;
-        try {
-          const all = ctx.sessionStore.readSessionStore();
-          if (all && all[logicId] !== undefined) { store = ctx.sessionStore; break; }
-        } catch (_) { /* ignore */ }
+    // [022] 直接写 host.db，不再经过"扫窗口找 store"——后者会用到错误的 profile_id
+    // 背景：dsh-tasks 通过 agentOptions.model 指定窗口（profileId），
+    //       旧实现"扫所有窗口找 logicId"找不到就用"最后一个窗口"，导致会话写进错误账号。
+    // 决策：profileId 由调用方明确传入；INSERT 时用它，UPDATE 时不影响（按 logic_id 定位）。
+    // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现（会话写到了 vs*****fr 而不是 ck*****48）。
+    saveSessionDirMapping: (logicId: string, projectDir: string, profileId?: string | null): boolean => {
+      if (!logicId) return false;
+      const db = opts?.db;
+      if (!db) {
+        console.error('[Cuckoo Host] saveSessionDirMapping 失败：host.db 未注入');
+        return false;
       }
-      if (!store) {
-        const ctxs = windowState.getAllContexts();
-        store = ctxs.length > 0 ? ctxs[ctxs.length - 1].sessionStore : null;
+      try {
+        const now = new Date().toISOString();
+        const exist = db.prepare('SELECT logic_id FROM sessions WHERE logic_id = ?').get(logicId) as any;
+        if (exist) {
+          db.prepare('UPDATE sessions SET project_dir = ?, updated_at = ? WHERE logic_id = ?')
+            .run(projectDir, now, logicId);
+        } else {
+          db.prepare('INSERT INTO sessions (logic_id, profile_id, project_dir, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
+            .run(logicId, profileId || null, projectDir, now, now);
+        }
+        return true;
+      } catch (e: any) {
+        console.error('[Cuckoo Host] saveSessionDirMapping 失败:', e && e.message ? e.message : String(e));
+        return false;
       }
-      if (!store) return false;
-
-      try { store.saveSessionDirMapping(logicId, projectDir); return true; } catch (_) { return false; }
     },
     broadcastTurnEnd: (logicId: string, reason: 'completed' | 'error' | 'max-tokens' | 'aborted'): void => {
       // 构造 session 对象（dsh-tasks 用 session.id 匹配 trackedRuns）

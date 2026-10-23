@@ -180,8 +180,8 @@ interface CuckooHost {
   buildSystemPrompt?: (projectDir: string, providerId: string) => string;
   /** DSH agents.create 用：往会话窗口发用户消息（按 profileId 找窗口） */
   sendUserMessage?: (logicId: string, profileId: string | null, text: string) => boolean;
-  /** DSH agents.create 用：保存"会话 → 目录"映射 */
-  saveSessionDirMapping?: (logicId: string, projectDir: string) => boolean;
+  /** DSH agents.create 用：保存"会话 → 目录"映射（profileId 决定会话归属哪个窗口） */
+  saveSessionDirMapping?: (logicId: string, projectDir: string, profileId?: string | null) => boolean;
   /** 按 logicId 设置会话标题 */
   setSessionTitleForId?: (logicId: string, title: string) => void;
   /** 广播 session/event.turn/end（dsh-tasks 监听） */
@@ -243,6 +243,9 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
     // ⚠️ DSH 插件用【属性访问】（host.webServer.register）——不是只有 ctx.get()
     // 这里把常用服务同时挂成属性，避免走 Proxy stub（静默失败）
     get webServer() { return (ctx as any).get ? (ctx as any).get('webServer') : undefined; },
+    // [022] workspaceRegistry 也必须走属性访问——dsh-tasks 用 ctx.workspaceRegistry.get(id)
+    // 漏了这行会导致属性访问走 Proxy stub，workspace.path 变成函数，create 报 "meta.cwd got function"
+    get workspaceRegistry() { return (ctx as any).get ? (ctx as any).get('workspaceRegistry') : undefined; },
     get loader() {
       // dsh-market 调 host.loader.entries() —— 返回 profile 里已装的插件清单
       return {

@@ -33770,7 +33770,7 @@ body {
   // src/ui/shell/scripts/pages/workspaces-react.tsx
   var import_react23 = __toESM(require_react(), 1);
   function baseName(dir) {
-    if (!dir) return "\u672A\u547D\u540D";
+    if (!dir) return "\u672A\u6307\u5B9A\u5DE5\u4F5C\u533A";
     const parts = String(dir).replace(/[\\/]+$/, "").split(/[\\/]/);
     return parts[parts.length - 1] || dir;
   }
@@ -34021,11 +34021,14 @@ body {
         { key: dir, className: "ck-ws-group" + (isOpen ? " open" : ""), "data-dir": dir },
         (0, import_react23.createElement)(
           "div",
-          { className: "ck-ws-group-title", title: dir, onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e) => showTip(dir, e.currentTarget), onMouseLeave: () => setTip(null) },
+          { className: "ck-ws-group-title", title: dir || "\u672A\u6307\u5B9A\u5DE5\u4F5C\u533A", onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e) => {
+            if (dir) showTip(dir, e.currentTarget);
+          }, onMouseLeave: () => setTip(null) },
           (0, import_react23.createElement)(Svg5, { d: IC.caret, cls: "ck-ws-caret" }),
           (0, import_react23.createElement)(Svg5, { d: IC.folder, cls: "ck-ws-folder" }),
           (0, import_react23.createElement)("span", { className: "ck-ws-gname" }, baseName(dir)),
-          (0, import_react23.createElement)(
+          // [022] 空目录（未指定工作区）不渲染操作按钮——不是真实目录，新建/归档无意义
+          dir ? (0, import_react23.createElement)(
             "span",
             { className: "ck-ws-gacts" },
             (0, import_react23.createElement)("span", { className: "ck-ws-gact", title: "\u7528\u8BE5\u9879\u76EE\u65B0\u5EFA\u5BF9\u8BDD", onClick: async (e) => {
@@ -34056,7 +34059,7 @@ body {
                 load();
               }
             } }, (0, import_react23.createElement)(Svg5, { d: IC.archiveProj }))
-          )
+          ) : null
         ),
         (0, import_react23.createElement)(
           "div",

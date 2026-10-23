@@ -138,7 +138,9 @@ function registerSessionIpc(): void {
         parentId: meta.parentId || null, kind: meta.kind || null,
         agentName: meta.agentName || null, superseded: meta.superseded === true,
       };
-    }).filter((s: any) => !!s.projectDir);
+    });
+    // [022] 不再过滤无 projectDir 的会话——DSH 语义下"无 cwd 会话"合法存在，
+    // 前端会把它们归到「未指定工作区」分组。详见 docs/dsh-compat-decisions.md 9.1。
     return { success: true, sessions, currentSessionId: store.state.currentSessionId || null, archivedProjects: store.getArchivedProjects() };
   });
 
