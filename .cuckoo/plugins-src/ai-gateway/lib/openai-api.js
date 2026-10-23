@@ -15,8 +15,9 @@ function messagesToText(messages) {
     // 丢弃客户端的 system 消息：Cuckoo 有自己完整的系统提示词（initProject 注入），
     // 再把客户端的 system 拼进来会让两套提示词打架（模型会跟着客户端的走）。
     if (role === 'system') continue;
-    if (role === 'assistant') parts.push('[助手] ' + content);
-    else parts.push(content);
+    if (role === 'assistant') { parts.push('[助手] ' + content); }
+    else if (role === 'tool') { parts.push('[工具返回结果] ' + content); }
+    else { parts.push(content); }
   }
   return parts.join('\n\n');
 }

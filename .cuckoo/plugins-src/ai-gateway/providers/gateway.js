@@ -165,7 +165,7 @@ async function handleChat(req, res, bodyText) {
   const model = body.model || 'cuckoo-default';
   const tools = body.tools || null;
   const hasTools = Array.isArray(tools) && tools.length > 0;
-  const stream = body.stream === true && !hasTools;
+  const stream = body.stream === true;
   const text = messagesToText(messages);
   if (hasTools) {
     const tPrompt = toolsToPrompt(tools);
@@ -227,20 +227,17 @@ async function handleChat(req, res, bodyText) {
         try {
           const raw = (c && c.text) || '';
           const rawThink = (c && c.think) || '';
-          // 新一轮检测：正文或思考变短 = AI 换轮了 → 重置"本轮已发送"
           if (raw.length < lastRawLen || rawThink.length < lastRawThinkLen) {
             turnTextSent = ''; turnThinkSent = '';
           }
           lastRawLen = raw.length;
           lastRawThinkLen = rawThink.length;
-          // 思考 → reasoning_content
           if (rawThink.length > turnThinkSent.length) {
             const delta = rawThink.slice(turnThinkSent.length);
             turnThinkSent = rawThink;
             res.write(sseLine(streamChunk(id, model, { reasoning_content: delta }, null)));
             wroteAny = true;
           }
-          // 正文 → content（剥离工具代码块，客户端不该看到工具调用文本）
           const clean = stripToolBlocks(raw);
           if (clean.length > turnTextSent.length) {
             const delta = clean.slice(turnTextSent.length);
@@ -258,15 +255,33 @@ async function handleChat(req, res, bodyText) {
       res.end();
       return;
     }
-    // 兜底：流式回调没吐出任何内容，把最终文本（剥离工具块）整段补发
-    if (!wroteAny && r.text) {
-      const clean = stripToolBlocks(r.text);
-      if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+    if (hasTools) {
+      const calls = parseToolCalls(r.text || '');
+      if (calls && calls.length > 0) {
+        calls.forEach(function(c, i) {
+          const chunk = {
+            tool_calls: [
+              { index: i, id: c.id, type: c.type, function: { name: c.function.name, arguments: c.function.arguments } }
+            ]
+          };
+          res.write(sseLine(streamChunk(id, model, chunk, null)));
+        });
+        res.write(sseLine(streamChunk(id, model, {}, 'tool_calls')));
+        addLog({ type: 'chat', model, stream: true, ok: true, replyLen: (r.text || '').length, tools: calls.length });
+      } else {
+        const clean = stripToolBlocks(r.text || '');
+        if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+        res.write(sseLine(streamChunk(id, model, {}, 'stop')));
+      }
+    } else {
+      if (!wroteAny && r.text) {
+        const clean = stripToolBlocks(r.text);
+        if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+      }
+      res.write(sseLine(streamChunk(id, model, {}, 'stop')));
     }
-    res.write(sseLine(streamChunk(id, model, {}, 'stop')));
     res.write('data: [DONE]\n\n');
     res.end();
-    addLog({ type: 'chat', model, stream, ok: true, replyLen: (r.text || '').length });
     return;
   }
 
