@@ -156,152 +156,165 @@ function getGatewayRun() {
 }
 
 async function handleChat(req, res, bodyText) {
-  if (!gatewayEnabled) return json(res, 503, { error: { message: '网关已关闭（可在侧边栏面板或管理网站重新开启）', type: 'service_unavailable' } });
-  const a = authClient(req);
-  if (!a.ok) return json(res, 401, { error: { message: 'Invalid API key', type: 'invalid_request_error' } });
-  let body = {};
-  try { body = JSON.parse(bodyText || '{}'); } catch (e) { return json(res, 400, { error: { message: 'Invalid JSON' } }); }
-  const messages = body.messages || [];
-  const model = body.model || 'cuckoo-default';
-  const tools = body.tools || null;
-  const hasTools = Array.isArray(tools) && tools.length > 0;
-  const stream = body.stream === true;
-  const text = messagesToText(messages);
-  if (hasTools) {
-    const tPrompt = toolsToPrompt(tools);
-    if (tPrompt) text += "\n\n" + tPrompt;
-  }
-  if (!text) return json(res, 400, { error: { message: 'messages 为空' } });
-
-  // ===== 整活模式：不管问啥，只回一句整活话 =====
-  if (prankMode) {
-    totalCalls++;
-    if (a.key) keystore.recordUse(a.key);
-    const pid = 'chatcmpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-    addLog({ type: 'chat', model, stream, ok: true, prank: true, replyLen: PRANK_REPLY.length });
-    if (stream) {
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': (res.req && res.req.headers && res.req.headers.origin) || 'http://127.0.0.1',
-      });
-      res.write(sseLine(streamChunk(pid, model, { role: 'assistant', content: '' }, null)));
-      res.write(sseLine(streamChunk(pid, model, { content: PRANK_REPLY }, null)));
-      res.write(sseLine(streamChunk(pid, model, {}, 'stop')));
-      res.write('data: [DONE]\n\n');
-      res.end();
-      return;
+  let isAborted = false;
+  const timeoutTimer = setTimeout(function () {
+    if (!res.headersSent) {
+      isAborted = true;
+      json(res, 504, { error: { message: 'Cuckoo 处理超时（可能是窗口未打开或 AI 未回复）' } });
     }
-    return json(res, 200, chatCompletion(pid, model, PRANK_REPLY));
-  }
-
-  const run = getGatewayRun();
-  if (!run) return json(res, 503, { error: { message: '网关查询入口不可用（请重启 Cuckoo 开发版以加载）' } });
-  const parentWindowId = getParentWindowId();
-  if (!parentWindowId) return json(res, 503, { error: { message: '没有可用的 Cuckoo 窗口，请先打开一个窗口' } });
-
-  totalCalls++;
-  if (a.key) keystore.recordUse(a.key);
-  const id = 'chatcmpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-
-  // 流式：思考 → reasoning_content，正文 → content（像真 API）
-  if (stream) {
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': (res.req && res.req.headers && res.req.headers.origin) || 'http://127.0.0.1',
-    });
-    res.write(sseLine(streamChunk(id, model, { role: 'assistant', content: '' }, null)));
-    // 多轮（工具循环）流式：每轮文本会重置，需按轮追踪已发送内容
-    let lastRawLen = 0, lastRawThinkLen = 0;
-    let turnTextSent = '', turnThinkSent = '';
-    let wroteAny = false;
-    const r = await run({
-      text: text,
-      parentWindowId: parentWindowId,
-      noCuckooPrompt: cfg.nativeMode === true,
-      interceptTools: hasTools,
-      onChunk: function (c) {
-        try {
-          const raw = (c && c.text) || '';
-          const rawThink = (c && c.think) || '';
-          if (raw.length < lastRawLen || rawThink.length < lastRawThinkLen) {
-            turnTextSent = ''; turnThinkSent = '';
-          }
-          lastRawLen = raw.length;
-          lastRawThinkLen = rawThink.length;
-          if (rawThink.length > turnThinkSent.length) {
-            const delta = rawThink.slice(turnThinkSent.length);
-            turnThinkSent = rawThink;
-            res.write(sseLine(streamChunk(id, model, { reasoning_content: delta }, null)));
-            wroteAny = true;
-          }
-          const clean = stripToolBlocks(raw);
-          if (clean.length > turnTextSent.length) {
-            const delta = clean.slice(turnTextSent.length);
-            turnTextSent = clean;
-            res.write(sseLine(streamChunk(id, model, { content: delta }, null)));
-            wroteAny = true;
-          }
-        } catch (_) { /* ignore */ }
-      },
-    });
-    if (!r.ok) {
-      addLog({ type: 'chat', model, stream, ok: false, error: r.error });
-      res.write(sseLine({ error: { message: r.error || '未知错误' } }));
-      res.write('data: [DONE]\n\n');
-      res.end();
-      return;
-    }
-    if (hasTools) {
-      const calls = parseToolCalls(r.text || '');
-      if (calls && calls.length > 0) {
-        calls.forEach(function(c, i) {
-          const chunk = {
-            tool_calls: [
-              { index: i, id: c.id, type: c.type, function: { name: c.function.name, arguments: c.function.arguments } }
-            ]
-          };
-          res.write(sseLine(streamChunk(id, model, chunk, null)));
+  }, 60000);
+  res.on('close', function () { clearTimeout(timeoutTimer); });
+  try {
+      if (!gatewayEnabled) return json(res, 503, { error: { message: '网关已关闭（可在侧边栏面板或管理网站重新开启）', type: 'service_unavailable' } });
+      const a = authClient(req);
+      if (!a.ok) return json(res, 401, { error: { message: 'Invalid API key', type: 'invalid_request_error' } });
+      let body = {};
+      try { body = JSON.parse(bodyText || '{}'); } catch (e) { return json(res, 400, { error: { message: 'Invalid JSON' } }); }
+      const messages = body.messages || [];
+      const model = body.model || 'cuckoo-default';
+      const tools = body.tools || null;
+      const hasTools = Array.isArray(tools) && tools.length > 0;
+      const stream = body.stream === true;
+      const text = messagesToText(messages);
+      if (hasTools) {
+        const tPrompt = toolsToPrompt(tools);
+        if (tPrompt) text += "\n\n" + tPrompt;
+      }
+      if (!text) return json(res, 400, { error: { message: 'messages 为空' } });
+    
+      // ===== 整活模式：不管问啥，只回一句整活话 =====
+      if (prankMode) {
+        totalCalls++;
+        if (a.key) keystore.recordUse(a.key);
+        const pid = 'chatcmpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        addLog({ type: 'chat', model, stream, ok: true, prank: true, replyLen: PRANK_REPLY.length });
+        if (stream) {
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': (res.req && res.req.headers && res.req.headers.origin) || 'http://127.0.0.1',
+          });
+          res.write(sseLine(streamChunk(pid, model, { role: 'assistant', content: '' }, null)));
+          res.write(sseLine(streamChunk(pid, model, { content: PRANK_REPLY }, null)));
+          res.write(sseLine(streamChunk(pid, model, {}, 'stop')));
+          res.write('data: [DONE]\n\n');
+          clearTimeout(timeoutTimer); res.end();
+          return;
+        }
+        return json(res, 200, chatCompletion(pid, model, PRANK_REPLY));
+      }
+    
+      const run = getGatewayRun();
+      if (!run) return json(res, 503, { error: { message: '网关查询入口不可用（请重启 Cuckoo 开发版以加载）' } });
+      const parentWindowId = getParentWindowId();
+      if (!parentWindowId) return json(res, 503, { error: { message: '没有可用的 Cuckoo 窗口，请先打开一个窗口' } });
+    
+      totalCalls++;
+      if (a.key) keystore.recordUse(a.key);
+      const id = 'chatcmpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    
+      // 流式：思考 → reasoning_content，正文 → content（像真 API）
+      if (stream) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': (res.req && res.req.headers && res.req.headers.origin) || 'http://127.0.0.1',
         });
-        res.write(sseLine(streamChunk(id, model, {}, 'tool_calls')));
-        addLog({ type: 'chat', model, stream: true, ok: true, replyLen: (r.text || '').length, tools: calls.length });
-      } else {
-        const clean = stripToolBlocks(r.text || '');
-        if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
-        res.write(sseLine(streamChunk(id, model, {}, 'stop')));
+        res.write(sseLine(streamChunk(id, model, { role: 'assistant', content: '' }, null)));
+        // 多轮（工具循环）流式：每轮文本会重置，需按轮追踪已发送内容
+        let lastRawLen = 0, lastRawThinkLen = 0;
+        let turnTextSent = '', turnThinkSent = '';
+        let wroteAny = false;
+        const r = await run({
+          text: text,
+          parentWindowId: parentWindowId,
+          noCuckooPrompt: cfg.nativeMode === true,
+          interceptTools: hasTools,
+          onChunk: function (c) {
+            try {
+              const raw = (c && c.text) || '';
+              const rawThink = (c && c.think) || '';
+              if (raw.length < lastRawLen || rawThink.length < lastRawThinkLen) {
+                turnTextSent = ''; turnThinkSent = '';
+              }
+              lastRawLen = raw.length;
+              lastRawThinkLen = rawThink.length;
+              if (rawThink.length > turnThinkSent.length) {
+                const delta = rawThink.slice(turnThinkSent.length);
+                turnThinkSent = rawThink;
+                res.write(sseLine(streamChunk(id, model, { reasoning_content: delta }, null)));
+                wroteAny = true;
+              }
+              const clean = stripToolBlocks(raw);
+              if (clean.length > turnTextSent.length) {
+                const delta = clean.slice(turnTextSent.length);
+                turnTextSent = clean;
+                res.write(sseLine(streamChunk(id, model, { content: delta }, null)));
+                wroteAny = true;
+              }
+            } catch (_) { /* ignore */ }
+          },
+        });
+        if (!r.ok) {
+          addLog({ type: 'chat', model, stream, ok: false, error: r.error });
+          res.write(sseLine({ error: { message: r.error || '未知错误' } }));
+          res.write('data: [DONE]\n\n');
+          clearTimeout(timeoutTimer); res.end();
+          return;
+        }
+        if (hasTools) {
+          const calls = parseToolCalls(r.text || '');
+          if (calls && calls.length > 0) {
+            calls.forEach(function(c, i) {
+              const chunk = {
+                tool_calls: [
+                  { index: i, id: c.id, type: c.type, function: { name: c.function.name, arguments: c.function.arguments } }
+                ]
+              };
+              res.write(sseLine(streamChunk(id, model, chunk, null)));
+            });
+            res.write(sseLine(streamChunk(id, model, {}, 'tool_calls')));
+            addLog({ type: 'chat', model, stream: true, ok: true, replyLen: (r.text || '').length, tools: calls.length });
+          } else {
+            const clean = stripToolBlocks(r.text || '');
+            if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+            res.write(sseLine(streamChunk(id, model, {}, 'stop')));
+          }
+        } else {
+          if (!wroteAny && r.text) {
+            const clean = stripToolBlocks(r.text);
+            if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+          }
+          res.write(sseLine(streamChunk(id, model, {}, 'stop')));
+        }
+        res.write('data: [DONE]\n\n');
+        clearTimeout(timeoutTimer); res.end();
+        return;
       }
-    } else {
-      if (!wroteAny && r.text) {
-        const clean = stripToolBlocks(r.text);
-        if (clean) res.write(sseLine(streamChunk(id, model, { content: clean }, null)));
+    
+      // 非流式
+      const r = await run({ text: text, parentWindowId: parentWindowId, noCuckooPrompt: cfg.nativeMode === true });
+      if (!r.ok) {
+        addLog({ type: 'chat', model, stream, ok: false, error: r.error });
+        return json(res, 500, { error: { message: r.error || '未知错误' } });
       }
-      res.write(sseLine(streamChunk(id, model, {}, 'stop')));
-    }
-    res.write('data: [DONE]\n\n');
-    res.end();
-    return;
+      // B 模式（平台原生）：不剥离代码块，原样返回
+      if (hasTools) {
+        const calls = parseToolCalls(r.text || '');
+        if (calls && calls.length > 0) {
+          addLog({ type: 'chat', model, stream: false, ok: true, replyLen: (r.text || '').length, tools: calls.length });
+          clearTimeout(timeoutTimer); return json(res, 200, chatCompletionWithCalls(id, model, r.text || '', calls));
+        }
+      }
+      const clean = cfg.nativeMode === true ? (r.text || '') : stripToolBlocks(r.text || '');
+      addLog({ type: 'chat', model, stream, ok: true, replyLen: clean.length });
+      clearTimeout(timeoutTimer); return json(res, 200, chatCompletion(id, model, clean));
+  } catch (e) {
+    console.error("[ai-gateway] handleChat 崩溃:", e);
+    try { if (!res.headersSent) json(res, 500, { error: { message: e.message } }); else clearTimeout(timeoutTimer); res.end(); } catch (_) {}
   }
-
-  // 非流式
-  const r = await run({ text: text, parentWindowId: parentWindowId, noCuckooPrompt: cfg.nativeMode === true });
-  if (!r.ok) {
-    addLog({ type: 'chat', model, stream, ok: false, error: r.error });
-    return json(res, 500, { error: { message: r.error || '未知错误' } });
-  }
-  // B 模式（平台原生）：不剥离代码块，原样返回
-  if (hasTools) {
-    const calls = parseToolCalls(r.text || '');
-    if (calls && calls.length > 0) {
-      addLog({ type: 'chat', model, stream: false, ok: true, replyLen: (r.text || '').length, tools: calls.length });
-      return json(res, 200, chatCompletionWithCalls(id, model, r.text || '', calls));
-    }
-  }
-  const clean = cfg.nativeMode === true ? (r.text || '') : stripToolBlocks(r.text || '');
-  addLog({ type: 'chat', model, stream, ok: true, replyLen: clean.length });
-  return json(res, 200, chatCompletion(id, model, clean));
 }
 
 // ===== 路由 =====
@@ -309,7 +322,7 @@ async function handle(req, res) {
   res.setHeader('Access-Control-Allow-Origin', (req.headers.origin || 'http://127.0.0.1'));
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Token');
-  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+  if (req.method === 'OPTIONS') { res.writeHead(204); clearTimeout(timeoutTimer); res.end(); return; }
 
   const url = new URL(req.url || '/', 'http://127.0.0.1');
   const p = url.pathname;

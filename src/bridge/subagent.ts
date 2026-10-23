@@ -101,13 +101,13 @@ export function initSubagentIfNeeded(): SubagentConfig | null {
       ipcRenderer.invoke('subagent-response', { text: raw, done: true }).catch(() => {});
       return;
     }
+    const blocks = extractJsToolBlocks(raw);
     if (cfg.interceptTools && blocks.length > 0) {
       console.log('[Cuckoo Code][网关] 拦截到工具块，直接返回不执行');
       pushProgress({ status: 'done', text: raw, done: true });
       ipcRenderer.invoke('subagent-response', { text: raw, done: true, intercepted: true }).catch(() => {});
       return;
     }
-    const blocks = extractJsToolBlocks(raw);
     if (blocks.length === 0) {
       console.log('[Cuckoo Code][子代理] 收到最终回复，长度=' + raw.length + '，上报主进程');
       // 推一次 done（网关用它收尾）
