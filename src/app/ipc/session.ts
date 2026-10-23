@@ -245,6 +245,22 @@ function registerSessionIpc(): void {
     return { success: true, projectDir: projectDir || null, pendingTextLen: pendingText.length };
   });
 
+  /**
+   * [022] 判断两个 URL 是否指向同一会话（用于 navigate-session 的同 URL 跳过）。
+   * 规范化：去 hash、去尾斜杠、忽略大小写（Windows 路径 / 域名不敏感）。
+   */
+  function sameSessionUrl(a: string, b: string): boolean {
+    const norm = (u: string) => {
+      try {
+        const p = new URL(u);
+        return (p.origin + p.pathname.replace(/\/+$/, '') + p.search).toLowerCase();
+      } catch {
+        return u.toLowerCase();
+      }
+    };
+    return norm(a) === norm(b);
+  }
+
   // 导航到会话
   ipcMain.handle('navigate-session', async (event: any, { sessionId }: any) => {
     if (!sessionId) return { success: false, error: '缺少会话ID' };
@@ -272,6 +288,19 @@ function registerSessionIpc(): void {
       }
     } catch (_) { /* provider 未识别 */ }
     if (!url) return { success: false, error: '无法确定会话 URL（当前平台未提供 sessionUrlBase）' };
+
+    // [022] 同 URL 不刷新——loadURL 会强制重载页面，导致正在跑的 Agent loop 中断
+    // 背景：DSH 的 uiWorkspace.openSession 是 SPA 内部状态切换（不导航 URL），
+    //       Cuckoo 用 loadURL 模拟"导航到会话"，但用户在目标会话里点「打开对话」时 URL 已相同。
+    // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现（点按钮后 loop 中断）。
+    try {
+      const cur = view.webContents.getURL();
+      if (cur && sameSessionUrl(cur, url)) {
+        console.log('[Cuckoo Code] navigate-session: 已在目标会话，跳过刷新 | url=' + url);
+        return { success: true, skipped: true };
+      }
+    } catch { /* ignore */ }
+
     try {
       await view.webContents.loadURL(url);
       return { success: true };
