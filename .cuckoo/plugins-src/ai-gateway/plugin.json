@@ -10,7 +10,7 @@
       "type": "number",
       "label": "网关端口",
       "description": "HTTP 服务端口",
-      "default": 18900,
+      "default": 18901,
       "min": 1024,
       "max": 65535
     },

@@ -55,7 +55,7 @@ function getLanIPs() {
 }
 
 function readConfig() {
-  const out = { port: 18900, host: '127.0.0.1', adminPassword: '', requireKey: true, autoStart: true, enabled: true, nativeMode: false };
+  const out = { port: 18901, host: '127.0.0.1', adminPassword: '', requireKey: true, autoStart: true, enabled: true, nativeMode: false };
   try {
     const file = configFile();
     if (fs.existsSync(file)) {
@@ -458,8 +458,8 @@ async function applyEnabled(want) {
 const provider = {
   id: 'ai-gateway',
   name: 'AI 网关',
-  homeUrl: 'http://127.0.0.1:18900',
-  sessionUrlBase: 'http://127.0.0.1:18900/',
+  homeUrl: 'http://127.0.0.1:18901',
+  sessionUrlBase: 'http://127.0.0.1:18901/',
   extractSessionId: function () { return null; },
   matchesUrl: function () { return false; },  // 不是 AI 平台，不劫持平台识别
 };

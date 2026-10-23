@@ -2,7 +2,7 @@
 export const name = 'ai-gateway-panel';
 
 const PLUGIN_ID = 'ai-gateway';
-const DEFAULT_PORT = 18900;
+const DEFAULT_PORT = 18901;
 
 const CSS = [
   '.ck-gw-wrap{padding:12px}',
