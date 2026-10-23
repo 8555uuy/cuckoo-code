@@ -169,13 +169,13 @@ function loadKeys(){
     area.innerHTML = '<table><thead><tr><th>Key</th><th>备注</th><th>状态</th><th>调用</th><th>创建</th><th></th></tr></thead><tbody>' +
       r.keys.map(function(k){
         return '<tr>' +
-          '<td><code class="mono" style="color:#7dd3fc">'+esc(k.masked || (k.key || '').slice(0, 14)) +
+          '<td><code class="mono" style="color:#7dd3fc">'+esc(k.key) +
           '<td>'+esc(k.note||'—')+'</td>' +
           '<td>'+(k.enabled?'<span class="badge on"><span class="dot on"></span>启用</span>':'<span class="badge off"><span class="dot off"></span>停用</span>')+'</td>' +
           '<td class="mono">'+(k.calls||0)+'</td>' +
           '<td class="muted">'+fmtTime(k.createdAt)+'</td>' +
           '<td style="text-align:right;white-space:nowrap">' +
-            '' +
+            '<button class="btn ghost sm" data-copy-key="'+esc(k.key)+'">复制</button> ' +
             '<button class="btn ghost sm" data-toggle="'+esc(k.key)+'" data-en="'+(k.enabled?'0':'1')+'">'+(k.enabled?'停用':'启用')+'</button> ' +
             '<button class="btn danger sm" data-del="'+esc(k.key)+'">删除</button>' +
           '</td>' +

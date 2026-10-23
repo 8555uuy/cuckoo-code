@@ -347,9 +347,8 @@ async function handle(req, res) {
 
     if (p === '/api/keys' && req.method === 'GET') {
       const list = keystore.loadKeys().map(function (k) {
-        const plain = (typeof k.__plain === 'string' && k.__plain) || '';
-        const masked = plain ? (plain.slice(0, 14) + '…') : '(已加密)';
-        return { key: k.key, masked: masked, note: k.note, createdAt: k.createdAt, enabled: k.enabled, calls: k.calls, lastUsedAt: k.lastUsedAt };
+        const plain = (typeof k.__plain === 'string' && k.__plain) || k.key;
+        return { key: plain, note: k.note, createdAt: k.createdAt, enabled: k.enabled, calls: k.calls, lastUsedAt: k.lastUsedAt };
       });
       return json(res, 200, { success: true, keys: list });
     }
