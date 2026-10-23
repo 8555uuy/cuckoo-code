@@ -175,7 +175,7 @@ async function handleChat(req, res, bodyText) {
       const tools = body.tools || null;
       const hasTools = Array.isArray(tools) && tools.length > 0;
       const stream = body.stream === true;
-      const text = messagesToText(messages);
+      let text = messagesToText(messages);
       if (hasTools) {
         const tPrompt = toolsToPrompt(tools);
         if (tPrompt) text += "\n\n" + tPrompt;
