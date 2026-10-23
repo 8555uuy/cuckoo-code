@@ -284,6 +284,7 @@ export async function runGatewayQuery(opts: {
     interceptTools: opts.interceptTools === true,
   };
   gatewayActive++;
+  (globalThis as any).__CUCKOO_DISABLE_NOTIFY = true;
   const windowId = _createWindow(subProfile);
   if (opts.onChunk) gatewayStreams.set(windowId, opts.onChunk);
   const timeoutMs = opts.timeoutMs || 300000;
@@ -303,6 +304,7 @@ export async function runGatewayQuery(opts: {
   } finally {
     if (hardTimer) { try { clearTimeout(hardTimer); } catch (_) {} }
     gatewayActive = Math.max(0, gatewayActive - 1);
+    (globalThis as any).__CUCKOO_DISABLE_NOTIFY = false;
     gatewayStreams.delete(windowId);
     // 强制销毁：close() 在隐藏窗口上可能不生效（实测窗口堆积、最终资源耗尽）
     try {

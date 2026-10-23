@@ -26,10 +26,12 @@ function registerRendererIpc(): void {
           if (profile && profile.name) windowName = profile.name;
         }
 
-        const notification = new Notification({
+        if (!(globalThis as any).__CUCKOO_DISABLE_NOTIFY) {
+  const notification = new Notification({
           title: windowName + ' - AI任务已完成',
           body: 'AI 已完成回复',
         });
+}
         notification.show();
 
         win.flashFrame(true);

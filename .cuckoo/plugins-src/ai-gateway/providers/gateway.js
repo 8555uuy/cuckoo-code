@@ -24,7 +24,7 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { createRequire } = require('node:module');
 const { getAIWebContents, getProjectDir, getParentWindowId } = require('../lib/ai-driver.js');
-const { messagesToText, chatCompletion, streamChunk, sseLine } = require('../lib/openai-api.js');
+const { messagesToText, chatCompletion, streamChunk, sseLine, toolsToPrompt, parseToolCalls, chatCompletionWithCalls } = require('../lib/openai-api.js');
 const { adminHtml } = require('../lib/admin-html.js');
 const keystore = require('../lib/keystore.js');
 
