@@ -30990,8 +30990,8 @@ body {
       }
     }, []);
     const closePluginSection = (0, import_react8.useCallback)(() => {
-      setActive("appearance");
-    }, []);
+      onClose();
+    }, [onClose]);
     const numVal = (key) => data && (data[key] === null || data[key] === void 0) ? "" : data ? data[key] : "";
     const loading = data === null;
     if (loading) {

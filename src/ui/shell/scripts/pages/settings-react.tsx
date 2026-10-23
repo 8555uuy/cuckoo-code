@@ -122,7 +122,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     } catch (_) { /* ignore */ }
   }, []);
 
-  const closePluginSection = useCallback(() => { setActive('appearance'); }, []);
+  // [022] 对齐 DSH 契约：settings.section slot 的 close() = 关闭整个设置面板
+  // 原实现误做成"切回外观 tab"，导致插件（dsh-tasks 等）点「打开对话」后 Modal 还在
+  // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现
+  const closePluginSection = useCallback(() => { onClose(); }, [onClose]);
 
   const numVal = (key: string) => (data && (data[key] === null || data[key] === undefined)) ? '' : (data ? data[key] : '');
 
