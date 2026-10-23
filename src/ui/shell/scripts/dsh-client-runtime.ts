@@ -419,7 +419,22 @@ function makeRemote(): any {
 
 /** 会话打开（uiWorkspace） */
 function makeUiWorkspace(): any {
-  return { openSession(_id: string) { /* noop */ }, openWorkspace(_id: string) { /* noop */ } };
+  return {
+    // [022] DSH 0.1.7+ 的会话导航 API：dsh-tasks 的「打开对话」按钮走这里
+    // 复用壳页面的 navigateSession（主进程 navigate-session IPC 会把 logicId 翻译成 webId 再导航）
+    // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现（点按钮无反应）
+    openSession(id: string) {
+      try {
+        const api = (window as any).shellAPI;
+        if (api && typeof api.navigateSession === 'function') {
+          const p = api.navigateSession(id);
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+      } catch { /* ignore */ }
+    },
+    // 工作区切换：Cuckoo 侧栏点分组就切换，不需要单独的 openWorkspace
+    openWorkspace(_id: string) { /* noop */ },
+  };
 }
 
 /** 响应式表单（configForms.get 返回）：带 subscribe/getSnapshot/describe/... */

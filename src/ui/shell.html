@@ -29992,9 +29992,25 @@ body {
     return __remoteSingleton;
   }
   function makeUiWorkspace() {
-    return { openSession(_id) {
-    }, openWorkspace(_id) {
-    } };
+    return {
+      // [022] DSH 0.1.7+ 的会话导航 API：dsh-tasks 的「打开对话」按钮走这里
+      // 复用壳页面的 navigateSession（主进程 navigate-session IPC 会把 logicId 翻译成 webId 再导航）
+      // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现（点按钮无反应）
+      openSession(id) {
+        try {
+          const api2 = window.shellAPI;
+          if (api2 && typeof api2.navigateSession === "function") {
+            const p = api2.navigateSession(id);
+            if (p && typeof p.catch === "function") p.catch(() => {
+            });
+          }
+        } catch {
+        }
+      },
+      // 工作区切换：Cuckoo 侧栏点分组就切换，不需要单独的 openWorkspace
+      openWorkspace(_id) {
+      }
+    };
   }
   function makeReactiveForm(ns) {
     const state = makeObservable({ status: "ready", value: {} });
