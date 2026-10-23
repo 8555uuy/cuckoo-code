@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 
 // 当前数据库结构版本（每次改表结构 +1）
@@ -227,6 +228,44 @@ function migrateLegacyData(db: DatabaseSync, userDataDir: string): void {
     }
     
     db.exec('COMMIT;');
+
+    // [022] 决策 9.5：从 sessions 的 project_dir 回填 workspaces
+    // 背景：JSON 时代没有独立 workspace 概念，工作区是从 session.project_dir 动态聚合的。
+    //       接线到持久化 registry 后，必须迁移这些"隐式工作区"，否则侧栏工作区会消失。
+    // 幂等：path UNIQUE + INSERT OR IGNORE
+    // 排除 project_archive：归档是 Cuckoo 独有的项目归档概念，不是工作区
+    // 失败不阻塞：最坏情况是侧栏显示不全，用户重新选目录时自动补建
+    try {
+      const dirs = db.prepare(`
+        SELECT DISTINCT project_dir FROM sessions
+        WHERE project_dir IS NOT NULL
+          AND project_dir != ''
+          AND (kind IS NULL OR kind != 'project_archive')
+      `).all() as Array<{ project_dir: string }>;
+
+      const insertWs = db.prepare(`
+        INSERT OR IGNORE INTO workspaces (id, path, title, session_ids, created_at, updated_at)
+        VALUES (?, ?, ?, '[]', ?, ?)
+      `);
+
+      const now = new Date().toISOString();
+      let created = 0;
+      for (const row of dirs) {
+        let canonical = row.project_dir;
+        try {
+          if (fs.existsSync(canonical)) canonical = fs.realpathSync(canonical);
+        } catch { /* 保留原值 */ }
+        const title = canonical.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || canonical;
+        try {
+          insertWs.run(randomUUID(), canonical, title, now, now);
+          created++;
+        } catch { /* 单条失败不影响其他 */ }
+      }
+      if (created > 0) console.log('[DB] workspaces 回填完成，共 ' + created + ' 条');
+    } catch (err: any) {
+      console.error('[DB] workspaces 回填失败（不阻塞）:', err.message);
+    }
+
     db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('legacy_migrated', '1')").run();
     console.log('[DB] 老数据迁移完成，已打上标记，以后不再重复读取老 JSON。');
   } catch (err: any) {
