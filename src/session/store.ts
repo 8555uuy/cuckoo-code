@@ -316,7 +316,16 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         if (canSend) emitProjectDir(wc, null);
       }
     } else {
-      // URL 没有 webId，说明在首页。
+      // [022] URL 没有 webId：只有"主页"才走后续逻辑（生成 logicId / 弹窗）。
+      // 其他页面（settings / pricing 等）直接跳过，避免误弹初始化遮罩。
+      // 详见 docs/dsh-compat-decisions.md 9.1。
+      const provider = getProviderByUrl(url);
+      const isHomeUrl = provider && provider.homeUrlPattern && provider.homeUrlPattern.test(url);
+      if (!isHomeUrl) {
+        console.log('[Cuckoo Store] 非会话且非主页 URL，跳过: ' + url);
+        return;
+      }
+
       // 检查 URL 是否带入了 cuckoo_logic_id（插件入口）
       let urlLogicId: string | null = null;
       try {
