@@ -122,9 +122,8 @@ test('不同 profile 的存储文件互相隔离', () => {
   assert.strictEqual(s2.getProjectDirBySessionId('sess-1'), 'C:/proj2');
 });
 
-test('handleUrlChange 首页 → 生成新 local-xxx，清空 selectedProjectDir', () => {
-  // [022-mod] 新行为（决策 9.x）：落地首页时生成新的 local-xxx，不再是清空 null。
-  // 理由：让 UI 后续能绑定新会话到该 logicId。详见 docs/dsh-compat-decisions.md 第九章。
+test('handleUrlChange 首页 → 清空 currentSessionId，清空 selectedProjectDir', () => {
+  // [022] 已废除 local-xxx 临时 ID：落地首页就清空当前会话。
   const sent = [];
   const fakeView = { webContents: { isDestroyed: () => false, send: (ch, data) => sent.push([ch, data]) } };
   const fakeWin = { webContents: { isDestroyed: () => false, send: () => {} } };
@@ -133,10 +132,7 @@ test('handleUrlChange 首页 → 生成新 local-xxx，清空 selectedProjectDir
   store.state.currentSessionId = 'old';
   store.state.selectedProjectDir = 'C:/old';
   store.handleUrlChange('https://chat.deepseek.com/', fakeView);
-  assert.ok(
-    typeof store.state.currentSessionId === 'string' && store.state.currentSessionId.startsWith('local-'),
-    'currentSessionId 应为新生成的 local-xxx，实际：' + store.state.currentSessionId,
-  );
+  assert.strictEqual(store.state.currentSessionId, null, 'currentSessionId 必须清空为 null');
   assert.strictEqual(store.state.selectedProjectDir, null);
   assert.ok(sent.some(([ch]) => ch === 'project-dir-updated'));
 });

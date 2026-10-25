@@ -192,21 +192,10 @@ function registerSessionIpc(): void {
     const homeUrl = provider && provider.homeUrl ? provider.homeUrl : null;
     if (!homeUrl) return { success: false, error: '当前平台无首页地址' };
     const wc = ctx.view.webContents;
-    console.log('[Cuckoo Code] 用项目新建对话 → ' + projectDir);
+    console.log('[Cuckoo Code] 工作区新建对话 → ' + homeUrl);
     
-    let targetUrl = homeUrl;
-    if (projectDir) {
-      try {
-        const u = new URL(homeUrl);
-        u.searchParams.set('cuckoo-project-dir', projectDir);
-        targetUrl = u.toString();
-      } catch (_) {
-        targetUrl = homeUrl + (homeUrl.includes('?') ? '&' : '?') + 'cuckoo-project-dir=' + encodeURIComponent(projectDir);
-      }
-    }
-    
-    // 只管导航，触发 handleUrlChange
-    try { await wc.loadURL(targetUrl); } catch (err: any) { return { success: false, error: err.message }; }
+    // 加号逻辑：永远只是打开 homeUrl，不做任何状态重置，不传额外参数
+    try { await wc.loadURL(homeUrl); } catch (err: any) { return { success: false, error: err.message }; }
     return { success: true };
   });
 

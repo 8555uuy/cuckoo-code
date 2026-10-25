@@ -11,7 +11,7 @@ import { setWindowCumulative, getTotal, cleanupSubagentKeys } from '../token-sta
 import { resolveAsset, resolveSrc } from '../../infra/paths.js';
 import * as updater from '../../updater/index.js';
 // 新对话要让 harness 视图一起重置 —— 两个入口共用同一段逻辑，避免行为分叉
-import { prepareNewConversation } from './harness.js';
+
 
 const require = createRequire(import.meta.url);
 const { ipcMain, app, shell, BrowserWindow } = require('electron');
@@ -205,9 +205,7 @@ function registerShellIpc(): void {
     const url = provider && provider.homeUrl ? provider.homeUrl : '';
     if (!url) return { success: false, error: 'no-home-url' };
     try {
-      // 通知 harness 视图重置
-      prepareNewConversation(ctx);
-      // 只负责导航，清理状态和弹窗统一交由 handleUrlChange 处理
+      // 加号逻辑：永远只是打开 homeUrl，不做任何状态重置
       await view.webContents.loadURL(url);
       return { success: true };
     }

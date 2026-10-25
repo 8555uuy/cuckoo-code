@@ -326,6 +326,13 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         return;
       }
 
+      // [022] 只要落到首页，就清空内存里的 currentSessionId，彻底废除 local-xxx 临时 ID。
+      // 没发消息（没 webId）就没有当前会话，等有了 webId 再通过 ensureLogicId 真正落库。
+      if (state.currentSessionId) {
+        state.currentSessionId = null;
+        console.log('[Cuckoo Code][' + profileId + '] 回到首页，已清空 currentSessionId');
+      }
+
       // 检查 URL 是否带入了 cuckoo_logic_id（插件入口）
       let urlLogicId: string | null = null;
       try {
@@ -334,17 +341,9 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
       } catch (_) { /* ignore */ }
       
       if (urlLogicId) {
-        // 插件带了 logicId，缓存在内存里
+        // 插件带了 logicId，强行覆盖内存里的空值
         state.currentSessionId = urlLogicId as LogicId;
         console.log('[Cuckoo Code][' + profileId + '] 从 URL 缓存插件 LogicId: ' + urlLogicId);
-      } else {
-        // 没有带参数，说明是用户手动新建，或者从老会话退回了首页。
-        // 如果内存里没有以 local- 开头的 ID，说明是网页直接新建的，必须马上生成一个！
-        if (!state.currentSessionId || !state.currentSessionId.startsWith('local-')) {
-          const newLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
-          state.currentSessionId = newLogicId;
-          console.log('[Cuckoo Code][' + profileId + '] 发现首页且无凭证，主动生成新的临时 LogicId: ' + newLogicId);
-        }
       }
       
       state.selectedProjectDir = null;

@@ -391,8 +391,7 @@ function registerHarnessIpc(): void {
       const url = provider && provider.homeUrl ? provider.homeUrl : null;
       if (!url) return { success: false, error: 'no-home-url' };
       console.log('[Cuckoo Harness] 新对话 → 导航到 ' + url);
-      // 清主进程 todo 缓存 + 让 harness 视图完整重置（后者是"残留"的根治点）
-      prepareNewConversation(ctx);
+      // 加号逻辑：永远只是打开 homeUrl，不做任何状态重置
       ctx.view.webContents.loadURL(url);
       return { success: true, url: url };
     } catch (err: any) {

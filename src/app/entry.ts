@@ -123,12 +123,9 @@ function createWindow(profile: any) {
   const provider = getProvider(profileData.providerId) || null;
   const sessionStore = createSessionStore(profileData.id, globalDb, windowState, { logicIdMap: globalLogicIdMap });
 
-  // 新窗口诞生时，立刻分配一个临时 logicId，并创建“新建对话”的记录。
-  // 这样在 webId 出现之前，所有的操作（绑目录、设标题、发消息）都有明确的 logicId。
-  const tempLogicId = ('local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)) as any;
-  sessionStore.updateSessionTitle(tempLogicId, '新建对话');
+  // [022] 彻底废除 local-xxx 临时 ID。新窗口在发第一条消息之前，没有任何会话。
   if (!sessionStore.state) sessionStore.state = {};
-  sessionStore.state.currentSessionId = tempLogicId;
+  sessionStore.state.currentSessionId = null;
 
   const hasExplicitProfile = !!profile;
   // providerId 已确定 → 直接打开；未确定 → 显示平台选择页
