@@ -369,9 +369,11 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
       // 详见 docs/dsh-compat-decisions.md 9.1 + 本次真机验证发现。
       if (!urlLogicId) {
         const ctx = windowState && windowState.getContextByWebContents ? windowState.getContextByWebContents(wc) : null;
-        if (ctx && ctx.win && !ctx.win.isDestroyed()) {
-          ctx.win.webContents.send('shell-show-init-prompt', { projectDir: urlProjectDir });
-        }
+        if (!ctx || !ctx.win || ctx.win.isDestroyed()) return;
+        // [022] 子代理窗口自己通过 initProject(noDialog=true) 初始化，不弹窗
+        // 详见 docs/dsh-compat-decisions.md 9.1 + subagent.ts 的初始化流程
+        if (ctx.isSubagent) return;
+        ctx.win.webContents.send('shell-show-init-prompt', { projectDir: urlProjectDir });
       }
     }
   }
