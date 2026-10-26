@@ -58,7 +58,7 @@ function extract(archive, dest) {
   fs.mkdirSync(dest, { recursive: true });
   if (archive.endsWith('.zip')) {
     execSync('tar -xf "' + archive + '" -C "' + dest + '"', { stdio: 'inherit' });
-  } else if (archive.endsWith('.tar.gz')) {
+  } else if (archive.endsWith('.tar.gz') || archive.endsWith('.tgz')) {
     execSync('tar -xzf "' + archive + '" -C "' + dest + '"', { stdio: 'inherit' });
   } else {
     throw new Error('不支持的压缩格式: ' + archive);
