@@ -88,7 +88,7 @@ function allSessions(): Array<{ id: string; title?: string; projectDir?: string 
 }
 
 /** 构造 CuckooHost（供 DSH 插件 ctx 使用） */
-function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
+function buildCuckooHost(opts?: { db?: any; logicIdMap?: any; createWindow?: any; profileManager?: any }): CuckooHost {
   const logicIdMap = opts?.logicIdMap || null;
   return {
     logicIdMap: logicIdMap ? {
@@ -190,10 +190,14 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
       if (profileId) {
         ctx = windowState.getWindowByProfileId(profileId);
       }
-      if (!ctx) {
-        // 回退：当前窗口（最后一个）
-        const ctxs = windowState.getAllContexts();
-        ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      if (!ctx && profileId && opts?.createWindow && opts?.profileManager) {
+        // 窗口未打开 → 主动拉起新窗口
+        const prof = opts.profileManager.getProfileById(profileId);
+        if (prof) {
+          const wid = opts.createWindow(prof);
+          ctx = windowState.getWindowContext(wid);
+          console.log('[Cuckoo Host] 插件指定窗口未打开，已主动拉起: ' + profileId);
+        }
       }
       if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return false;
       const pid = providerId || ctx.providerId;
@@ -267,9 +271,13 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any }): CuckooHost {
       if (profileId) {
         ctx = windowState.getWindowByProfileId(profileId);
       }
-      if (!ctx) {
-        const ctxs = windowState.getAllContexts();
-        ctx = ctxs.length > 0 ? ctxs[ctxs.length - 1] : null;
+      if (!ctx && profileId && opts?.createWindow && opts?.profileManager) {
+        const prof = opts.profileManager.getProfileById(profileId);
+        if (prof) {
+          const wid = opts.createWindow(prof);
+          ctx = windowState.getWindowContext(wid);
+          console.log('[Cuckoo Host] 发送消息时窗口未打开，已主动拉起: ' + profileId);
+        }
       }
       if (!ctx || !ctx.view || ctx.view.webContents.isDestroyed()) return false;
       try {

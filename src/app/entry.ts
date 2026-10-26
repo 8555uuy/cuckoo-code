@@ -1333,7 +1333,7 @@ if (!gotSingleInstanceLock) {
     import('../plugins/cuckoo-plugins/index.js').then((m: any) => {
       import('../tools/index.js').then((t: any) => {
         import('./cuckoo-host.js').then((h: any) => {
-          const host = h.buildCuckooHost({ db: globalDb, logicIdMap: globalLogicIdMap });
+          const host = h.buildCuckooHost({ db: globalDb, logicIdMap: globalLogicIdMap, createWindow, profileManager });
           m.loadEnabledPlugins(t.registry, host).then((r: any) => {
             if (r.loaded.length || r.failed.length) {
               console.log('[Cuckoo Plugin] 已加载: ' + (r.loaded.join(' | ') || '(无)') +
