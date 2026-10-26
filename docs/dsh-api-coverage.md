@@ -1,6 +1,6 @@
 # DSH API 覆盖度清单
 
-> 对照 DSH 官方源码（`C:\\d\\SourceCode\\2026\\deepseek-harness2`）自动提取的 Context 服务覆盖清单。
+> 对照 DSH 官方源码自动提取的 Context 服务覆盖清单。
 > 每次适配新插件后，回来更新「状态」列。
 > 相关：[022 DSH 插件兼容](requirements/022-dsh-plugin-compat.md) | [DSH 兼容决策](dsh-compat-decisions.md)
 
