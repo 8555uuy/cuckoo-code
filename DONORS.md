@@ -1,8 +1,8 @@
 # 捐赠者名单
 
-> 感谢每一位支持 **Cuckoo Code** 的捐赠者！
+> 感谢每一位向 [壹基金（One Foundation）](https://onefoundation.cn/donate/) 捐赠 的捐赠者！
 >
-> **捐赠渠道**：[壹基金（One Foundation）](https://onefoundation.cn/donate/) —— 本项目的所有捐赠均直接进入壹基金公益账户，作者本人不收取任何款项。
+> **捐赠渠道**：[壹基金（One Foundation）](https://onefoundation.cn/donate/) —— 本项目的所有捐赠均直接进入壹基金公益账户，作者本人不会获得任何捐赠资金。
 
 **总计捐赠金额：100 元**
 
