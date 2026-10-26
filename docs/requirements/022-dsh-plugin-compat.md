@@ -267,3 +267,5 @@ DSH（DeepSeek Harness）是 DeepSeek 官方的 Agent 框架，生态里已有�
 
 - 参考项目：`C:\d\SourceCode\2026\deepseek-harness2`
 - 前置：PR #36（可执行插件运行时——但它是 bridge 层、简化版，与本需求的"主进程 + 全兼容"不同）
+- **[DSH API 覆盖度清单](../dsh-api-coverage.md)**：当前 119 个 DSH Context 服务的实现状态（已实现 32 个，27%），适配新插件时先对照此清单
+- **[DSH 兼容决策记录](../dsh-compat-decisions.md)**：9.1-9.9 各决策的背景与权衡

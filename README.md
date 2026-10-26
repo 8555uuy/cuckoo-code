@@ -254,6 +254,31 @@ AI 读 `src/api/user.ts` 时，会**自动看到这条规则**（首次注入全
 
 ---
 
+## DSH 插件兼容
+
+Cuckoo 支持直接安装运行 **DSH（DeepSeek Harness）插件**——类似"鸿蒙兼容 Android 应用"的思路：Cuckoo 不依赖 DSH 代码，而是自己实现同名 API，让 DSH 插件原样跑在 Cuckoo 里。
+
+### 已支持的 DSH 能力
+
+- **工具定义**：`@deepseek-ai/dsh-tools` 的 `defineTool` 自动转换成 Cuckoo 工具
+- **宿主服务**：`ctx.agents` / `ctx.fs` / `ctx.sessions` / `ctx.settings` / `ctx.shell` / `ctx.mcpResources` 等 32 个服务
+- **客户端运行时**：支持 DSH 的 `./client` 入口（UI 插件、Slot 注册、React 渲染）
+- **工作区注册表**：`ctx.workspaceRegistry` 持久化（对齐 DSH 五道校验）
+- **设置面板**：`settings.section` 动态渲染插件配置表单
+
+### 已验证插件
+
+- `@deepseek-ai/dsh-tool-todo`（官方包）：与真 DSH 输出一致
+- `dsh-tasks`：定时任务调度、窗口定位、跨窗口跳转已兼容
+
+### 限制
+
+DSH 的 119 个 Context 服务中，当前实现 32 个（27%）。新插件如果用到未实现的服务，会走 stub（可能缺高级能力）。
+
+**适配新插件时**，先对照 **[DSH API 覆盖度清单](docs/dsh-api-coverage.md)** 看用到哪些服务。
+
+---
+
 ## 自定义 Provider
 
 想要接入新的 AI 平台？复制 `src/providers/custom/provider.template.js`，按模板填写：
