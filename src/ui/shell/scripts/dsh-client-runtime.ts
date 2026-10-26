@@ -790,19 +790,23 @@ function installFetchInterceptor(): void {
   if (w.__ckFetchPatched) return;
   w.__ckFetchPatched = true;
   const origFetch = w.fetch.bind(w);
-  // [022] 不再用白名单。file:// 页面下所有「相对路径」请求（/xxx）浏览器物理上发不出去，
-  // 必须重写到本地 HTTP 服务才能工作。插件注册了路由就正常响应，没注册就返回 JSON 404。
-  // 外网请求（https:// / http:// 绝对地址）和 data:/blob: 完全不受影响。
+  // [022] 不设白名单。用主进程的动态路由表（插件 ctx.webServer.register 注册的 path）
+  // 从任意形态的 URL 里匹配出真正的 API 路径，再拼到本地 webServer 上。
+  // 匹配不到注册表的请求原样放行（如 file:// 同目录静态资源、外网请求）。
   let DYNAMIC_ROUTE_PATHS: string[] = [];
   let DYNAMIC_LOADED = false;
-  // 从主进程拉动态路由（保留：仅用于日志诊断，不再用于判断是否需要重写）
+  let DYNAMIC_LOADING: Promise<void> | null = null;
   const refreshDynamicRoutes = async () => {
     try {
       const api = (window as any).shellAPI;
       if (!api || typeof api.webRoutes !== 'function') return;
       const r = await api.webRoutes();
       if (r && r.success && Array.isArray(r.routes)) {
-        DYNAMIC_ROUTE_PATHS = r.routes.map((x: any) => String(x && x.path ? x.path : '')).filter(Boolean);
+        // 按长度降序：最长匹配优先（'/dsh-market/api' 先于 '/dsh-market'）
+        DYNAMIC_ROUTE_PATHS = r.routes
+          .map((x: any) => String(x && x.path ? x.path : ''))
+          .filter(Boolean)
+          .sort((a: string, b: string) => b.length - a.length);
         DYNAMIC_LOADED = true;
       }
     } catch (_) { /* ignore */ }
@@ -810,52 +814,73 @@ function installFetchInterceptor(): void {
   (window as any).__ckRefreshDynamicRoutes = refreshDynamicRoutes;
   // 首次拉一次（不阻塞 fetch）
   refreshDynamicRoutes();
-  /** 判断是否「file:// 页面下的相对路径请求」——所有这类请求都要重写 */
-  const isRelativePath = (u: string) => {
+  /** 确保动态路由表已加载（首次请求时等一次 IPC；并发请求合并） */
+  const ensureDynamicRoutes = async (): Promise<void> => {
+    if (DYNAMIC_LOADED) return;
+    if (!DYNAMIC_LOADING) {
+      DYNAMIC_LOADING = refreshDynamicRoutes().finally(() => { DYNAMIC_LOADING = null; });
+    }
+    await DYNAMIC_LOADING;
+  };
+  /** 是否外网/绝对地址（不重写，直接放行） */
+  const isExternalUrl = (u: string) => {
     if (!u) return false;
-    // 外网/本地绝对地址：不碰
-    if (/^(https?|data|blob|chrome-extension|about|ws|wss|file):/i.test(u)) return false;
-    // 协议相对（//example.com/xxx）：不碰
-    if (u.startsWith('//')) return false;
-    // 相对路径（/xxx 或 xxx 或以 ./ ../ 开头）：重写
-    return true;
+    if (/^(https?|data|blob|chrome-extension|about|ws|wss):/i.test(u)) return true;
+    if (u.startsWith('//')) return true;
+    return false;
+  };
+  /**
+   * 从任意形态的 URL 里，用已注册的动态路由表匹配出真正的 API 路径。
+   * 返回 null 表示「不是任何已注册插件的 API」——调用方应原样放行。
+   * 例：
+   *   '/C:/d/.../ui/dsh-market/status' → '/dsh-market/status'（匹配 '/dsh-market'）
+   *   '/dsh-tasks/api/next'            → '/dsh-tasks/api/next'（匹配 '/dsh-tasks/api'）
+   */
+  const extractApiPath = (raw: string): string | null => {
+    if (!raw) return null;
+    for (const p of DYNAMIC_ROUTE_PATHS) {
+      const idx = raw.indexOf(p);
+      if (idx >= 0) return raw.slice(idx);
+    }
+    return null;
   };
   w.fetch = async (input: any, init?: any) => {
     try {
       let url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
-      if (isRelativePath(url)) {
-        if (httpBaseCache === null) {
-          try {
-            const api = (window as any).shellAPI;
-            const r = api && typeof api.webServerInfo === 'function' ? await api.webServerInfo() : null;
-            httpBaseCache = (r && r.success && r.base) ? r.base : '';
-          } catch (_) { httpBaseCache = ''; }
+      if (url && !isExternalUrl(url)) {
+        // 确保动态路由表已加载（首次请求时等一次 IPC）
+        await ensureDynamicRoutes();
+        // 规范化：相对路径（不带前导 / 也不是 file:）先解析成绝对 file:// URL，
+        // 这样注册表匹配对 '/xxx'、'xxx'、'./xxx' 都成立
+        let raw = url;
+        if (!raw.startsWith('/') && !raw.startsWith('file:')) {
+          try { raw = new URL(raw, location.href).href; } catch (_) { /* ignore */ }
         }
-        // 取壳令牌（只取一次）
-        if (shellTokenCache === null) {
-          try {
-            const api = (window as any).shellAPI;
-            const r = api && typeof api.getShellToken === 'function' ? await api.getShellToken() : null;
-            shellTokenCache = (r && r.token) ? r.token : '';
-          } catch (_) { shellTokenCache = ''; }
-        }
-        if (httpBaseCache) {
-          // 提取"API 路径"：
-          //   - fetch('/dsh-tasks/api/next') 在 file:// 下 url 就是 '/dsh-tasks/api/next'
-          //   - 也可能是 fetch('dsh-tasks/api') 这种不带前导斜杠的相对路径
-          let raw = url;
-          // 兼容 file:// 形态（部分插件用 new URL(相对路径, location.href) 拼出）
-          if (raw.startsWith('file:')) {
-            const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
-            if (m) raw = '/' + m[1];
+        // 用注册表匹配：命中 → 截取真正的 API 路径；没命中 → 原样放行
+        const apiPath = extractApiPath(raw);
+        if (apiPath) {
+          if (httpBaseCache === null) {
+            try {
+              const api = (window as any).shellAPI;
+              const r = api && typeof api.webServerInfo === 'function' ? await api.webServerInfo() : null;
+              httpBaseCache = (r && r.success && r.base) ? r.base : '';
+            } catch (_) { httpBaseCache = ''; }
           }
-          const pathname = raw.startsWith('/') ? raw : '/' + raw;
-          input = httpBaseCache + pathname;
-          // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）
-          if (shellTokenCache) {
-            const headers = new Headers(init && init.headers ? init.headers : undefined);
-            headers.set('X-Cuckoo-Shell', shellTokenCache);
-            init = Object.assign({}, init || {}, { headers });
+          if (shellTokenCache === null) {
+            try {
+              const api = (window as any).shellAPI;
+              const r = api && typeof api.getShellToken === 'function' ? await api.getShellToken() : null;
+              shellTokenCache = (r && r.token) ? r.token : '';
+            } catch (_) { shellTokenCache = ''; }
+          }
+          if (httpBaseCache) {
+            input = httpBaseCache + apiPath;
+            // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）
+            if (shellTokenCache) {
+              const headers = new Headers(init && init.headers ? init.headers : undefined);
+              headers.set('X-Cuckoo-Shell', shellTokenCache);
+              init = Object.assign({}, init || {}, { headers });
+            }
           }
         }
       }

@@ -4456,7 +4456,7 @@ body {
               }
             }
           }
-          function checkPropTypes(typeSpecs, values, location, componentName, element) {
+          function checkPropTypes(typeSpecs, values, location2, componentName, element) {
             {
               var has = Function.call.bind(hasOwnProperty);
               for (var typeSpecName in typeSpecs) {
@@ -4464,23 +4464,23 @@ body {
                   var error$1 = void 0;
                   try {
                     if (typeof typeSpecs[typeSpecName] !== "function") {
-                      var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                      var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                       err.name = "Invariant Violation";
                       throw err;
                     }
-                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                   } catch (ex) {
                     error$1 = ex;
                   }
                   if (error$1 && !(error$1 instanceof Error)) {
                     setCurrentlyValidatingElement(element);
-                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
+                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
                     setCurrentlyValidatingElement(null);
                   }
                   if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                     loggedTypeFailures[error$1.message] = true;
                     setCurrentlyValidatingElement(element);
-                    error("Failed %s type: %s", location, error$1.message);
+                    error("Failed %s type: %s", location2, error$1.message);
                     setCurrentlyValidatingElement(null);
                   }
                 }
@@ -13858,7 +13858,7 @@ body {
               }
             }
           }
-          function checkPropTypes(typeSpecs, values, location, componentName, element) {
+          function checkPropTypes(typeSpecs, values, location2, componentName, element) {
             {
               var has2 = Function.call.bind(hasOwnProperty);
               for (var typeSpecName in typeSpecs) {
@@ -13866,23 +13866,23 @@ body {
                   var error$1 = void 0;
                   try {
                     if (typeof typeSpecs[typeSpecName] !== "function") {
-                      var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                      var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                       err.name = "Invariant Violation";
                       throw err;
                     }
-                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                   } catch (ex) {
                     error$1 = ex;
                   }
                   if (error$1 && !(error$1 instanceof Error)) {
                     setCurrentlyValidatingElement(element);
-                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
+                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
                     setCurrentlyValidatingElement(null);
                   }
                   if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                     loggedTypeFailures[error$1.message] = true;
                     setCurrentlyValidatingElement(element);
-                    error("Failed %s type: %s", location, error$1.message);
+                    error("Failed %s type: %s", location2, error$1.message);
                     setCurrentlyValidatingElement(null);
                   }
                 }
@@ -27053,7 +27053,7 @@ body {
               }
             }
           }
-          function checkPropTypes(typeSpecs, values, location, componentName, element) {
+          function checkPropTypes(typeSpecs, values, location2, componentName, element) {
             {
               var has = Function.call.bind(hasOwnProperty);
               for (var typeSpecName in typeSpecs) {
@@ -27061,23 +27061,23 @@ body {
                   var error$1 = void 0;
                   try {
                     if (typeof typeSpecs[typeSpecName] !== "function") {
-                      var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                      var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                       err.name = "Invariant Violation";
                       throw err;
                     }
-                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                    error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                   } catch (ex) {
                     error$1 = ex;
                   }
                   if (error$1 && !(error$1 instanceof Error)) {
                     setCurrentlyValidatingElement(element);
-                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
+                    error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
                     setCurrentlyValidatingElement(null);
                   }
                   if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                     loggedTypeFailures[error$1.message] = true;
                     setCurrentlyValidatingElement(element);
-                    error("Failed %s type: %s", location, error$1.message);
+                    error("Failed %s type: %s", location2, error$1.message);
                     setCurrentlyValidatingElement(null);
                   }
                 }
@@ -30455,13 +30455,14 @@ body {
     const origFetch = w.fetch.bind(w);
     let DYNAMIC_ROUTE_PATHS = [];
     let DYNAMIC_LOADED = false;
+    let DYNAMIC_LOADING = null;
     const refreshDynamicRoutes = async () => {
       try {
         const api2 = window.shellAPI;
         if (!api2 || typeof api2.webRoutes !== "function") return;
         const r = await api2.webRoutes();
         if (r && r.success && Array.isArray(r.routes)) {
-          DYNAMIC_ROUTE_PATHS = r.routes.map((x) => String(x && x.path ? x.path : "")).filter(Boolean);
+          DYNAMIC_ROUTE_PATHS = r.routes.map((x) => String(x && x.path ? x.path : "")).filter(Boolean).sort((a, b) => b.length - a.length);
           DYNAMIC_LOADED = true;
         }
       } catch (_) {
@@ -30469,46 +30470,68 @@ body {
     };
     window.__ckRefreshDynamicRoutes = refreshDynamicRoutes;
     refreshDynamicRoutes();
-    const isRelativePath = (u) => {
+    const ensureDynamicRoutes = async () => {
+      if (DYNAMIC_LOADED) return;
+      if (!DYNAMIC_LOADING) {
+        DYNAMIC_LOADING = refreshDynamicRoutes().finally(() => {
+          DYNAMIC_LOADING = null;
+        });
+      }
+      await DYNAMIC_LOADING;
+    };
+    const isExternalUrl = (u) => {
       if (!u) return false;
-      if (/^(https?|data|blob|chrome-extension|about|ws|wss|file):/i.test(u)) return false;
-      if (u.startsWith("//")) return false;
-      return true;
+      if (/^(https?|data|blob|chrome-extension|about|ws|wss):/i.test(u)) return true;
+      if (u.startsWith("//")) return true;
+      return false;
+    };
+    const extractApiPath = (raw) => {
+      if (!raw) return null;
+      for (const p of DYNAMIC_ROUTE_PATHS) {
+        const idx = raw.indexOf(p);
+        if (idx >= 0) return raw.slice(idx);
+      }
+      return null;
     };
     w.fetch = async (input2, init) => {
       try {
         let url = typeof input2 === "string" ? input2 : input2 && input2.url ? input2.url : String(input2);
-        if (isRelativePath(url)) {
-          if (httpBaseCache === null) {
+        if (url && !isExternalUrl(url)) {
+          await ensureDynamicRoutes();
+          let raw = url;
+          if (!raw.startsWith("/") && !raw.startsWith("file:")) {
             try {
-              const api2 = window.shellAPI;
-              const r = api2 && typeof api2.webServerInfo === "function" ? await api2.webServerInfo() : null;
-              httpBaseCache = r && r.success && r.base ? r.base : "";
+              raw = new URL(raw, location.href).href;
             } catch (_) {
-              httpBaseCache = "";
             }
           }
-          if (shellTokenCache === null) {
-            try {
-              const api2 = window.shellAPI;
-              const r = api2 && typeof api2.getShellToken === "function" ? await api2.getShellToken() : null;
-              shellTokenCache = r && r.token ? r.token : "";
-            } catch (_) {
-              shellTokenCache = "";
+          const apiPath = extractApiPath(raw);
+          if (apiPath) {
+            if (httpBaseCache === null) {
+              try {
+                const api2 = window.shellAPI;
+                const r = api2 && typeof api2.webServerInfo === "function" ? await api2.webServerInfo() : null;
+                httpBaseCache = r && r.success && r.base ? r.base : "";
+              } catch (_) {
+                httpBaseCache = "";
+              }
             }
-          }
-          if (httpBaseCache) {
-            let raw = url;
-            if (raw.startsWith("file:")) {
-              const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
-              if (m) raw = "/" + m[1];
+            if (shellTokenCache === null) {
+              try {
+                const api2 = window.shellAPI;
+                const r = api2 && typeof api2.getShellToken === "function" ? await api2.getShellToken() : null;
+                shellTokenCache = r && r.token ? r.token : "";
+              } catch (_) {
+                shellTokenCache = "";
+              }
             }
-            const pathname = raw.startsWith("/") ? raw : "/" + raw;
-            input2 = httpBaseCache + pathname;
-            if (shellTokenCache) {
-              const headers = new Headers(init && init.headers ? init.headers : void 0);
-              headers.set("X-Cuckoo-Shell", shellTokenCache);
-              init = Object.assign({}, init || {}, { headers });
+            if (httpBaseCache) {
+              input2 = httpBaseCache + apiPath;
+              if (shellTokenCache) {
+                const headers = new Headers(init && init.headers ? init.headers : void 0);
+                headers.set("X-Cuckoo-Shell", shellTokenCache);
+                init = Object.assign({}, init || {}, { headers });
+              }
             }
           }
         }
