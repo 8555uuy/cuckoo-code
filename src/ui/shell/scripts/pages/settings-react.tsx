@@ -212,12 +212,26 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     createElement(ToggleRow, { label: '拒绝 webFetch 访问内网/本地地址', desc: '开启后 webFetch 拒绝内网、回环、保留地址（防 SSRF）。默认关闭（可访问本地项目）。', checked: data.ssrfGuard === true, onChange: (v) => setField('ssrfGuard', v) }),
   );
 
+  const aiIntercept = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-row-col' },
+      createElement('div', { className: 'ck-set-row-label' }, '拦截正则（每行一条）'),
+      createElement('div', { className: 'ck-set-row-desc' }, '任意一条命中即视为 XML 工具调用，会提示 AI 改用 cuckoo 代码块。支持正则表达式，不区分大小写。'),
+      createElement('textarea', { className: 'ck-set-textarea', rows: 8, value: data.aiInterceptPatterns || '', onChange: (e: any) => setField('aiInterceptPatterns', e.target.value) }),
+    ),
+    createElement('div', { className: 'ck-set-row-col' },
+      createElement('div', { className: 'ck-set-row-label' }, '拦截提示语'),
+      createElement('div', { className: 'ck-set-row-desc' }, '拦截命中后发送给 AI 的提示文本'),
+      createElement('textarea', { className: 'ck-set-textarea', rows: 3, value: data.aiInterceptPrompt || '', onChange: (e: any) => setField('aiInterceptPrompt', e.target.value) }),
+    ),
+  );
+
   const NAV: [string, string][] = [
     ['appearance', '外观'],
     ['retry', '失败自动重试'],
     ['send', '发送延迟'],
     ['attach', '附件上传间隔'],
     ['security', '网络安全'],
+    ['ai-intercept', 'AI 回复拦截'],
   ];
 
   // 当前分类标题（右侧内容区顶部显示）
@@ -237,6 +251,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   else if (active === 'send') content = sendDelay;
   else if (active === 'attach') content = attachDelay;
   else if (active === 'security') content = security;
+  else if (active === 'ai-intercept') content = aiIntercept;
   else if (active.startsWith('plugin:')) {
     const key = active.slice('plugin:'.length);
     const item = pluginSections.find((s: any) => (s.pluginId + ':' + s.id) === key);
