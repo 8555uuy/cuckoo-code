@@ -53,6 +53,15 @@ function logStep(step: string, msg: string): void {
   console.log('[Cuckoo Compact] [' + step + '] ' + msg);
 }
 
+/** 在重试间隔期间展示倒计时（每秒更新一次 toast），等待结束后返回。 */
+async function countdownAndWait(attempt: number, maxAttempts: number, intervalMs: number): Promise<void> {
+  const totalSec = Math.ceil(intervalMs / 1000);
+  for (let remaining = totalSec; remaining > 0; remaining--) {
+    showToast('压缩重试中（' + attempt + '/' + maxAttempts + '）：' + remaining + ' 秒后重新尝试…', 2000);
+    await new Promise<void>((r) => setTimeout(r, 1000));
+  }
+}
+
 interface MessageItem {
   message_id: number;
   role: string;
@@ -230,24 +239,53 @@ function pickRecentPairedIds(msgs: MessageItem[], leafId: number | null, ratio: 
   return picked.map((m) => m.message_id).sort((a, b) => b - a);
 }
 
-/** 调 share/create 创建分享，返回 share_id */
+/** 调 share/create 创建分享，返回 share_id（带超时 + 完整错误信息） */
 async function createShare(sessionId: string, messageIds: number[], headers: any): Promise<string> {
   const h = Object.assign({}, headers);
   h['content-type'] = 'application/json';
-  const resp = await fetch('/api/v0/share/create', {
-    method: 'POST',
-    headers: h,
-    body: JSON.stringify({ chat_session_id: sessionId, message_ids: messageIds }),
-  });
-  const txt = await resp.text();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  let resp: Response;
+  let txt: string;
+  try {
+    resp = await fetch('/api/v0/share/create', {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ chat_session_id: sessionId, message_ids: messageIds }),
+      signal: controller.signal,
+    });
+    txt = await resp.text();
+  } catch (err: any) {
+    if (err && err.name === 'AbortError') throw new Error('share/create 请求超时（30 秒）');
+    throw new Error('share/create 请求失败: ' + ((err && err.message) || String(err)));
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   console.log('[Cuckoo Compact] [api] share/create HTTP ' + resp.status + ' 响应: ' + txt.slice(0, 600));
+
+  if (!resp.ok) {
+    throw new Error('share/create HTTP ' + resp.status + ': ' + txt.slice(0, 200));
+  }
+
   let json: any = null;
   try { json = JSON.parse(txt); } catch (_) {}
-  if (!json || json.code !== 0) {
-    throw new Error('创建分享失败: ' + (json ? json.msg : txt.slice(0, 200)));
+  if (!json) {
+    throw new Error('share/create 响应非 JSON: ' + txt.slice(0, 200));
+  }
+  if (json.code !== 0) {
+    throw new Error('share/create 失败: ' + (json.msg || '未知错误'));
+  }
+  const bizCode = json.data && json.data.biz_code;
+  if (bizCode !== undefined && bizCode !== 0) {
+    throw new Error('share/create 业务错误: ' + (json.data.biz_msg || '未知业务错误') + ' (biz_code=' + bizCode + ')');
   }
   const shareId = json.data && json.data.biz_data && json.data.biz_data.share_id;
-  if (!shareId) throw new Error('响应无 share_id（完整响应见日志）');
+  if (!shareId) {
+    throw new Error('share/create 响应无 share_id: ' + txt.slice(0, 200));
+  }
   return shareId;
 }
 
@@ -272,22 +310,34 @@ async function runCompaction(projectDir?: string): Promise<void> {
     const { text: summaryText } = await waitReply;
     logStep('summary', '收到摘要回复，长度=' + (summaryText || '').length);
 
-    // 清当前会话 IDB 记录，触发刷新后 DeepSeek 重新拉取完整历史
-    logStep('idb', '清除当前会话 IDB 记录');
-    await clearSessionFromIdb(sessionId);
+    // [022] 摘要已收到，从这里开始任何异常都重试（纯合并重试，10 次 × 20s）
+    const MAX_ATTEMPTS = 10;
+    const RETRY_INTERVAL = 20000;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        logStep('idb', '第 ' + attempt + '/' + MAX_ATTEMPTS + ' 次尝试清除 IDB');
+        await clearSessionFromIdb(sessionId);
 
-    // 存项目目录（跨页需要）
-    try {
-      if (projectDir) localStorage.setItem(COMPACT_DIR_KEY, projectDir);
-      else localStorage.removeItem(COMPACT_DIR_KEY);
-    } catch (_) {}
+        try {
+          if (projectDir) localStorage.setItem(COMPACT_DIR_KEY, projectDir);
+          else localStorage.removeItem(COMPACT_DIR_KEY);
+        } catch (_) {}
 
-    // URL 加标记 → 刷新
-    const url = new URL(location.href);
-    url.searchParams.set(COMPACT_URL_FLAG, '1');
-    logStep('reload', '刷新页面以让 DeepSeek 重建 IDB: ' + url.toString());
-    showToast('压缩中，正在刷新页面...', 3000);
-    location.href = url.toString();
+        const url = new URL(location.href);
+        url.searchParams.set(COMPACT_URL_FLAG, '1');
+        logStep('reload', '刷新页面以让 DeepSeek 重建 IDB: ' + url.toString());
+        showToast('压缩中，正在刷新页面...', 3000);
+        location.href = url.toString();
+        return;
+      } catch (err: any) {
+        const errMsg = (err && err.message) || String(err);
+        if (attempt === MAX_ATTEMPTS) {
+          throw new Error('清除 IDB 失败（已重试 ' + MAX_ATTEMPTS + ' 次）: ' + errMsg);
+        }
+        logStep('retry', '第 ' + attempt + '/' + MAX_ATTEMPTS + ' 次失败: ' + errMsg + '，' + (RETRY_INTERVAL / 1000) + 's 后重试');
+        await countdownAndWait(attempt, MAX_ATTEMPTS, RETRY_INTERVAL);
+      }
+    }
   } catch (err: any) {
     console.error('[Cuckoo Compact] 压缩失败:', err);
     showToast('压缩失败: ' + err.message, 5000);
@@ -314,41 +364,54 @@ async function checkPendingCompact(): Promise<boolean> {
   let projectDir: string | null = null;
   try { projectDir = localStorage.getItem(COMPACT_DIR_KEY); } catch (_) {}
 
-  try {
-    const sessionId = getSessionIdFromUrl();
-    if (!sessionId) throw new Error('无法从 URL 获取 chat_session_id');
+  // [022] 段2 纯合并重试：等 IDB + 读消息 + 裁剪 + createShare 全部包进循环
+  // 任一步失败 → 等 20s → 重头再来（用户主动接受"白等"，换取逻辑简单）
+  const MAX_ATTEMPTS = 10;
+  const RETRY_INTERVAL = 20000;
 
-    logStep('idb', '等待 DeepSeek 重建 IDB（监听写入事件）');
-    await waitForIdbWrite(IDB_WAIT_TIMEOUT);
-    logStep('idb', '收到 IDB 写入事件');
-
-    const headers = getCachedHeaders();
-    if (!headers || !headers['authorization']) {
-      throw new Error('未获取到认证请求头（请刷新页面后重试）');
-    }
-
-    const { list: allMsgs, currentMessageId } = await getMessagesFromIndexedDB(sessionId);
-    if (allMsgs.length === 0) throw new Error('未读取到消息列表');
-    const tailIds = pickRecentPairedIds(allMsgs, currentMessageId, 0.2);
-    if (tailIds.length === 0) throw new Error('裁剪后无有效消息');
-    logStep('api', '全量消息 ' + allMsgs.length + ' 条（叶子=' + (currentMessageId || '?') + '），保留最近 ' + tailIds.length + ' 条（成对）');
-
-    const shareId = await createShare(sessionId, tailIds, headers);
-    const link = 'https://chat.deepseek.com/share/' + shareId;
-    logStep('api', '分享链接: ' + link);
-
-    showToast('压缩完成，正在打开新会话...', 3000);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      localStorage.setItem(PENDING_INIT_KEY, String(Date.now()));
-      if (projectDir) localStorage.setItem(COMPACT_DIR_KEY, projectDir);
-    } catch (_) {}
-    location.href = link;
-    return true;
-  } catch (err: any) {
-    console.error('[Cuckoo Compact] 段2失败:', err);
-    showToast('压缩失败: ' + err.message, 5000);
-    return false;
+      const sessionId = getSessionIdFromUrl();
+      if (!sessionId) throw new Error('无法从 URL 获取 chat_session_id');
+
+      logStep('idb', '第 ' + attempt + '/' + MAX_ATTEMPTS + ' 次尝试：等待 DeepSeek 重建 IDB（监听写入事件）');
+      await waitForIdbWrite(IDB_WAIT_TIMEOUT);
+      logStep('idb', '收到 IDB 写入事件');
+
+      const headers = getCachedHeaders();
+      if (!headers || !headers['authorization']) {
+        throw new Error('未获取到认证请求头（请刷新页面后重试）');
+      }
+
+      const { list: allMsgs, currentMessageId } = await getMessagesFromIndexedDB(sessionId);
+      if (allMsgs.length === 0) throw new Error('未读取到消息列表');
+      const tailIds = pickRecentPairedIds(allMsgs, currentMessageId, 0.2);
+      if (tailIds.length === 0) throw new Error('裁剪后无有效消息');
+      logStep('api', '全量消息 ' + allMsgs.length + ' 条（叶子=' + (currentMessageId || '?') + '），保留最近 ' + tailIds.length + ' 条（成对）');
+
+      const shareId = await createShare(sessionId, tailIds, headers);
+      const link = 'https://chat.deepseek.com/share/' + shareId;
+      logStep('api', '分享链接: ' + link);
+
+      showToast('压缩完成，正在打开新会话...', 3000);
+      try {
+        localStorage.setItem(PENDING_INIT_KEY, String(Date.now()));
+        if (projectDir) localStorage.setItem(COMPACT_DIR_KEY, projectDir);
+      } catch (_) {}
+      location.href = link;
+      return true;
+    } catch (err: any) {
+      const errMsg = (err && err.message) || String(err);
+      if (attempt === MAX_ATTEMPTS) {
+        console.error('[Cuckoo Compact] 段2失败（已重试 ' + MAX_ATTEMPTS + ' 次）:', errMsg);
+        showToast('压缩失败（已重试 ' + MAX_ATTEMPTS + ' 次）: ' + errMsg, 8000);
+        return false;
+      }
+      logStep('retry', '第 ' + attempt + '/' + MAX_ATTEMPTS + ' 次失败: ' + errMsg + '，' + (RETRY_INTERVAL / 1000) + 's 后重试');
+      await countdownAndWait(attempt, MAX_ATTEMPTS, RETRY_INTERVAL);
+    }
   }
+  return false;
 }
 
 /** 段3：分享页 —— 检测待初始化标记，自动初始化项目 */
