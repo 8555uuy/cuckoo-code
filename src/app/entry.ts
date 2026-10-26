@@ -65,6 +65,7 @@ if (RENDERER_LOG_DIR) {
 }
 
 import { registerIpcHandlers } from './ipc/index.js';
+import { injectSessionDeps } from './ipc/session.js';
 import { buildChromeUserAgent, buildClientHintsHeaders } from '../infra/user-agent.js';
 import { initFeishu } from './ipc/feishu.js';
 import { injectSubagentDeps, runAgent as runAgentImpl } from './subagent.js';
@@ -826,6 +827,7 @@ function setupAppMenu() {
 
 // ========== 子代理依赖注入 ==========
 injectSubagentDeps({ createWindow, profileManager });
+injectSessionDeps({ createWindow, profileManager });
 // 给 runAgent 工具注入执行器（tools 层不依赖 app）
 injectAgentRunner(async ({ agent, task, currentWindowId }: any) => {
   const ctx = windowState.getWindowContext(currentWindowId);

@@ -11,6 +11,12 @@ import { initProject } from '../../session/project-context.js';
 const require = createRequire(import.meta.url);
 const { ipcMain } = require('electron');
 
+// [022] 依赖注入（app 层注入给 IPC 层，用于按 profile_id 拉起窗口）
+let injects: { createWindow?: any; profileManager?: any } = {};
+function injectSessionDeps(deps: { createWindow?: any; profileManager?: any }): void {
+  injects = { ...injects, ...deps };
+}
+
 // 文件树：忽略的目录 + 节点上限（防超大项目）
 const TREE_IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'out', 'build', 'coverage', '.cuckooCode', '.playwright-mcp', '.idea', '.vscode', 'wyp', 'release', 'dist-verify']);
 const TREE_MAX_NODES = 5000;
@@ -261,25 +267,46 @@ function registerSessionIpc(): void {
     return norm(a) === norm(b);
   }
 
-  // 导航到会话
+  // 导航到会话（支持跨窗口：按 profile_id 找/拉起目标窗口）
   ipcMain.handle('navigate-session', async (event: any, { sessionId }: any) => {
     if (!sessionId) return { success: false, error: '缺少会话ID' };
-    const ctx = windowState.getContextByWebContents(event.sender);
+
+    // 1. 查数据库拿 webId + profileId
+    let targetWebId = sessionId;
+    let profileId: string | null = null;
+    const db = (globalThis as any).__globalDb;
+    if (db) {
+      try {
+        const row = db.prepare('SELECT web_id, profile_id FROM sessions WHERE logic_id = ?').get(sessionId) as any;
+        if (row) {
+          if (row.web_id) targetWebId = row.web_id;
+          if (row.profile_id) profileId = row.profile_id;
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    // 2. 按 profileId 找窗口，找不到则主动拉起
+    let ctx: any = null;
+    if (profileId) {
+      ctx = windowState.getWindowByProfileId(profileId);
+      if (!ctx && injects.createWindow && injects.profileManager) {
+        const prof = injects.profileManager.getProfileById(profileId);
+        if (prof) {
+          const wid = injects.createWindow(prof);
+          ctx = windowState.getWindowContext(wid);
+          console.log('[Cuckoo Code] navigate-session: 目标窗口未打开，已主动拉起 ' + profileId);
+        }
+      }
+    }
+    // 兜底：当前窗口
+    if (!ctx) ctx = windowState.getContextByWebContents(event.sender);
+
     const view = ctx ? ctx.view : null;
     if (!view || !view.webContents || view.webContents.isDestroyed()) {
       return { success: false, error: '窗口已关闭' };
     }
-    
-    // 【核心修复】查数据库，把 logicId 翻译成真实的 webId
-    let targetWebId = sessionId;
-    if (ctx && ctx.sessionStore) {
-      const meta = ctx.sessionStore.getSessionMeta(sessionId);
-      if (meta && meta.webId) {
-        targetWebId = meta.webId;
-      }
-    }
-    
-    // 按当前 provider 拼会话 URL（智谱 cid=、DeepSeek /chat/s/、Claude /chat/）
+
+    // 3. 按当前 provider 拼会话 URL
     let url = null;
     try {
       const provider = getProviderByUrl(view.webContents.getURL());
@@ -289,10 +316,7 @@ function registerSessionIpc(): void {
     } catch (_) { /* provider 未识别 */ }
     if (!url) return { success: false, error: '无法确定会话 URL（当前平台未提供 sessionUrlBase）' };
 
-    // [022] 同 URL 不刷新——loadURL 会强制重载页面，导致正在跑的 Agent loop 中断
-    // 背景：DSH 的 uiWorkspace.openSession 是 SPA 内部状态切换（不导航 URL），
-    //       Cuckoo 用 loadURL 模拟"导航到会话"，但用户在目标会话里点「打开对话」时 URL 已相同。
-    // 详见 docs/dsh-compat-decisions.md 9.1 + 真机验证发现（点按钮后 loop 中断）。
+    // 4. 同 URL 不刷新
     try {
       const cur = view.webContents.getURL();
       if (cur && sameSessionUrl(cur, url)) {
@@ -301,6 +325,7 @@ function registerSessionIpc(): void {
       }
     } catch { /* ignore */ }
 
+    // 5. 导航
     try {
       await view.webContents.loadURL(url);
       return { success: true };
@@ -310,4 +335,4 @@ function registerSessionIpc(): void {
   });
 }
 
-export { registerSessionIpc };
+export { registerSessionIpc, injectSessionDeps };
