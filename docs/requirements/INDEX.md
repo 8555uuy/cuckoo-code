@@ -25,7 +25,7 @@
 | 019 | feature | [飞书同步（手机收发对话）](./019-feishu-sync.md) | doing | feat/019-feishu-sync | 2026-09-30 |
 | 020 | feature | [插件市场（GitHub topic 自动发现与安装）](./020-plugin-market.md) | review | feat/020-plugin-market | 2026-10-02 |
 | 021 | feature | [窗口组（多账号限流轮换）](./021-window-groups.md) | done | feat/021-window-groups | 2026-10-05 |
-| 022 | feature | [DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）](./022-dsh-plugin-compat.md) | in_progress | feat/022-dsh-compat-c7 | 2026-10-22 |
+| 022 | feature | [DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）](./022-dsh-plugin-compat.md) | in_progress | feat/022-dsh-compat-c7 | 2026-10-26 |
 | 023 | fix | [ChatGPT 初始化填入失败 + 工具结果发送失败（含上下文耗尽自动续接）](./023-chatgpt-input-send.md) | done | fix/023-chatgpt-input-send | 2026-10-13 |
 | 023 | feature | [壳页面 React 化（shell UI 迁移）](./023-shell-react.md) | in_progress | feat/shell-react | 2026-10-09 |
 | 024 | fix | [窗口组转移复用 IDB 重写 + 上下文耗尽续接补发工具结果](./024-switch-idb-context-resume.md) | done | fix/024-switch-idb-context-resume | 2026-10-14 |

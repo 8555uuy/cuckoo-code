@@ -5,7 +5,7 @@ title: DSH 插件兼容（Cuckoo 里安装/运行 DSH 插件）
 status: in_progress
 branch: feat/022-dsh-compat-c7
 created: 2026-10-06
-updated: 2026-10-22
+updated: 2026-10-26
 ---
 
 ## 背景
@@ -191,15 +191,53 @@ DSH（DeepSeek Harness）是 DeepSeek 官方的 Agent 框架，生态里已有�
 
 > **C7/C8 在分支 `feat/022-dsh-compat-c7`**（未合 master）。
 
+## C7 后续修复：窗口定位与压缩上下文
+
+**背景**：真机验证 dsh-tasks 时发现两类问题——插件指定的窗口未打开时，命令跑到了错误窗口；压缩上下文后新会话丢失项目目录。根因都是「会话 ID / 窗口定位」的解析逻辑不完整。
+
+### 修复 1：插件按 profileId 找不到窗口时主动拉起（`e627104`）
+
+**问题**：`cuckoo-host.ts` 的 `navigateWindowToHome` / `sendUserMessage` 在按 `profileId` 找不到窗口时，**静默回退到"最后一个已打开的窗口"**，导致插件任务在错误的窗口里执行。
+
+**修复**：找不到窗口时调 `createWindow(profile)` 主动拉起目标窗口，再执行后续操作。
+
+### 修复 2：navigate-session 支持跨窗口跳转（`8bb50f9`）
+
+**问题**：dsh-tasks 的「打开对话」传入 `logicId`，但 `navigate-session` 只用当前窗口导航，没有查找 `logicId` 归属的窗口。
+
+**修复**：先查数据库拿 `web_id` + `profile_id`，按 `profile_id` 找目标窗口（找不到则拉起），再在目标窗口导航。保留同 URL 跳过刷新逻辑。
+
+### 修复 3：压缩后新会话目录绑定（`85eb557`）
+
+**问题**：压缩跳转到分享页（`/share/xxx`）时，该页面既无 `webId` 也不是主页，`handleUrlChange` 提前 `return` 导致内存里的 `currentSessionId` 残留旧会话 ID。随后 `selectProjectDir` 把目录写到了旧记录上，新会话的 `project_dir` 为空。
+
+**修复**：
+1. 无 `webId` 页面（含分享页）立刻清空 `currentSessionId`
+2. `selectProjectDir` 加 `isCompaction` 参数，压缩场景强制写 `pendingProjectDir`，不写旧逻辑 ID
+3. `initProject` 把 `isCompaction` 传给 `selectProjectDir`
+
+### 修复 4：彻底废除 `local-xxx` 临时 ID（`c4b889d`）
+
+**问题**：`aae0435` 引入的「新窗口立刻生成 `local-xxx` 临时 ID 并落库」设计，导致数据库堆积大量 `web_id=null` 的垃圾记录，且压缩/新建对话时反复复用旧 ID，产生"父子指向自己"的死循环数据。
+
+**修复**：
+1. 加号（壳页面 / 工作区 / 纯净模式）只做 `loadURL(homeUrl)` 纯导航，不再重置状态
+2. 落地首页 / 分享页等无 `webId` 页面立刻清空 `currentSessionId` 为 `null`
+3. 取消窗口创建时的 `tempLogicId` 生成——没发消息就没有会话记录
+
+> **工作区加号例外**：工作区「+」保留 `?cuckoo-project-dir=xxx` 参数，让初始化遮罩层默认填好该工作区的目录（`b25a219`）。
+
 ## 验证
 
-### 单测（865 tests 全过）
+### 单测（956 tests 全过）
 
 - `test/plugins/dsh-compat.test.js`（9）：`defineTool` 转换 + 递归 schema
 - `test/plugins/cuckoo-plugin-load.test.js`（2）：加载 → 注册 → 执行
 - `test/plugins/plugin-tool-inject.test.js`（4）：动态注入沙箱 + AI 调用 + jsApi 展开
 - `test/plugins/c1-host-services.test.js`（4）：settings/tools/sessions 接入
 - `test/plugins/c2-session-events.test.js`（1）：append 真写 + 投影真读回
+- `test/app/new-conversation.test.js`（8）：加号纯导航契约（不重置状态）
+- `test/app/window-resolution.test.js`（8）：插件按 profileId 拉起窗口 + navigate-session 跨窗口跳转
 
 ### 真机验证
 
