@@ -14,6 +14,8 @@
 
 [English](README.en.md) | 中文
 
+**本系统仅用于学习使用,通过本系统造成的任何损失由使用者自行承担**
+
 [下载最新版本](https://github.com/wangyongpeng90/cuckoo-code/releases/latest)
 
 **Cuckoo Code** 是一个零 Token 成本的 AI Agent 桌面端。
@@ -21,6 +23,8 @@
 > 📐 **要改代码 / 做新需求？先读 [架构与开发指南](docs/architecture.md)**（目录结构、依赖规则、构建流程、任务手册）。
 
 它通过 Electron 将 AI 网页版嵌入本地窗口，并注入侧边覆盖层。AI 被系统提示词引导生成工具调用（JavaScript 代码块），经用户确认后在本地沙箱中执行，再把结果回传给 AI。整个过程不需要 API Key，你用的是网页版账号，而不是按 Token 计费的接口。
+
+> 本系统完全ai生成,人类在其中只扮演需求传话筒角色, 并且除最小实现(read / edit / write 工具)外是由其他agent工具实现,其他后续迭代功能全部由 cuckoo code 自行迭代完成.
 
 ---
 
