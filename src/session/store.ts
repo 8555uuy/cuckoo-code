@@ -316,21 +316,21 @@ function createSessionStore(profileId: string, db: DatabaseSync, windowState: an
         if (canSend) emitProjectDir(wc, null);
       }
     } else {
-      // [022] URL 没有 webId：只有"主页"才走后续逻辑（生成 logicId / 弹窗）。
-      // 其他页面（settings / pricing 等）直接跳过，避免误弹初始化遮罩。
-      // 详见 docs/dsh-compat-decisions.md 9.1。
+      // [022] URL 没有 webId：说明当前不在任何真实会话页。
+      // 无论是首页（新建）、分享页（压缩中间态）还是其他页面，都意味着之前的会话已结束。
+      // 清空 currentSessionId，后续有 webId 产生时统一通过 ensureLogicId 创建新记录。
+      if (state.currentSessionId) {
+        state.currentSessionId = null;
+        console.log('[Cuckoo Code][' + profileId + '] 无 webId 页面，已清空 currentSessionId');
+      }
+
+      // 只有"主页"才走后续逻辑（弹窗等）。
+      // 其他页面（settings / 分享页 / pricing 等）直接跳过，避免误弹初始化遮罩。
       const provider = getProviderByUrl(url);
       const isHomeUrl = provider && provider.homeUrlPattern && provider.homeUrlPattern.test(url);
       if (!isHomeUrl) {
         console.log('[Cuckoo Store] 非会话且非主页 URL，跳过: ' + url);
         return;
-      }
-
-      // [022] 只要落到首页，就清空内存里的 currentSessionId，彻底废除 local-xxx 临时 ID。
-      // 没发消息（没 webId）就没有当前会话，等有了 webId 再通过 ensureLogicId 真正落库。
-      if (state.currentSessionId) {
-        state.currentSessionId = null;
-        console.log('[Cuckoo Code][' + profileId + '] 回到首页，已清空 currentSessionId');
       }
 
       // 检查 URL 是否带入了 cuckoo_logic_id（插件入口）

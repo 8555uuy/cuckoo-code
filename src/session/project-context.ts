@@ -44,7 +44,8 @@ async function selectProjectDir(
   windowContext: any = null,
   presetDir: string | null = null,
   noDialog: boolean = false,
-  parentSessionId: string | null = null
+  parentSessionId: string | null = null,
+  isCompaction: boolean = false
 ): Promise<{ success: boolean; message: string; dir?: string }> {
   const ctx = windowContext || windowState.getMainContext();
   const mainWindow = ctx ? ctx.win : windowState.getMainWindow();
@@ -94,7 +95,13 @@ async function selectProjectDir(
   if (sessionStore) {
     sessionStore.state.selectedProjectDir = selectedDir;
 
-    if (sessionStore.state.currentSessionId) {
+    // [022] 压缩场景：新会话还没出现（当前 URL 还是分享页），
+    // 不能把目录保存到旧 logicId 上——否则新会话拿不到目录，旧记录被污染。
+    // 改为存 pendingProjectDir，等新 webId 出现时在 handleUrlChange 里消费。
+    if (isCompaction) {
+      sessionStore.state.pendingProjectDir = selectedDir;
+      console.log(`[Cuckoo Code] 压缩场景：暂存项目目录 ${selectedDir}，等新会话出现后绑定`);
+    } else if (sessionStore.state.currentSessionId) {
       sessionStore.saveSessionDirMapping(sessionStore.state.currentSessionId, selectedDir);
       console.log(`[Cuckoo Code] 已保存会话 ${sessionStore.state.currentSessionId} -> ${selectedDir}`);
     } else {
@@ -185,8 +192,8 @@ async function initProject(
     sessionStore.state.pendingLineage = { parentId: parentSessionId, kind: 'compaction', agentName: null };
   }
 
-  // 1. 选目录
-  const dirRes = await selectProjectDir(ctx, presetDir, noDialog, parentSessionId);
+  // 1. 选目录（压缩场景传 isCompaction=true，避免目录写到旧 logicId 上）
+  const dirRes = await selectProjectDir(ctx, presetDir, noDialog, parentSessionId, isCompaction);
   if (!dirRes.success) return dirRes;
 
   // 2. 如果只是更新目录，直接返回
