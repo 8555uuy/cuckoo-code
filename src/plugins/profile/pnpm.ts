@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { resolveResourceRoot } from '../app-root.js';
 
 /** 找自带的 node 运行时（resources/runtime/<platform>/bin/） */
 function bundledNode(): { cmd: string; binDir: string } | null {
@@ -16,9 +17,8 @@ function bundledNode(): { cmd: string; binDir: string } | null {
       ? (process.arch === 'arm64' ? 'mac-arm64' : 'mac-x64')
       : null);
   if (!platform) return null;
-  // resources/runtime 相对应用根（out/src/plugins/profile → ../../../..）
-  const appRoot = path.join(import.meta.dirname, '..', '..', '..', '..');
-  const binDir = path.join(appRoot, 'resources', 'runtime', platform, 'bin');
+  // 打包版走 process.resourcesPath，开发版回退源码推算（见 app-root.ts）
+  const binDir = path.join(resolveResourceRoot(), 'runtime', platform, 'bin');
   const cmd = path.join(binDir, process.platform === 'win32' ? 'node.exe' : 'node');
   if (fs.existsSync(cmd)) return { cmd, binDir };
   return null;
@@ -26,8 +26,7 @@ function bundledNode(): { cmd: string; binDir: string } | null {
 
 /** 找自带的 pnpm（resources/runtime/pnpm/bin/pnpm.cjs） */
 function bundledPnpm(): string | null {
-  const appRoot = path.join(import.meta.dirname, '..', '..', '..', '..');
-  const cjs = path.join(appRoot, 'resources', 'runtime', 'pnpm', 'bin', 'pnpm.cjs');
+  const cjs = path.join(resolveResourceRoot(), 'runtime', 'pnpm', 'bin', 'pnpm.cjs');
   return fs.existsSync(cjs) ? cjs : null;
 }
 

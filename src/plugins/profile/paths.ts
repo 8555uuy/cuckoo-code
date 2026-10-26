@@ -16,6 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { resolveResourceRoot } from '../app-root.js';
 
 /** 默认 profile 名（Cuckoo 单 profile） */
 const DEFAULT_PROFILE = 'default';
@@ -72,11 +73,9 @@ function getProfileModulesDir(dir: string): string {
   return path.join(dir, 'node_modules');
 }
 
-/** 内置（预置）插件目录：开发版 = <appRoot>/resources/bundled-plugins；打包版同（extraResources） */
+/** 内置（预置）插件目录：开发版 = <项目根>/resources/bundled-plugins；打包版 = resources/bundled-plugins（extraResources） */
 function getBundledPluginsDir(): string {
-  // 照抄 pnpm.ts 的 appRoot 逻辑：out/src/plugins/profile → 上 4 级 = 应用根
-  const appRoot = path.join(import.meta.dirname, '..', '..', '..', '..');
-  return path.join(appRoot, 'resources', 'bundled-plugins');
+  return path.join(resolveResourceRoot(), 'bundled-plugins');
 }
 
 /** 内置插件的目录（按包名），不存在返回 null */

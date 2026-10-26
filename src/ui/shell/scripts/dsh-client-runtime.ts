@@ -790,21 +790,12 @@ function installFetchInterceptor(): void {
   if (w.__ckFetchPatched) return;
   w.__ckFetchPatched = true;
   const origFetch = w.fetch.bind(w);
-  // 判断"该走插件 HTTP 服务"的 URL：
-  //   - /api/*（Cuckoo 旧约定）
-  //   - /dsh-*/*（dsh 插件路由，如 /dsh-market/status）
-  //   - /plugin*/*（插件路由）
-  //   - file:// 下的相对根路径（fetch('/xxx') 在 file:// 页面上会解析成 file:///C:/.../xxx）
-  // 判断"该走插件 HTTP 服务"的 URL——**路径任意位置**含 API 标记即可：
-  //   /dsh-market/xxx
-  //   /C:/d/.../src/ui/dsh-market/xxx  （file:// 页面 + new URL 后的形态）
-  //   /api/xxx
-  //   /plugin* /xxx
-  // 插件 HTTP 路由前缀（内置 + 动态从主进程拉：所有已注册的动态路由）
-  const API_MARKERS = ['/dsh-market/', '/dsh-tasks/', '/api/', '/plugin'];
+  // [022] 不再用白名单。file:// 页面下所有「相对路径」请求（/xxx）浏览器物理上发不出去，
+  // 必须重写到本地 HTTP 服务才能工作。插件注册了路由就正常响应，没注册就返回 JSON 404。
+  // 外网请求（https:// / http:// 绝对地址）和 data:/blob: 完全不受影响。
   let DYNAMIC_ROUTE_PATHS: string[] = [];
   let DYNAMIC_LOADED = false;
-  // 从主进程拉动态路由（懒加载一次；插件注册后调用 refreshDynamicRoutes 更新）
+  // 从主进程拉动态路由（保留：仅用于日志诊断，不再用于判断是否需要重写）
   const refreshDynamicRoutes = async () => {
     try {
       const api = (window as any).shellAPI;
@@ -819,17 +810,20 @@ function installFetchInterceptor(): void {
   (window as any).__ckRefreshDynamicRoutes = refreshDynamicRoutes;
   // 首次拉一次（不阻塞 fetch）
   refreshDynamicRoutes();
-  const isPluginApi = (u: string) => {
+  /** 判断是否「file:// 页面下的相对路径请求」——所有这类请求都要重写 */
+  const isRelativePath = (u: string) => {
     if (!u) return false;
-    for (const mk of API_MARKERS) { if (u.indexOf(mk) >= 0) return true; }
-    // 动态路由（任意插件注册的 path，如 /dsh-ssh/api）
-    for (const p of DYNAMIC_ROUTE_PATHS) { if (p && u.indexOf(p) >= 0) return true; }
-    return false;
+    // 外网/本地绝对地址：不碰
+    if (/^(https?|data|blob|chrome-extension|about|ws|wss|file):/i.test(u)) return false;
+    // 协议相对（//example.com/xxx）：不碰
+    if (u.startsWith('//')) return false;
+    // 相对路径（/xxx 或 xxx 或以 ./ ../ 开头）：重写
+    return true;
   };
   w.fetch = async (input: any, init?: any) => {
     try {
       let url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
-      if (isPluginApi(url)) {
+      if (isRelativePath(url)) {
         if (httpBaseCache === null) {
           try {
             const api = (window as any).shellAPI;
@@ -846,21 +840,16 @@ function installFetchInterceptor(): void {
           } catch (_) { shellTokenCache = ''; }
         }
         if (httpBaseCache) {
-          // 从任意形态的 URL 里提取"API 路径"
+          // 提取"API 路径"：
+          //   - fetch('/dsh-tasks/api/next') 在 file:// 下 url 就是 '/dsh-tasks/api/next'
+          //   - 也可能是 fetch('dsh-tasks/api') 这种不带前导斜杠的相对路径
           let raw = url;
+          // 兼容 file:// 形态（部分插件用 new URL(相对路径, location.href) 拼出）
           if (raw.startsWith('file:')) {
             const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
             if (m) raw = '/' + m[1];
           }
-          // 取最早出现的 marker 位置（保留完整前缀，如 /dsh-tasks/api）
-          let pathname = '';
-          let bestIdx = -1;
-          for (const mk of API_MARKERS) {
-            const idx = raw.indexOf(mk);
-            if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) bestIdx = idx;
-          }
-          if (bestIdx >= 0) pathname = raw.slice(bestIdx);
-          if (!pathname) pathname = raw.startsWith('/') ? raw : '/' + raw;
+          const pathname = raw.startsWith('/') ? raw : '/' + raw;
           input = httpBaseCache + pathname;
           // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）
           if (shellTokenCache) {

@@ -30453,7 +30453,6 @@ body {
     if (w.__ckFetchPatched) return;
     w.__ckFetchPatched = true;
     const origFetch = w.fetch.bind(w);
-    const API_MARKERS = ["/dsh-market/", "/dsh-tasks/", "/api/", "/plugin"];
     let DYNAMIC_ROUTE_PATHS = [];
     let DYNAMIC_LOADED = false;
     const refreshDynamicRoutes = async () => {
@@ -30470,20 +30469,16 @@ body {
     };
     window.__ckRefreshDynamicRoutes = refreshDynamicRoutes;
     refreshDynamicRoutes();
-    const isPluginApi = (u) => {
+    const isRelativePath = (u) => {
       if (!u) return false;
-      for (const mk of API_MARKERS) {
-        if (u.indexOf(mk) >= 0) return true;
-      }
-      for (const p of DYNAMIC_ROUTE_PATHS) {
-        if (p && u.indexOf(p) >= 0) return true;
-      }
-      return false;
+      if (/^(https?|data|blob|chrome-extension|about|ws|wss|file):/i.test(u)) return false;
+      if (u.startsWith("//")) return false;
+      return true;
     };
     w.fetch = async (input2, init) => {
       try {
         let url = typeof input2 === "string" ? input2 : input2 && input2.url ? input2.url : String(input2);
-        if (isPluginApi(url)) {
+        if (isRelativePath(url)) {
           if (httpBaseCache === null) {
             try {
               const api2 = window.shellAPI;
@@ -30508,14 +30503,7 @@ body {
               const m = raw.match(/^file:\/\/[^/]*\/(.*)$/);
               if (m) raw = "/" + m[1];
             }
-            let pathname = "";
-            let bestIdx = -1;
-            for (const mk of API_MARKERS) {
-              const idx = raw.indexOf(mk);
-              if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) bestIdx = idx;
-            }
-            if (bestIdx >= 0) pathname = raw.slice(bestIdx);
-            if (!pathname) pathname = raw.startsWith("/") ? raw : "/" + raw;
+            const pathname = raw.startsWith("/") ? raw : "/" + raw;
             input2 = httpBaseCache + pathname;
             if (shellTokenCache) {
               const headers = new Headers(init && init.headers ? init.headers : void 0);
