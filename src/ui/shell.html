@@ -30485,11 +30485,43 @@ body {
       if (u.startsWith("//")) return true;
       return false;
     };
+    const BASE_DIR = (() => {
+      try {
+        const u = new URL(document.baseURI);
+        const p = u.pathname;
+        const i = p.lastIndexOf("/");
+        return i >= 0 ? p.slice(0, i + 1) : "";
+      } catch (_) {
+        return "";
+      }
+    })();
+    const stripBaseDir = (raw) => {
+      if (!BASE_DIR || !raw.startsWith(BASE_DIR)) return raw;
+      return "/" + raw.slice(BASE_DIR.length);
+    };
     const extractApiPath = (raw) => {
       if (!raw) return null;
+      let pathname = raw;
+      try {
+        const u = new URL(raw, document.baseURI);
+        pathname = u.pathname;
+      } catch (_) {
+      }
+      const stripped = stripBaseDir(pathname);
+      for (const p of DYNAMIC_ROUTE_PATHS) {
+        if (stripped === p || stripped.startsWith(p + "/")) return stripped;
+      }
+      for (const p of DYNAMIC_ROUTE_PATHS) {
+        if (pathname === p || pathname.startsWith(p + "/")) return pathname;
+      }
       for (const p of DYNAMIC_ROUTE_PATHS) {
         const idx = raw.indexOf(p);
-        if (idx >= 0) return raw.slice(idx);
+        if (idx >= 0) {
+          const next = raw[idx + p.length];
+          if (next === void 0 || next === "/" || next === "?" || next === "#") {
+            return raw.slice(idx);
+          }
+        }
       }
       return null;
     };

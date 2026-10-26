@@ -830,17 +830,72 @@ function installFetchInterceptor(): void {
     return false;
   };
   /**
+   * 壳页面自身目录（含末尾斜杠），用于剥离插件 pathname 里的"页面磁盘前缀"。
+   * 例：document.baseURI = 'file:///C:/d/.../src/ui/shell.html'
+   *     → BASE_DIR = '/C:/d/.../src/ui/'
+   * 不同用户安装路径不同，所以运行时动态获取，不能写死。
+   */
+  const BASE_DIR: string = (() => {
+    try {
+      const u = new URL(document.baseURI);
+      const p = u.pathname;
+      const i = p.lastIndexOf('/');
+      return i >= 0 ? p.slice(0, i + 1) : '';
+    } catch (_) { return ''; }
+  })();
+  /**
+   * 去掉 pathname 开头的 BASE_DIR。
+   * 不含 BASE_DIR 时原样返回（如 '/dsh-tasks/api/next' 这种前端硬编码路径）。
+   */
+  const stripBaseDir = (raw: string): string => {
+    if (!BASE_DIR || !raw.startsWith(BASE_DIR)) return raw;
+    return '/' + raw.slice(BASE_DIR.length);
+  };
+  /**
    * 从任意形态的 URL 里，用已注册的动态路由表匹配出真正的 API 路径。
    * 返回 null 表示「不是任何已注册插件的 API」——调用方应原样放行。
+   *
+   * 三段式（精度从高到低）：
+   *   ① 剥离 BASE_DIR（页面磁盘前缀）得到候选，若以注册 path 开头则命中（最准确）
+   *   ② 候选本身作为绝对路径匹配注册表（如 '/dsh-tasks/api/next'）
+   *   ③ 兜底：在原始 raw 里 indexOf 找注册 path（极端情况下路径形态异常）
+   *
    * 例：
-   *   '/C:/d/.../ui/dsh-market/status' → '/dsh-market/status'（匹配 '/dsh-market'）
-   *   '/dsh-tasks/api/next'            → '/dsh-tasks/api/next'（匹配 '/dsh-tasks/api'）
+   *   '/C:/d/.../ui/dsh-market/status'
+   *     → 剥离 BASE_DIR → '/dsh-market/status' → 命中 '/dsh-market' ✅
+   *   '/dsh-tasks/api/next'
+   *     → 不含 BASE_DIR，候选 = 原样 → 命中 '/dsh-tasks/api' ✅
    */
   const extractApiPath = (raw: string): string | null => {
     if (!raw) return null;
+    // 统一先提取 pathname 部分（去掉 query/fragment）
+    let pathname = raw;
+    try {
+      const u = new URL(raw, document.baseURI);
+      pathname = u.pathname;
+    } catch (_) { /* raw 本身可能就是 pathname */ }
+
+    // ① 剥离 BASE_DIR 后匹配（最准确）
+    const stripped = stripBaseDir(pathname);
+    for (const p of DYNAMIC_ROUTE_PATHS) {
+      if (stripped === p || stripped.startsWith(p + '/')) return stripped;
+    }
+
+    // ② 候选本身作为绝对路径匹配（dsh-tasks 这类前端硬编码路径）
+    for (const p of DYNAMIC_ROUTE_PATHS) {
+      if (pathname === p || pathname.startsWith(p + '/')) return pathname;
+    }
+
+    // ③ 兜底：在原始 raw 里 indexOf 找注册 path（路径形态异常时的最后一道）
     for (const p of DYNAMIC_ROUTE_PATHS) {
       const idx = raw.indexOf(p);
-      if (idx >= 0) return raw.slice(idx);
+      if (idx >= 0) {
+        // 校验边界：后面必须是 '/' 或结尾，避免 '/dsh-market-app' 误匹配 '/dsh-market'
+        const next = raw[idx + p.length];
+        if (next === undefined || next === '/' || next === '?' || next === '#') {
+          return raw.slice(idx);
+        }
+      }
     }
     return null;
   };
