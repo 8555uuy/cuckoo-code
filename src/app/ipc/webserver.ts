@@ -104,6 +104,22 @@ function ensureServer(): Promise<number> {
           delete req.headers.origin;
           delete req.headers.referer;
         }
+        // 跨域预检（OPTIONS）直接放行：file:// 页面带自定义头 X-Cuckoo-Shell 时会触发预检
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Cuckoo-Shell',
+            'Access-Control-Max-Age': '86400',
+          });
+          res.end();
+          return;
+        }
+
+        // 全局注入 CORS 头（对动态路由和静态资源都生效），防止浏览器直接报 Failed to fetch
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Cuckoo-Shell');
+
         // 1) 动态路由优先（插件注册的 HTTP 处理器）
         const dyn = dynamicRoutes.find((r) => r.kind === 'exact' ? url.pathname === r.path : url.pathname.startsWith(r.path));
         if (dyn) {

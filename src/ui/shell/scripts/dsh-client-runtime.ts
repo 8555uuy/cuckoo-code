@@ -793,34 +793,21 @@ function installFetchInterceptor(): void {
   // [022] 不设白名单。用主进程的动态路由表（插件 ctx.webServer.register 注册的 path）
   // 从任意形态的 URL 里匹配出真正的 API 路径，再拼到本地 webServer 上。
   // 匹配不到注册表的请求原样放行（如 file:// 同目录静态资源、外网请求）。
-  let DYNAMIC_ROUTE_PATHS: string[] = [];
-  let DYNAMIC_LOADED = false;
-  let DYNAMIC_LOADING: Promise<void> | null = null;
-  const refreshDynamicRoutes = async () => {
+  // 每次请求都实时拉取，不做缓存（IPC 只需几毫秒，避免「插件加载慢于壳页面」导致缓存过期）。
+  const fetchDynamicRoutes = async (): Promise<string[]> => {
     try {
       const api = (window as any).shellAPI;
-      if (!api || typeof api.webRoutes !== 'function') return;
+      if (!api || typeof api.webRoutes !== 'function') return [];
       const r = await api.webRoutes();
       if (r && r.success && Array.isArray(r.routes)) {
         // 按长度降序：最长匹配优先（'/dsh-market/api' 先于 '/dsh-market'）
-        DYNAMIC_ROUTE_PATHS = r.routes
+        return r.routes
           .map((x: any) => String(x && x.path ? x.path : ''))
           .filter(Boolean)
           .sort((a: string, b: string) => b.length - a.length);
-        DYNAMIC_LOADED = true;
       }
     } catch (_) { /* ignore */ }
-  };
-  (window as any).__ckRefreshDynamicRoutes = refreshDynamicRoutes;
-  // 首次拉一次（不阻塞 fetch）
-  refreshDynamicRoutes();
-  /** 确保动态路由表已加载（首次请求时等一次 IPC；并发请求合并） */
-  const ensureDynamicRoutes = async (): Promise<void> => {
-    if (DYNAMIC_LOADED) return;
-    if (!DYNAMIC_LOADING) {
-      DYNAMIC_LOADING = refreshDynamicRoutes().finally(() => { DYNAMIC_LOADING = null; });
-    }
-    await DYNAMIC_LOADING;
+    return [];
   };
   /** 是否外网/绝对地址（不重写，直接放行） */
   const isExternalUrl = (u: string) => {
@@ -866,7 +853,7 @@ function installFetchInterceptor(): void {
    *   '/dsh-tasks/api/next'
    *     → 不含 BASE_DIR，候选 = 原样 → 命中 '/dsh-tasks/api' ✅
    */
-  const extractApiPath = (raw: string): string | null => {
+  const extractApiPath = (raw: string, routes: string[]): string | null => {
     if (!raw) return null;
     // 统一先提取 pathname 部分（去掉 query/fragment）
     let pathname = raw;
@@ -877,17 +864,17 @@ function installFetchInterceptor(): void {
 
     // ① 剥离 BASE_DIR 后匹配（最准确）
     const stripped = stripBaseDir(pathname);
-    for (const p of DYNAMIC_ROUTE_PATHS) {
+    for (const p of routes) {
       if (stripped === p || stripped.startsWith(p + '/')) return stripped;
     }
 
     // ② 候选本身作为绝对路径匹配（dsh-tasks 这类前端硬编码路径）
-    for (const p of DYNAMIC_ROUTE_PATHS) {
+    for (const p of routes) {
       if (pathname === p || pathname.startsWith(p + '/')) return pathname;
     }
 
     // ③ 兜底：在原始 raw 里 indexOf 找注册 path（路径形态异常时的最后一道）
-    for (const p of DYNAMIC_ROUTE_PATHS) {
+    for (const p of routes) {
       const idx = raw.indexOf(p);
       if (idx >= 0) {
         // 校验边界：后面必须是 '/' 或结尾，避免 '/dsh-market-app' 误匹配 '/dsh-market'
@@ -903,16 +890,12 @@ function installFetchInterceptor(): void {
     try {
       let url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
       if (url && !isExternalUrl(url)) {
-        // 确保动态路由表已加载（首次请求时等一次 IPC）
-        await ensureDynamicRoutes();
-        // 规范化：相对路径（不带前导 / 也不是 file:）先解析成绝对 file:// URL，
-        // 这样注册表匹配对 '/xxx'、'xxx'、'./xxx' 都成立
+        const routes = await fetchDynamicRoutes();
         let raw = url;
         if (!raw.startsWith('/') && !raw.startsWith('file:')) {
           try { raw = new URL(raw, location.href).href; } catch (_) { /* ignore */ }
         }
-        // 用注册表匹配：命中 → 截取真正的 API 路径；没命中 → 原样放行
-        const apiPath = extractApiPath(raw);
+        const apiPath = extractApiPath(raw, routes);
         if (apiPath) {
           if (httpBaseCache === null) {
             try {
@@ -930,7 +913,6 @@ function installFetchInterceptor(): void {
           }
           if (httpBaseCache) {
             input = httpBaseCache + apiPath;
-            // 带壳令牌（服务器据此删"跨站"标记，让插件同源检查放行）
             if (shellTokenCache) {
               const headers = new Headers(init && init.headers ? init.headers : undefined);
               headers.set('X-Cuckoo-Shell', shellTokenCache);

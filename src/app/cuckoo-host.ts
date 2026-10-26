@@ -435,7 +435,7 @@ function buildCuckooHost(opts?: { db?: any; logicIdMap?: any; createWindow?: any
     // ===== 宿主服务：webServer =====
     registerHttpRoute: (s: { pluginId: string; kind?: string; path: string; handler: (req: any, res: any) => any }) => {
       try { return registerDynamicRoute(s.pluginId, { kind: s.kind, path: s.path, handler: s.handler }); }
-      catch (_) { return () => {}; }
+      catch (e: any) { console.error('[Cuckoo Host] registerHttpRoute 失败:', s.pluginId, s.path, e); return () => {}; }
     },
     // ===== UI 槽位（对标 DSH slots）=====
     registerSlot: (s: { pluginId: string; slot: string; id: string; order?: number; spec?: any }) => {

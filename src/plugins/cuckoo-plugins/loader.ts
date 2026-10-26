@@ -336,6 +336,7 @@ function createCollectorCtx(pluginName: string, host?: CuckooHost, runtime?: any
         return addDisposer(typeof c === 'function' ? c : () => {});
       } catch (e: any) {
         dbg('effect 执行失败 @' + pluginName + ': ' + (e && e.message ? e.message : String(e)));
+        console.error('[cuckoo-plugin] effect 执行失败 @' + pluginName, e);
         if (e && e.stack) dbg(String(e.stack).slice(0, 800));
         return () => {};
       }

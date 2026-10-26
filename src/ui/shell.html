@@ -30453,31 +30453,17 @@ body {
     if (w.__ckFetchPatched) return;
     w.__ckFetchPatched = true;
     const origFetch = w.fetch.bind(w);
-    let DYNAMIC_ROUTE_PATHS = [];
-    let DYNAMIC_LOADED = false;
-    let DYNAMIC_LOADING = null;
-    const refreshDynamicRoutes = async () => {
+    const fetchDynamicRoutes = async () => {
       try {
         const api2 = window.shellAPI;
-        if (!api2 || typeof api2.webRoutes !== "function") return;
+        if (!api2 || typeof api2.webRoutes !== "function") return [];
         const r = await api2.webRoutes();
         if (r && r.success && Array.isArray(r.routes)) {
-          DYNAMIC_ROUTE_PATHS = r.routes.map((x) => String(x && x.path ? x.path : "")).filter(Boolean).sort((a, b) => b.length - a.length);
-          DYNAMIC_LOADED = true;
+          return r.routes.map((x) => String(x && x.path ? x.path : "")).filter(Boolean).sort((a, b) => b.length - a.length);
         }
       } catch (_) {
       }
-    };
-    window.__ckRefreshDynamicRoutes = refreshDynamicRoutes;
-    refreshDynamicRoutes();
-    const ensureDynamicRoutes = async () => {
-      if (DYNAMIC_LOADED) return;
-      if (!DYNAMIC_LOADING) {
-        DYNAMIC_LOADING = refreshDynamicRoutes().finally(() => {
-          DYNAMIC_LOADING = null;
-        });
-      }
-      await DYNAMIC_LOADING;
+      return [];
     };
     const isExternalUrl = (u) => {
       if (!u) return false;
@@ -30499,7 +30485,7 @@ body {
       if (!BASE_DIR || !raw.startsWith(BASE_DIR)) return raw;
       return "/" + raw.slice(BASE_DIR.length);
     };
-    const extractApiPath = (raw) => {
+    const extractApiPath = (raw, routes) => {
       if (!raw) return null;
       let pathname = raw;
       try {
@@ -30508,13 +30494,13 @@ body {
       } catch (_) {
       }
       const stripped = stripBaseDir(pathname);
-      for (const p of DYNAMIC_ROUTE_PATHS) {
+      for (const p of routes) {
         if (stripped === p || stripped.startsWith(p + "/")) return stripped;
       }
-      for (const p of DYNAMIC_ROUTE_PATHS) {
+      for (const p of routes) {
         if (pathname === p || pathname.startsWith(p + "/")) return pathname;
       }
-      for (const p of DYNAMIC_ROUTE_PATHS) {
+      for (const p of routes) {
         const idx = raw.indexOf(p);
         if (idx >= 0) {
           const next = raw[idx + p.length];
@@ -30529,7 +30515,7 @@ body {
       try {
         let url = typeof input2 === "string" ? input2 : input2 && input2.url ? input2.url : String(input2);
         if (url && !isExternalUrl(url)) {
-          await ensureDynamicRoutes();
+          const routes = await fetchDynamicRoutes();
           let raw = url;
           if (!raw.startsWith("/") && !raw.startsWith("file:")) {
             try {
@@ -30537,7 +30523,7 @@ body {
             } catch (_) {
             }
           }
-          const apiPath = extractApiPath(raw);
+          const apiPath = extractApiPath(raw, routes);
           if (apiPath) {
             if (httpBaseCache === null) {
               try {

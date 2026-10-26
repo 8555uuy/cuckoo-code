@@ -386,6 +386,11 @@ function createWindow(profile: any) {
     }
   }
 
+  // 转发壳页面 console 到主进程日志（便于诊断插件加载 / 网络请求问题）
+  mainWindow.webContents.on('console-message', (_event: any, _level: any, message: any) => {
+    console.log('[Shell Console]', message);
+  });
+
   // 加载地址栏壳页面；壳就绪后主动推一次当前 URL 状态（避免与 view 加载竞态）
   mainWindow.loadFile(resolveSrc('ui/shell.html'));
   mainWindow.webContents.on('did-finish-load', () => {
