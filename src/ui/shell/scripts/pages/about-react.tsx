@@ -1,6 +1,7 @@
 /** About 页（React 版，对齐原版） */
 import { createElement, useState, useEffect, useCallback } from 'react';
 import { api } from '../shared.js';
+import { DonationBlock } from './donation-block.js';
 
 export function AboutPage() {
   const [version, setVersion] = useState('—');
@@ -27,7 +28,7 @@ export function AboutPage() {
       createElement('div', { className: 'ck-about-title' }, 'Cuckoo Code'),
       createElement('div', { className: 'ck-about-ver' }, '版本 ', createElement('span', null, version)),
     ),
-    createElement('p', { className: 'ck-about-tip' }, '本版本为', createElement('strong', null, '插件改造版'), '（plugin-ui-ext），已禁用原版在线更新，以免被覆盖丢失插件系统。'),
+    createElement(DonationBlock, null),
     createElement('div', { className: 'ck-about-group' },
       createElement('div', { className: 'ck-about-group-title' }, '开源地址'),
       createElement('p', { className: 'ck-about-tip' }, '本系统为开源项目，欢迎点 Star 支持。'),

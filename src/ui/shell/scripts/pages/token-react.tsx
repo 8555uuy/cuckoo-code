@@ -11,6 +11,7 @@
  */
 import { createElement, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ckAlert, ckConfirm, formatTokenCount, formatShort } from '../shared.js';
+import { DonationBlock } from './donation-block.js';
 
 interface DailyItem { date: string; value: number; }
 interface TokenData { context?: number; cumulative?: number; windowCumulative?: number; todayCumulative?: number; daily?: DailyItem[]; }
@@ -133,6 +134,7 @@ export function TokenPage() {
       createElement('button', { className: 'ck-btn ck-btn-anim', disabled: saving, onClick: onSaveAuto },
         createElement(SaveIcon), createElement('span', null, saving ? '保存中…' : '保存设置')),
     ),
+    createElement(DonationBlock, null),
     createElement('div', { className: 'ck-chart-block' }, createElement(Chart, { daily: data.daily || [] })),
   );
 }
