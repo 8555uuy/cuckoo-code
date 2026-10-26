@@ -194,8 +194,19 @@ function registerSessionIpc(): void {
     const wc = ctx.view.webContents;
     console.log('[Cuckoo Code] 工作区新建对话 → ' + homeUrl);
     
-    // 加号逻辑：永远只是打开 homeUrl，不做任何状态重置，不传额外参数
-    try { await wc.loadURL(homeUrl); } catch (err: any) { return { success: false, error: err.message }; }
+    // [022] 工作区新建：带项目目录参数导航。不含任何内存状态重置，由 handleUrlChange 消费参数。
+    let targetUrl = homeUrl;
+    if (projectDir) {
+      try {
+        const u = new URL(homeUrl);
+        u.searchParams.set('cuckoo-project-dir', projectDir);
+        targetUrl = u.toString();
+      } catch (_) {
+        targetUrl = homeUrl + (homeUrl.includes('?') ? '&' : '?') + 'cuckoo-project-dir=' + encodeURIComponent(projectDir);
+      }
+    }
+    
+    try { await wc.loadURL(targetUrl); } catch (err: any) { return { success: false, error: err.message }; }
     return { success: true };
   });
 
