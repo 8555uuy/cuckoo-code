@@ -30,13 +30,14 @@
 
 ## 捐赠与支持
 
-> 我个人不需要你的捐赠。如果你愿意支持本项目，欢迎通过 **壹基金（One Foundation）** 进行捐赠：[https://onefoundation.cn/donate/](https://onefoundation.cn/donate/)
+> 我个人不需要你的捐赠。如果你愿意支持本项目，请去捐赠 **壹基金（One Foundation）** ：[https://onefoundation.cn/donate/](https://onefoundation.cn/donate/)\
+> 并且我个人不会收到任何捐赠也不需要大家对我个人捐赠
 
-**已收到 1 位捐赠者支持，累计 100 元**
+**已收到 1 位捐赠者支持，累计向壹基金（One Foundation)捐赠:  100 元**
 
-| 序号 | 捐赠者 | 金额 | 日期 | 证书 |
+| 序号 | 捐赠者 | 金额 | 日期 | 捐赠证书 |
 |---|---|---|---|---|
-| 1 | 王先生 | 100 元 | 2026-10-26 | [查看证书](https://onefoundation.cn/cert/20261026131837934/) |
+| 1 | 王先生 | 100 元 | 2026-10-26 | [[查看证书](https://onefoundation.cn/cert/20261026131837934/)](https://onefoundation.cn/cert/20261026131837934/) |
 
 > 名单持续更新中，完整历史详见 [DONORS.md](DONORS.md)
 
