@@ -115,7 +115,10 @@ const STUB_MODULE_CODE = [
 
 /** 用 esbuild 打包插件：把 @deepseek-ai/* 映射到我们的 shim */
 async function bundlePlugin(entryFile: string): Promise<string> {
-  const esbuild = require(path.join(getAppRoot(), 'node_modules', 'esbuild', 'lib', 'main.js'));
+  // 用裸名 require('esbuild')：Electron 会自动做 asar 路径映射
+  // - JS 文件从 app.asar 内读（无需 unpack）
+  // - 原生二进制（esbuild.exe）自动映射到 app.asar.unpacked（需要 package.json 的 asarUnpack 配合）
+  const esbuild = require('esbuild');
   const shim = shimPath();
   const result = await esbuild.build({
     entryPoints: [entryFile],

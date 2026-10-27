@@ -124,7 +124,9 @@
     },
     "asarUnpack": [
       "**/node_modules/@vscode/ripgrep/**",
-      "**/node_modules/@vscode/ripgrep-win32-x64/**"
+      "**/node_modules/@vscode/ripgrep-win32-x64/**",
+      "**/node_modules/esbuild/**",
+      "**/node_modules/@esbuild/**"
     ],
     "extraResources": [
       {
