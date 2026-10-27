@@ -36,6 +36,11 @@ try {
   console.error('[Cuckoo Code] 创建 userData 目录失败:', err.message);
 }
 app.setPath('userData', USER_DATA_DIR);
+// 尽早初始化日志（读 log-settings.json 决定是否落盘；后续所有 console.log 都会写入）
+try {
+  const { initLogging } = require('./ipc/logs.js');
+  initLogging();
+} catch (_) { /* ignore */ }
 console.log('[Cuckoo Code] Session 数据目录:', app.getPath('userData'));
 
 // 初始化 SQLite 数据库
@@ -389,6 +394,10 @@ function createWindow(profile: any) {
   // 转发壳页面 console 到主进程日志（便于诊断插件加载 / 网络请求问题）
   mainWindow.webContents.on('console-message', (_event: any, _level: any, message: any) => {
     console.log('[Shell Console]', message);
+    try {
+      const { appendRendererLog } = require('./ipc/logs.js');
+      appendRendererLog('shell', message);
+    } catch (_) { /* ignore */ }
   });
 
   // 加载地址栏壳页面；壳就绪后主动推一次当前 URL 状态（避免与 view 加载竞态）
@@ -475,8 +484,12 @@ function createWindow(profile: any) {
   // 转发 AI 页面 console.log 到主进程，并按平台写入独立日志文件
   view.webContents.on('console-message', (_event: any, level: any, message: any, _line: any, _sourceId: any) => {
     console.log('[Renderer Console][' + profileData.name + ']', message);
+    try {
+      const { appendRendererLog } = require('./ipc/logs.js');
+      appendRendererLog('renderer[' + profileData.name + ']', message);
+    } catch (_) { /* ignore */ }
 
-    // 打包版不进行日志持久化
+    // 打包版不进行日志持久化（走上面 appendRendererLog）
     if (!RENDERER_LOG_DIR) return;
 
     // 根据当前窗口上下文确定 providerId，未确定用 default

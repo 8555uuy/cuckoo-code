@@ -151,4 +151,9 @@ export interface ShellAPI {
   webServerInfo?: () => Promise<any>;
   /** 壳页面令牌（fetch 时带 X-Cuckoo-Shell 头） */
   getShellToken?: () => Promise<any>;
+  // ===== 日志（仅打包版生效；开发版由 start.js 写日志）=====
+  getLogInfo?: () => Promise<{ success: boolean; enabled: boolean; dir: string; file: string; size: number; error?: string }>;
+  setLogEnabled?: (enabled: boolean) => Promise<{ success: boolean; enabled?: boolean; error?: string }>;
+  deleteLogs?: () => Promise<{ success: boolean; error?: string }>;
+  openLogDir?: () => Promise<{ success: boolean; error?: string }>;
 }

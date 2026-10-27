@@ -53,6 +53,8 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const saveTimer = useRef<any>(null);
   const dirtyRef = useRef(false);   // 是否"用户改动过"（初始加载不触发保存）
   const [savedTip, setSavedTip] = useState('');
+  // 日志（仅打包版有意义；开发版提示"由 start.js 写日志"）
+  const [logInfo, setLogInfo] = useState<{ enabled: boolean; dir: string; file: string; size: number } | null>(null);
 
   const load = useCallback(async () => {
     if (!api.getSettings) return;
@@ -63,6 +65,16 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // 日志信息加载（每次切到 logs 分类时刷新）
+  const loadLogInfo = useCallback(async () => {
+    if (!api.getLogInfo) return;
+    try {
+      const r = await api.getLogInfo();
+      if (r && r.success) setLogInfo({ enabled: r.enabled, dir: r.dir, file: r.file, size: r.size });
+    } catch (_) { /* ignore */ }
+  }, []);
+  useEffect(() => { if (active === 'logs') loadLogInfo(); }, [active, loadLogInfo]);
 
   // 自动保存：data 变化 + 用户改过 → 防抖保存
   useEffect(() => {
@@ -225,6 +237,49 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     ),
   );
 
+  // ===== 日志分类（仅打包版有用）=====
+  const formatSize = (n: number) => n < 1024 ? n + ' B' : n < 1024 * 1024 ? (n / 1024).toFixed(1) + ' KB' : (n / 1024 / 1024).toFixed(2) + ' MB';
+  const toggleLog = async (v: boolean) => {
+    if (!api.setLogEnabled) return;
+    try {
+      const r = await api.setLogEnabled(v);
+      if (r && r.success) { await loadLogInfo(); }
+    } catch (_) { /* ignore */ }
+  };
+  const onDeleteLogs = async () => {
+    if (!api.deleteLogs) return;
+    const ok = await ckConfirm('确定清空所有日志吗？');
+    if (!ok) return;
+    try {
+      const r = await api.deleteLogs();
+      if (r && r.success) { await loadLogInfo(); setSavedTip('日志已清空'); setTimeout(() => setSavedTip(''), 1500); }
+    } catch (_) { /* ignore */ }
+  };
+  const onOpenLogDir = async () => {
+    if (!api.openLogDir) return;
+    try { await api.openLogDir(); } catch (_) { /* ignore */ }
+  };
+
+  const logs = createElement('div', { className: 'ck-card' },
+    createElement('div', { className: 'ck-set-row-desc', style: { marginBottom: '10px', opacity: 0.75 } },
+      '开启后，程序会把主进程 + 渲染进程的日志写入本地文件，便于排查问题。仅打包版生效（开发版日志由 start.js 自动写入）。'),
+    createElement(ToggleRow, {
+      label: '开启日志记录',
+      desc: '开启后立即生效，无需重启',
+      checked: !!(logInfo && logInfo.enabled),
+      onChange: (v) => toggleLog(v),
+    }),
+    createElement(SettingRow, { label: '日志文件', desc: logInfo ? '大小 ' + formatSize(logInfo.size) : '加载中…' },
+      createElement('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
+        createElement('input', { type: 'text', className: 'ck-set-input', readOnly: true, value: logInfo ? logInfo.file : '' }),
+        createElement('button', { className: 'ck-btn', onClick: onOpenLogDir, style: { whiteSpace: 'nowrap' } }, '打开目录'),
+      ),
+    ),
+    createElement(SettingRow, { label: '清空日志', desc: '删除当前所有日志文件（不影响开关状态）' },
+      createElement('button', { className: 'ck-btn ck-btn-danger', onClick: onDeleteLogs }, '清空'),
+    ),
+  );
+
   const NAV: [string, string][] = [
     ['appearance', '外观'],
     ['retry', '失败自动重试'],
@@ -232,6 +287,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     ['attach', '附件上传间隔'],
     ['security', '网络安全'],
     ['ai-intercept', 'AI 回复拦截'],
+    ['logs', '日志'],
   ];
 
   // 当前分类标题（右侧内容区顶部显示）
@@ -252,6 +308,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   else if (active === 'attach') content = attachDelay;
   else if (active === 'security') content = security;
   else if (active === 'ai-intercept') content = aiIntercept;
+  else if (active === 'logs') content = logs;
   else if (active.startsWith('plugin:')) {
     const key = active.slice('plugin:'.length);
     const item = pluginSections.find((s: any) => (s.pluginId + ':' + s.id) === key);

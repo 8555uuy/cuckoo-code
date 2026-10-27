@@ -15,6 +15,7 @@ import { registerSettingsIpc } from './settings.js';
 import { registerFeishuIpc } from './feishu.js';
 import { registerPluginIpc } from './plugin.js';
 import { registerWebServerIpc } from './webserver.js';
+import { registerLogIpc } from './logs.js';
 import { registerThemeIpc } from './theme.js';
 import { registerWindowGroupsIpc, onSwitchShareResult } from './window-groups.js';
 import { registerMemoryIpc } from './memory.js';
@@ -39,6 +40,7 @@ function registerIpcHandlers(): void {
   registerFeishuIpc();
   registerPluginIpc();
   registerWebServerIpc();
+  registerLogIpc();
   registerThemeIpc();
   registerWindowGroupsIpc();
   registerMemoryIpc();
