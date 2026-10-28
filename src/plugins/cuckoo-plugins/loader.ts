@@ -115,9 +115,25 @@ const STUB_MODULE_CODE = [
 
 /** 用 esbuild 打包插件：把 @deepseek-ai/* 映射到我们的 shim */
 async function bundlePlugin(entryFile: string): Promise<string> {
-  // 用裸名 require('esbuild')：Electron 会自动做 asar 路径映射
-  // - JS 文件从 app.asar 内读（无需 unpack）
-  // - 原生二进制（esbuild.exe）自动映射到 app.asar.unpacked（需要 package.json 的 asarUnpack 配合）
+  // 打包版修复：esbuild 内部用 child_process.spawn() 执行 exe，
+  // 但 Electron 的 spawn 无法执行 app.asar 包内的二进制文件（会报 ENOENT）。
+  // 我们已在 package.json 的 asarUnpack 里把 @esbuild 解压到 app.asar.unpacked，
+  // 这里通过官方支持的 ESBUILD_BINARY_PATH 环境变量，强制让它去 unpacked 里找。
+  try {
+    const electronApp = require('electron').app;
+    if (electronApp && electronApp.isPackaged) {
+      const path = require('node:path');
+      const fs = require('node:fs');
+      const arch = process.arch === 'x64' ? 'x64' : 'arm64';
+      const platformName = process.platform === 'win32' ? 'win32-' + arch : (process.platform === 'darwin' ? 'darwin-' + arch : 'linux-' + arch);
+      const exeName = process.platform === 'win32' ? 'esbuild.exe' : 'bin/esbuild';
+      const unpackedExe = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', '@esbuild', platformName, exeName);
+      if (fs.existsSync(unpackedExe)) {
+        process.env.ESBUILD_BINARY_PATH = unpackedExe;
+      }
+    }
+  } catch (_) { /* ignore */ }
+
   const esbuild = require('esbuild');
   const shim = shimPath();
   const result = await esbuild.build({
