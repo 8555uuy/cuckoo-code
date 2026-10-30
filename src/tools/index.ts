@@ -23,6 +23,8 @@ import { McpCallTool } from './impl/mcp-call.js';
 import { McpListServersTool, McpGetToolsTool } from './impl/mcp-query.js';
 import { RunAgentTool } from './impl/run-agent.js';
 import { GoalDoneTool } from './impl/goal-done.js';
+import { RememberTool, ForgetMemoryTool, UpdateMemoryTool } from './impl/remember.js';
+import { CreateSnapshotTool, ListSnapshotsTool, RestoreSnapshotTool } from './impl/snapshot.js';
 import { NameConversationTool } from './impl/name-conversation.js';
 
 

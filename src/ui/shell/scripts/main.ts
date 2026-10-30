@@ -30,6 +30,8 @@ import { SnippetsPage } from './pages/snippets-react.js';
 import { ConversationsPage } from './pages/conversations-react.js';
 import { TokenPage } from './pages/token-react.js';
 import { FeishuPage } from './pages/feishu-react.js';
+import { loadMemories as MemoriesPage } from './pages/memories.js';
+import { loadSnapshots as SnapshotsPage } from './pages/snapshots.js';
 // SettingsPage 改为全屏模态（shell-frame 直接引入），不再注册为 tab
 import { AgentsPage } from './pages/agents-react.js';
 import { FilesPage } from './pages/files-react.js';
@@ -53,6 +55,8 @@ try {
   registerPage('conversations', ConversationsPage);
   registerPage('token', TokenPage);
   registerPage('feishu', FeishuPage);
+  registerPage('memories', MemoriesPage as any);
+  registerPage('snapshots', SnapshotsPage as any);
   // settings 页改为全屏模态（见 shell-frame.tsx），不注册为 tab
   registerPage('agents', AgentsPage);
   registerPage('files', FilesPage);

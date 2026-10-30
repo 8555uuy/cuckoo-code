@@ -53,3 +53,8 @@ function writeConfig(cfg: Partial<UserConfig>): boolean {
 }
 
 export { readConfig, writeConfig, getConfigFile };
+
+
+/** 记忆功能开关（默认开启） */
+export function isMemoriesEnabled(): boolean { return true; }
+export function setMemoriesEnabled(enabled: boolean): boolean { return true; }

@@ -76,6 +76,10 @@ import { initFeishu } from './ipc/feishu.js';
 import { injectSubagentDeps, runAgent as runAgentImpl } from './subagent.js';
 import { injectAgentRunner, injectSubagentChecker } from '../tools/impl/run-agent.js';
 import { injectGoalDonePusher } from '../tools/impl/goal-done.js';
+import { injectMemoryStore } from '../tools/impl/remember.js';
+import { injectSnapshotStore } from '../tools/impl/snapshot.js';
+import { addMemory, removeMemory, updateMemory, listMemories } from '../infra/memories.js';
+import { createSnapshot, listSnapshots, restoreSnapshot } from './snapshots.js';
 import { isSubagentWindow, pushGoalDone } from './goal.js';
 import { injectSessionTitleSetter } from '../tools/impl/name-conversation.js';
 import { pushUrlState } from './ipc/shell.js';
@@ -869,6 +873,20 @@ injectAgentRunner(async ({ agent, task, currentWindowId }: any) => {
 injectSubagentChecker(isSubagentWindow);
 // 给 goalDone 工具注入"推送目标完成事件"实现（tools 层不依赖 app）
 injectGoalDonePusher(pushGoalDone);
+injectMemoryStore({
+  add: (text: string) => { const m = addMemory(text); return m ? { id: m.id } : null; },
+  remove: (id: string) => removeMemory(id),
+  update: (id: string, text: string) => { const m = updateMemory(id, text); return m ? { id: m.id } : null; },
+  list: () => listMemories().map((m) => ({ id: m.id, text: m.text })),
+});
+injectSnapshotStore({
+  create: (projectDir: string, name: string, description?: string) => {
+    const m = createSnapshot(projectDir, name, description);
+    return { id: m.id, fileCount: m.fileCount, projectDir: m.projectDir };
+  },
+  list: () => listSnapshots(),
+  restore: (id: string) => restoreSnapshot(id)
+});
 // 给 nameConversation 工具注入"设置当前会话标题"实现
 injectSessionTitleSetter(async ({ windowId, title }: any) => {
   const ctx = windowState.getWindowContext(windowId);

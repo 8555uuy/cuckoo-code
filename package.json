@@ -75,7 +75,7 @@
     "linux"
   ],
   "build": {
-    "appId": "com.cuckoo.cuckoo-code",
+    "appId": "com.cuckoo.cuckoo-code.fork",
     "productName": "Cuckoo-Code",
     "publish": [
       {
@@ -180,5 +180,6 @@
     "esbuild@0.28.2": true,
     "electron-winstaller@5.4.0": true,
     "protobufjs@7.6.6": true
-  }
+  },
+  "productName": "Cuckoo-Code-Fork"
 }
