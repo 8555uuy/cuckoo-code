@@ -4145,11 +4145,11 @@ body {
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef7(initialValue) {
+          function useRef9(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect21(create, deps) {
+          function useEffect23(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -4932,14 +4932,14 @@ body {
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect21;
+          exports.useEffect = useEffect23;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
-          exports.useRef = useRef7;
+          exports.useRef = useRef9;
           exports.useState = useState20;
           exports.useSyncExternalStore = useSyncExternalStore2;
           exports.useTransition = useTransition;
@@ -5436,9 +5436,9 @@ body {
           if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
             __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
           }
-          var React2 = require_react();
+          var React4 = require_react();
           var Scheduler = require_scheduler();
-          var ReactSharedInternals = React2.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           var suppressWarning = false;
           function setSuppressWarning(newSuppressWarning) {
             {
@@ -7045,7 +7045,7 @@ body {
             {
               if (props.value == null) {
                 if (typeof props.children === "object" && props.children !== null) {
-                  React2.Children.forEach(props.children, function(child) {
+                  React4.Children.forEach(props.children, function(child) {
                     if (child == null) {
                       return;
                     }
@@ -26641,7 +26641,7 @@ body {
       if (true) {
         (function() {
           "use strict";
-          var React2 = require_react();
+          var React4 = require_react();
           var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.element");
           var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
           var REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment");
@@ -26667,7 +26667,7 @@ body {
             }
             return null;
           }
-          var ReactSharedInternals = React2.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           function error(format) {
             {
               {
@@ -31383,6 +31383,8 @@ body {
     { id: "snippets", title: "\u63D0\u793A\u8BCD", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
     { id: "skills", title: "\u6280\u80FD", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
     { id: "plugins", title: "\u63D2\u4EF6", icon: "M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.2 2.2 0 0 1 0 4.4H2V19a2 2 0 0 0 2 2h3.8v-1.5a2.2 2.2 0 0 1 4.4 0V21H18a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" },
+    { id: "memories", title: "\u8BB0\u5FC6", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 15a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm1-4h-2V7h2z" },
+    { id: "snapshots", title: "\u5FEB\u7167", icon: "M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z" },
     { id: "agents", title: "\u5B50\u4EE3\u7406", icon: "M3 8h18v12H3zM12 8V4" },
     { id: "mcp", title: "MCP\uFF08\u8FDE\u63A5\u5668\uFF09", icon: "M9 12h6M8 7H7a5 5 0 0 0 0 10h1M16 7h1a5 5 0 0 1 0 10h-1" },
     { id: "windows", title: "\u7A97\u53E3", icon: "M3 3h18v18H3zM3 9h18M9 21V9" },
@@ -33120,6 +33122,9 @@ body {
     );
   }
 
+  // src/ui/shell/scripts/pages/memories-react.tsx
+  var import_react21 = __toESM(require_react(), 1);
+
   // src/ui/shell/scripts/pages/memories.ts
   var memories = [];
   var keyword = "";
@@ -33254,6 +33259,21 @@ body {
     });
   }
 
+  // src/ui/shell/scripts/pages/memories-react.tsx
+  function MemoriesReact() {
+    const ref = (0, import_react21.useRef)(null);
+    (0, import_react21.useEffect)(() => {
+      if (ref.current) ref.current.innerHTML = '<div class="ck-tab" data-panel="memories">\n  <div class="ck-actions">\n    <button class="ck-btn ck-btn-anim" id="mem-add">\n      <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>\n      <span>\u65B0\u5EFA\u8BB0\u5FC6</span>\n    </button>\n    <input class="ck-input" id="mem-search" type="search" placeholder="\u641C\u7D22\u8BB0\u5FC6\u2026" style="flex:1;min-width:0;margin-left:8px" />\n    <button class="ck-icon-btn" id="mem-refresh" title="\u5237\u65B0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>\n  </div>\n  <p class="ck-about-tip">\u8BB0\u5FC6\u4F1A\u968F\u7CFB\u7EDF\u63D0\u793A\u8BCD\u53D1\u7ED9\u6A21\u578B\u3002\u65E0\u6761\u6570/\u957F\u5EA6\u9650\u5236\u3002</p>\n  <div class="ck-list" id="mem-list"><div class="ck-list-empty">\u52A0\u8F7D\u4E2D\u2026</div></div>\n</div>';
+      setTimeout(() => {
+        if (typeof loadMemories === "function") loadMemories();
+      }, 50);
+    }, []);
+    return import_react21.default.createElement("div", { ref, style: { height: "100%", overflow: "auto", padding: "16px" } });
+  }
+
+  // src/ui/shell/scripts/pages/snapshots-react.tsx
+  var import_react22 = __toESM(require_react(), 1);
+
   // src/ui/shell/scripts/pages/snapshots.ts
   var snapshots = [];
   var currentProjectDir = null;
@@ -33364,8 +33384,20 @@ body {
   });
   document.getElementById("snap-refresh")?.addEventListener("click", loadSnapshots);
 
+  // src/ui/shell/scripts/pages/snapshots-react.tsx
+  function SnapshotsReact() {
+    const ref = (0, import_react22.useRef)(null);
+    (0, import_react22.useEffect)(() => {
+      if (ref.current) ref.current.innerHTML = '<div class="ck-tab" data-panel="snapshots">\n  <div class="ck-actions">\n    <button class="ck-btn ck-btn-anim" id="snap-create">\u65B0\u5EFA\u5FEB\u7167</button>\n    <button class="ck-icon-btn" id="snap-refresh" title="\u5237\u65B0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>\n  </div>\n  <p class="ck-about-tip">\u5FEB\u7167\u4F1A\u5728\u6062\u590D\u524D\u81EA\u52A8\u521B\u5EFA\u56DE\u6EDA\u5907\u4EFD\uFF0C\u9632\u6B62\u6570\u636E\u4E22\u5931\u3002</p>\n  <div class="ck-list" id="snap-list"><div class="ck-list-empty">\u52A0\u8F7D\u4E2D\u2026</div></div>\n</div>';
+      setTimeout(() => {
+        if (typeof loadSnapshots === "function") loadSnapshots();
+      }, 50);
+    }, []);
+    return import_react22.default.createElement("div", { ref, style: { height: "100%", overflow: "auto", padding: "16px" } });
+  }
+
   // src/ui/shell/scripts/pages/agents-react.tsx
-  var import_react21 = __toESM(require_react(), 1);
+  var import_react23 = __toESM(require_react(), 1);
   var I2 = {
     edit: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
     del: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
@@ -33373,14 +33405,14 @@ body {
     plus: "M12 5v14M5 12h14"
   };
   function Svg3({ d }) {
-    return (0, import_react21.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react21.createElement)("path", { d }));
+    return (0, import_react23.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react23.createElement)("path", { d }));
   }
   function AgentModal({ editing, onClose, onSaved }) {
-    const [name, setName] = (0, import_react21.useState)(editing ? editing.name : "");
-    const [scope, setScope] = (0, import_react21.useState)("project");
+    const [name, setName] = (0, import_react23.useState)(editing ? editing.name : "");
+    const [scope, setScope] = (0, import_react23.useState)("project");
     const isEdit = !!editing;
     useHideAiView();
-    const submit = (0, import_react21.useCallback)(async () => {
+    const submit = (0, import_react23.useCallback)(async () => {
       if (!name.trim()) {
         await ckAlert("\u8BF7\u586B\u5199\u540D\u79F0");
         return;
@@ -33406,7 +33438,7 @@ body {
         await ckAlert("\u64CD\u4F5C\u5931\u8D25: " + (e.message || e));
       }
     }, [name, scope, isEdit, editing, onClose, onSaved]);
-    const openFile = (0, import_react21.useCallback)(async () => {
+    const openFile = (0, import_react23.useCallback)(async () => {
       if (!editing || !api.openAgentFile) return;
       try {
         const r = await api.openAgentFile(editing.agentPath);
@@ -33415,47 +33447,47 @@ body {
         await ckAlert("\u6253\u5F00\u5931\u8D25: " + (e.message || e));
       }
     }, [editing]);
-    return (0, import_react21.createElement)(
+    return (0, import_react23.createElement)(
       "div",
       { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
         if (e.target === e.currentTarget) onClose();
       } },
-      (0, import_react21.createElement)(
+      (0, import_react23.createElement)(
         "div",
         { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
-        (0, import_react21.createElement)("h3", { style: { margin: "0 0 14px" } }, isEdit ? "\u7F16\u8F91\u5B50\u4EE3\u7406" : "\u65B0\u5EFA\u5B50\u4EE3\u7406"),
-        (0, import_react21.createElement)(
+        (0, import_react23.createElement)("h3", { style: { margin: "0 0 14px" } }, isEdit ? "\u7F16\u8F91\u5B50\u4EE3\u7406" : "\u65B0\u5EFA\u5B50\u4EE3\u7406"),
+        (0, import_react23.createElement)(
           "div",
           { style: { marginBottom: 10 } },
-          (0, import_react21.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
-          (0, import_react21.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
+          (0, import_react23.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u540D\u79F0"),
+          (0, import_react23.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
         ),
-        !isEdit ? (0, import_react21.createElement)(
+        !isEdit ? (0, import_react23.createElement)(
           "div",
           { style: { marginBottom: 10 } },
-          (0, import_react21.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u8303\u56F4"),
-          (0, import_react21.createElement)(
+          (0, import_react23.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u8303\u56F4"),
+          (0, import_react23.createElement)(
             "select",
             { value: scope, onChange: (e) => setScope(e.target.value), style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } },
-            (0, import_react21.createElement)("option", { value: "project" }, "\u9879\u76EE\u7EA7"),
-            (0, import_react21.createElement)("option", { value: "user" }, "\u7528\u6237\u7EA7")
+            (0, import_react23.createElement)("option", { value: "project" }, "\u9879\u76EE\u7EA7"),
+            (0, import_react23.createElement)("option", { value: "user" }, "\u7528\u6237\u7EA7")
           )
         ) : null,
-        (0, import_react21.createElement)("p", { style: { fontSize: 12, color: "#888" } }, isEdit ? "\u6539\u540D\u4F1A\u91CD\u547D\u540D\u6587\u4EF6\uFF1B\u300C\u6253\u5F00\u6B63\u6587\u300D\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u7F16\u8F91\u63D0\u793A\u8BCD\u3002" : "\u751F\u6210\u6A21\u677F\u540E\uFF0C\u4F1A\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u7A0B\u5E8F\u6253\u5F00\uFF0C\u4F60\u76F4\u63A5\u7F16\u8F91\u4FDD\u5B58\u5373\u53EF\u3002"),
-        (0, import_react21.createElement)(
+        (0, import_react23.createElement)("p", { style: { fontSize: 12, color: "#888" } }, isEdit ? "\u6539\u540D\u4F1A\u91CD\u547D\u540D\u6587\u4EF6\uFF1B\u300C\u6253\u5F00\u6B63\u6587\u300D\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u7F16\u8F91\u63D0\u793A\u8BCD\u3002" : "\u751F\u6210\u6A21\u677F\u540E\uFF0C\u4F1A\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u7A0B\u5E8F\u6253\u5F00\uFF0C\u4F60\u76F4\u63A5\u7F16\u8F91\u4FDD\u5B58\u5373\u53EF\u3002"),
+        (0, import_react23.createElement)(
           "div",
           { style: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 } },
-          isEdit ? (0, import_react21.createElement)("button", { onClick: openFile, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u6253\u5F00\u6B63\u6587") : null,
-          (0, import_react21.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
-          (0, import_react21.createElement)("button", { onClick: submit, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, isEdit ? "\u4FDD\u5B58\u540D\u79F0" : "\u521B\u5EFA\u5E76\u6253\u5F00")
+          isEdit ? (0, import_react23.createElement)("button", { onClick: openFile, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u6253\u5F00\u6B63\u6587") : null,
+          (0, import_react23.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react23.createElement)("button", { onClick: submit, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, isEdit ? "\u4FDD\u5B58\u540D\u79F0" : "\u521B\u5EFA\u5E76\u6253\u5F00")
         )
       )
     );
   }
   function AgentsPage() {
-    const [agents, setAgents] = (0, import_react21.useState)(null);
-    const [modal, setModal] = (0, import_react21.useState)({ open: false, editing: null });
-    const load = (0, import_react21.useCallback)(async () => {
+    const [agents, setAgents] = (0, import_react23.useState)(null);
+    const [modal, setModal] = (0, import_react23.useState)({ open: false, editing: null });
+    const load = (0, import_react23.useCallback)(async () => {
       if (!api.listAgents) {
         setAgents([]);
         return;
@@ -33467,10 +33499,10 @@ body {
         setAgents([]);
       }
     }, []);
-    (0, import_react21.useEffect)(() => {
+    (0, import_react23.useEffect)(() => {
       load();
     }, [load]);
-    const click = (0, import_react21.useCallback)(async (a) => {
+    const click = (0, import_react23.useCallback)(async (a) => {
       if (api.appendSnippet) {
         try {
           await api.appendSnippet("\u8BF7\u4F7F\u7528 " + a.name + " \u5B50\u4EE3\u7406");
@@ -33479,7 +33511,7 @@ body {
       }
       addRecent("agent", a.name);
     }, []);
-    const del = (0, import_react21.useCallback)(async (a) => {
+    const del = (0, import_react23.useCallback)(async (a) => {
       if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BE5\u5B50\u4EE3\u7406\u6587\u4EF6\uFF1F\u6B64\u64CD\u4F5C\u4E0D\u53EF\u6062\u590D\u3002")) return;
       const anyApi = api;
       if (!anyApi.deleteAgentFile) return;
@@ -33494,54 +33526,54 @@ body {
     const list = agents || [];
     const userAgents = list.filter((a) => a.source !== "project");
     const projAgents = list.filter((a) => a.source === "project");
-    const card = (a) => (0, import_react21.createElement)(
+    const card = (a) => (0, import_react23.createElement)(
       "div",
       { key: a.agentPath, className: "ck-skill-item ck-agent-item", onClick: () => click(a) },
-      (0, import_react21.createElement)(
+      (0, import_react23.createElement)(
         "div",
         { className: "ck-skill-top" },
-        (0, import_react21.createElement)("span", { className: "ck-skill-name" }, a.name),
-        (0, import_react21.createElement)(
+        (0, import_react23.createElement)("span", { className: "ck-skill-name" }, a.name),
+        (0, import_react23.createElement)(
           "div",
           { className: "ck-agent-actions" },
-          (0, import_react21.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
+          (0, import_react23.createElement)("button", { className: "ck-snip-icon-btn", title: "\u7F16\u8F91", onClick: (e) => {
             e.stopPropagation();
             setModal({ open: true, editing: a });
-          } }, (0, import_react21.createElement)(Svg3, { d: I2.edit })),
-          (0, import_react21.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
+          } }, (0, import_react23.createElement)(Svg3, { d: I2.edit })),
+          (0, import_react23.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5220\u9664", onClick: (e) => {
             e.stopPropagation();
             del(a);
-          } }, (0, import_react21.createElement)(Svg3, { d: I2.del }))
+          } }, (0, import_react23.createElement)(Svg3, { d: I2.del }))
         )
       ),
-      (0, import_react21.createElement)("div", { className: "ck-skill-desc" }, a.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
+      (0, import_react23.createElement)("div", { className: "ck-skill-desc" }, a.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09")
     );
-    return (0, import_react21.createElement)(
+    return (0, import_react23.createElement)(
       "div",
       { className: "ck-tab ck-tab-active" },
-      (0, import_react21.createElement)(
+      (0, import_react23.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react21.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5EFA", onClick: () => setModal({ open: true, editing: null }) }, (0, import_react21.createElement)(Svg3, { d: I2.plus })),
-        (0, import_react21.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5B50\u4EE3\u7406"),
-        (0, import_react21.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react21.createElement)(Svg3, { d: I2.refresh }))
+        (0, import_react23.createElement)("button", { className: "ck-icon-btn", title: "\u65B0\u5EFA", onClick: () => setModal({ open: true, editing: null }) }, (0, import_react23.createElement)(Svg3, { d: I2.plus })),
+        (0, import_react23.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5B50\u4EE3\u7406"),
+        (0, import_react23.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react23.createElement)(Svg3, { d: I2.refresh }))
       ),
-      (0, import_react21.createElement)(
+      (0, import_react23.createElement)(
         "div",
         { className: "ck-list" },
-        agents === null ? (0, import_react21.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react21.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u5B50\u4EE3\u7406", (0, import_react21.createElement)("br"), "\uFF08.cuckoo/agents/ \u6216 ~/.cuckoo/agents/\uFF09") : [
-          userAgents.length ? (0, import_react21.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
+        agents === null ? (0, import_react23.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : list.length === 0 ? (0, import_react23.createElement)("div", { className: "ck-list-empty" }, "\u672A\u53D1\u73B0\u5B50\u4EE3\u7406", (0, import_react23.createElement)("br"), "\uFF08.cuckoo/agents/ \u6216 ~/.cuckoo/agents/\uFF09") : [
+          userAgents.length ? (0, import_react23.createElement)("div", { key: "u", className: "ck-mcp-group-title" }, "\u7528\u6237\u7EA7") : null,
           ...userAgents.map(card),
-          projAgents.length ? (0, import_react21.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
+          projAgents.length ? (0, import_react23.createElement)("div", { key: "p", className: "ck-mcp-group-title" }, "\u9879\u76EE\u7EA7") : null,
           ...projAgents.map(card)
         ]
       ),
-      modal.open ? (0, import_react21.createElement)(AgentModal, { editing: modal.editing, onClose: () => setModal({ open: false, editing: null }), onSaved: load }) : null
+      modal.open ? (0, import_react23.createElement)(AgentModal, { editing: modal.editing, onClose: () => setModal({ open: false, editing: null }), onSaved: load }) : null
     );
   }
 
   // src/ui/shell/scripts/pages/files-react.tsx
-  var import_react22 = __toESM(require_react(), 1);
+  var import_react24 = __toESM(require_react(), 1);
   var CARET = "M6 3l5 5-5 5";
   var FOLDER = "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z";
   var FILE = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6";
@@ -33692,16 +33724,16 @@ body {
     return EXT_COLOR[ext] ? "ck-ft-c-" + EXT_COLOR[ext] : "ck-ft-c-file";
   }
   function FIcon({ name, type }) {
-    const svg = (d, extra) => (0, import_react22.createElement)("span", { className: "ck-ft-icon " + extra }, (0, import_react22.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react22.createElement)("path", { d })));
+    const svg = (d, extra) => (0, import_react24.createElement)("span", { className: "ck-ft-icon " + extra }, (0, import_react24.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react24.createElement)("path", { d })));
     if (type === "dir") return svg(FOLDER, "ck-ft-i-dir");
     const ext = extOf(name);
     if (MEDIA_EXTS.has(ext)) return svg(IMG, "ck-ft-i-media");
     const badge = EXT_BADGE[ext];
-    if (badge) return (0, import_react22.createElement)("span", { className: "ck-ft-icon ck-ft-badge " + colorCls(name, "file") }, badge);
+    if (badge) return (0, import_react24.createElement)("span", { className: "ck-ft-icon ck-ft-badge " + colorCls(name, "file") }, badge);
     return svg(FILE, "ck-ft-i-file");
   }
   function AtBtn({ path }) {
-    return (0, import_react22.createElement)("span", { className: "ck-ft-at", title: "\u8FFD\u52A0 @" + path + " \u5230\u8F93\u5165\u6846", onClick: async (e) => {
+    return (0, import_react24.createElement)("span", { className: "ck-ft-at", title: "\u8FFD\u52A0 @" + path + " \u5230\u8F93\u5165\u6846", onClick: async (e) => {
       e.stopPropagation();
       if (api.appendSnippet) {
         try {
@@ -33712,42 +33744,42 @@ body {
     } }, "@");
   }
   function Highlight({ text, kw }) {
-    if (!kw) return (0, import_react22.createElement)("span", null, text);
+    if (!kw) return (0, import_react24.createElement)("span", null, text);
     const low = text.toLowerCase();
     const k = kw.toLowerCase();
     const idx = low.indexOf(k);
-    if (idx < 0) return (0, import_react22.createElement)("span", null, text);
-    return (0, import_react22.createElement)("span", null, text.slice(0, idx), (0, import_react22.createElement)("mark", { className: "ck-ft-hl" }, text.slice(idx, idx + kw.length)), text.slice(idx + kw.length));
+    if (idx < 0) return (0, import_react24.createElement)("span", null, text);
+    return (0, import_react24.createElement)("span", null, text.slice(0, idx), (0, import_react24.createElement)("mark", { className: "ck-ft-hl" }, text.slice(idx, idx + kw.length)), text.slice(idx + kw.length));
   }
   function TreeNodes({ nodes, depth, expanded, onToggle, onFile }) {
-    return (0, import_react22.createElement)(
+    return (0, import_react24.createElement)(
       "div",
       { style: { display: "contents" } },
       nodes.map((n) => {
         const pad = 6 + depth * 14;
         if (n.type === "dir") {
           const open = expanded.has(n.path);
-          return (0, import_react22.createElement)(
+          return (0, import_react24.createElement)(
             "div",
             { key: n.path, style: { display: "contents" } },
-            (0, import_react22.createElement)(
+            (0, import_react24.createElement)(
               "div",
               { className: "ck-ft-row ck-ft-dir" + (open ? " open" : ""), style: { paddingLeft: pad }, onClick: () => onToggle(n.path) },
-              (0, import_react22.createElement)("span", { className: "ck-ft-caret" }, (0, import_react22.createElement)("svg", { viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react22.createElement)("path", { d: CARET }))),
-              (0, import_react22.createElement)(FIcon, { name: n.name, type: "dir" }),
-              (0, import_react22.createElement)("span", { className: "ck-ft-name" }, n.name),
-              (0, import_react22.createElement)(AtBtn, { path: n.path })
+              (0, import_react24.createElement)("span", { className: "ck-ft-caret" }, (0, import_react24.createElement)("svg", { viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react24.createElement)("path", { d: CARET }))),
+              (0, import_react24.createElement)(FIcon, { name: n.name, type: "dir" }),
+              (0, import_react24.createElement)("span", { className: "ck-ft-name" }, n.name),
+              (0, import_react24.createElement)(AtBtn, { path: n.path })
             ),
-            open && n.children ? (0, import_react22.createElement)(TreeNodes, { nodes: n.children, depth: depth + 1, expanded, onToggle, onFile }) : null
+            open && n.children ? (0, import_react24.createElement)(TreeNodes, { nodes: n.children, depth: depth + 1, expanded, onToggle, onFile }) : null
           );
         }
-        return (0, import_react22.createElement)(
+        return (0, import_react24.createElement)(
           "div",
           { key: n.path, className: "ck-ft-row ck-ft-file", title: n.path, style: { paddingLeft: pad }, onClick: () => onFile(n.path) },
-          (0, import_react22.createElement)("span", { className: "ck-ft-caret" }),
-          (0, import_react22.createElement)(FIcon, { name: n.name, type: "file" }),
-          (0, import_react22.createElement)("span", { className: "ck-ft-name " + colorCls(n.name, "file") }, n.name),
-          (0, import_react22.createElement)(AtBtn, { path: n.path })
+          (0, import_react24.createElement)("span", { className: "ck-ft-caret" }),
+          (0, import_react24.createElement)(FIcon, { name: n.name, type: "file" }),
+          (0, import_react24.createElement)("span", { className: "ck-ft-name " + colorCls(n.name, "file") }, n.name),
+          (0, import_react24.createElement)(AtBtn, { path: n.path })
         );
       })
     );
@@ -33760,9 +33792,9 @@ body {
     return out;
   }
   function FilePreviewModal({ path, onClose }) {
-    const [state, setState] = (0, import_react22.useState)({ status: "loading" });
-    const monacoRef = (0, import_react22.useRef)(null);
-    (0, import_react22.useEffect)(() => {
+    const [state, setState] = (0, import_react24.useState)({ status: "loading" });
+    const monacoRef = (0, import_react24.useRef)(null);
+    (0, import_react24.useEffect)(() => {
       let cancelled = false;
       (async () => {
         try {
@@ -33788,7 +33820,7 @@ body {
         cancelled = true;
       };
     }, [path]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       const onKey = (e) => {
         if (e.key === "Escape") onClose();
       };
@@ -33796,11 +33828,11 @@ body {
       return () => window.removeEventListener("keydown", onKey);
     }, [onClose]);
     useHideAiView();
-    const openExternal = (0, import_react22.useCallback)(() => {
+    const openExternal = (0, import_react24.useCallback)(() => {
       if (api.openFileExternal) api.openFileExternal(path).catch(() => {
       });
     }, [path]);
-    return (0, import_react22.createElement)(
+    return (0, import_react24.createElement)(
       "div",
       {
         style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 1e4, display: "flex", alignItems: "center", justifyContent: "center" },
@@ -33808,40 +33840,40 @@ body {
           if (e.target === e.currentTarget) onClose();
         }
       },
-      (0, import_react22.createElement)(
+      (0, import_react24.createElement)(
         "div",
         {
           style: { background: "var(--ck-bg, #fff)", borderRadius: 10, width: "88vw", height: "85vh", maxWidth: 1200, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,.35)", border: "1px solid var(--ck-border, #e0e0e0)" },
           onClick: (e) => e.stopPropagation()
         },
-        (0, import_react22.createElement)(
+        (0, import_react24.createElement)(
           "div",
           { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--ck-border, #e0e0e0)", flexShrink: 0 } },
-          (0, import_react22.createElement)("span", { style: { fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: path }, path),
-          state.size !== void 0 ? (0, import_react22.createElement)("span", { style: { fontSize: 12, opacity: 0.6 } }, fmtSize2(state.size)) : null,
-          (0, import_react22.createElement)("button", { title: "\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u6253\u5F00", onClick: openExternal, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2197"),
-          (0, import_react22.createElement)("button", { title: "\u5173\u95ED", onClick: onClose, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2715")
+          (0, import_react24.createElement)("span", { style: { fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: path }, path),
+          state.size !== void 0 ? (0, import_react24.createElement)("span", { style: { fontSize: 12, opacity: 0.6 } }, fmtSize2(state.size)) : null,
+          (0, import_react24.createElement)("button", { title: "\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u6253\u5F00", onClick: openExternal, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2197"),
+          (0, import_react24.createElement)("button", { title: "\u5173\u95ED", onClick: onClose, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2715")
         ),
-        (0, import_react22.createElement)(
+        (0, import_react24.createElement)(
           "div",
           { style: { flex: 1, minHeight: 0, position: "relative" } },
-          state.status === "loading" ? (0, import_react22.createElement)("div", { style: { padding: 20, opacity: 0.6 } }, "\u52A0\u8F7D\u4E2D\u2026") : state.status === "err" ? (0, import_react22.createElement)("div", { style: { padding: 20, color: "#e55" } }, state.error) : (0, import_react22.createElement)("div", { ref: monacoRef, style: { width: "100%", height: "100%" } })
+          state.status === "loading" ? (0, import_react24.createElement)("div", { style: { padding: 20, opacity: 0.6 } }, "\u52A0\u8F7D\u4E2D\u2026") : state.status === "err" ? (0, import_react24.createElement)("div", { style: { padding: 20, color: "#e55" } }, state.error) : (0, import_react24.createElement)("div", { ref: monacoRef, style: { width: "100%", height: "100%" } })
         )
       )
     );
   }
   function RefreshIcon3() {
-    return (0, import_react22.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react22.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }), (0, import_react22.createElement)("path", { d: "M21 3v6h-6" }));
+    return (0, import_react24.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react24.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36" }), (0, import_react24.createElement)("path", { d: "M21 3v6h-6" }));
   }
   function FilesPage() {
-    const [tree, setTree] = (0, import_react22.useState)([]);
-    const [root, setRoot] = (0, import_react22.useState)("\u9879\u76EE\u6587\u4EF6");
-    const [kw, setKw] = (0, import_react22.useState)("");
-    const [expanded, setExpanded] = (0, import_react22.useState)(/* @__PURE__ */ new Set());
-    const [truncated, setTruncated] = (0, import_react22.useState)(false);
-    const [err, setErr] = (0, import_react22.useState)(null);
-    const [previewPath, setPreviewPath] = (0, import_react22.useState)(null);
-    const load = (0, import_react22.useCallback)(async () => {
+    const [tree, setTree] = (0, import_react24.useState)([]);
+    const [root, setRoot] = (0, import_react24.useState)("\u9879\u76EE\u6587\u4EF6");
+    const [kw, setKw] = (0, import_react24.useState)("");
+    const [expanded, setExpanded] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
+    const [truncated, setTruncated] = (0, import_react24.useState)(false);
+    const [err, setErr] = (0, import_react24.useState)(null);
+    const [previewPath, setPreviewPath] = (0, import_react24.useState)(null);
+    const load = (0, import_react24.useCallback)(async () => {
       if (!api.listProjectTree) return;
       try {
         const r = await api.listProjectTree();
@@ -33857,16 +33889,16 @@ body {
         setErr("\u52A0\u8F7D\u5931\u8D25");
       }
     }, []);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       load();
     }, [load]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       if (api.onProjectDir) api.onProjectDir(() => {
         setExpanded(/* @__PURE__ */ new Set());
         load();
       });
     }, [load]);
-    const onToggle = (0, import_react22.useCallback)((p) => {
+    const onToggle = (0, import_react24.useCallback)((p) => {
       setExpanded((s) => {
         const n = new Set(s);
         if (n.has(p)) n.delete(p);
@@ -33874,66 +33906,66 @@ body {
         return n;
       });
     }, []);
-    const onFile = (0, import_react22.useCallback)((p) => {
+    const onFile = (0, import_react24.useCallback)((p) => {
       setPreviewPath(p);
     }, []);
     let body;
-    if (err) body = (0, import_react22.createElement)("div", { className: "ck-list-empty" }, err);
+    if (err) body = (0, import_react24.createElement)("div", { className: "ck-list-empty" }, err);
     else if (kw) {
       const all = flatten(tree, []);
       const low = kw.toLowerCase();
       const matched = all.filter((n) => n.path.toLowerCase().includes(low));
-      if (matched.length === 0) body = (0, import_react22.createElement)("div", { className: "ck-list-empty" }, "\u65E0\u5339\u914D\u7ED3\u679C");
+      if (matched.length === 0) body = (0, import_react24.createElement)("div", { className: "ck-list-empty" }, "\u65E0\u5339\u914D\u7ED3\u679C");
       else {
         matched.sort((a, b) => a.type !== b.type ? a.type === "file" ? -1 : 1 : a.path.localeCompare(b.path));
         const shown = matched.slice(0, 500);
-        body = (0, import_react22.createElement)(
+        body = (0, import_react24.createElement)(
           "div",
           { style: { display: "contents" } },
-          shown.map((n) => (0, import_react22.createElement)(
+          shown.map((n) => (0, import_react24.createElement)(
             "div",
             { key: n.path, className: "ck-ft-row " + (n.type === "dir" ? "ck-ft-dir" : "ck-ft-file"), title: n.path, onClick: n.type === "file" ? () => onFile(n.path) : () => onToggle(n.path) },
-            (0, import_react22.createElement)(FIcon, { name: n.name, type: n.type }),
-            (0, import_react22.createElement)("span", { className: "ck-ft-name " + colorCls(n.name, n.type) }, (0, import_react22.createElement)(Highlight, { text: n.name, kw })),
-            (0, import_react22.createElement)("span", { className: "ck-ft-path" }, (0, import_react22.createElement)(Highlight, { text: n.path, kw })),
-            (0, import_react22.createElement)(AtBtn, { path: n.path })
+            (0, import_react24.createElement)(FIcon, { name: n.name, type: n.type }),
+            (0, import_react24.createElement)("span", { className: "ck-ft-name " + colorCls(n.name, n.type) }, (0, import_react24.createElement)(Highlight, { text: n.name, kw })),
+            (0, import_react24.createElement)("span", { className: "ck-ft-path" }, (0, import_react24.createElement)(Highlight, { text: n.path, kw })),
+            (0, import_react24.createElement)(AtBtn, { path: n.path })
           )),
-          matched.length > 500 ? (0, import_react22.createElement)("div", { className: "ck-ft-truncated" }, "\uFF08\u7ED3\u679C\u8FC7\u591A\uFF0C\u4EC5\u663E\u793A\u524D 500 \u9879\uFF09") : null
+          matched.length > 500 ? (0, import_react24.createElement)("div", { className: "ck-ft-truncated" }, "\uFF08\u7ED3\u679C\u8FC7\u591A\uFF0C\u4EC5\u663E\u793A\u524D 500 \u9879\uFF09") : null
         );
       }
-    } else if (tree.length === 0) body = (0, import_react22.createElement)("div", { className: "ck-list-empty" }, "\u7A7A\u76EE\u5F55");
-    else body = (0, import_react22.createElement)(
+    } else if (tree.length === 0) body = (0, import_react24.createElement)("div", { className: "ck-list-empty" }, "\u7A7A\u76EE\u5F55");
+    else body = (0, import_react24.createElement)(
       "div",
       { style: { display: "contents" } },
-      (0, import_react22.createElement)(TreeNodes, { nodes: tree, depth: 0, expanded, onToggle, onFile }),
-      truncated ? (0, import_react22.createElement)("div", { className: "ck-ft-truncated" }, "\uFF08\u8282\u70B9\u8FC7\u591A\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\uFF09") : null
+      (0, import_react24.createElement)(TreeNodes, { nodes: tree, depth: 0, expanded, onToggle, onFile }),
+      truncated ? (0, import_react24.createElement)("div", { className: "ck-ft-truncated" }, "\uFF08\u8282\u70B9\u8FC7\u591A\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\uFF09") : null
     );
-    return (0, import_react22.createElement)(
+    return (0, import_react24.createElement)(
       "div",
       { className: "ck-tab ck-tab-active" },
-      (0, import_react22.createElement)(
+      (0, import_react24.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react22.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, root),
-        (0, import_react22.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react22.createElement)(RefreshIcon3))
+        (0, import_react24.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, root),
+        (0, import_react24.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react24.createElement)(RefreshIcon3))
       ),
-      (0, import_react22.createElement)(
+      (0, import_react24.createElement)(
         "div",
         { className: "ck-ft-search" },
-        (0, import_react22.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react22.createElement)("circle", { cx: 11, cy: 11, r: 7 }), (0, import_react22.createElement)("path", { d: "M21 21l-4-4" })),
-        (0, import_react22.createElement)("input", { className: "ck-ft-search-input", placeholder: "\u641C\u7D22\u6587\u4EF6\u540D\u2026", spellCheck: false, autoComplete: "off", value: kw, onChange: (e) => setKw(e.target.value) })
+        (0, import_react24.createElement)("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react24.createElement)("circle", { cx: 11, cy: 11, r: 7 }), (0, import_react24.createElement)("path", { d: "M21 21l-4-4" })),
+        (0, import_react24.createElement)("input", { className: "ck-ft-search-input", placeholder: "\u641C\u7D22\u6587\u4EF6\u540D\u2026", spellCheck: false, autoComplete: "off", value: kw, onChange: (e) => setKw(e.target.value) })
       ),
-      (0, import_react22.createElement)(
+      (0, import_react24.createElement)(
         "div",
         { className: "ck-files-cols" },
-        (0, import_react22.createElement)("div", { className: "ck-list ck-ft", id: "ft-list" }, body)
+        (0, import_react24.createElement)("div", { className: "ck-list ck-ft", id: "ft-list" }, body)
       ),
-      previewPath ? (0, import_react22.createElement)(FilePreviewModal, { path: previewPath, onClose: () => setPreviewPath(null) }) : null
+      previewPath ? (0, import_react24.createElement)(FilePreviewModal, { path: previewPath, onClose: () => setPreviewPath(null) }) : null
     );
   }
 
   // src/ui/shell/scripts/pages/windows-react.tsx
-  var import_react23 = __toESM(require_react(), 1);
+  var import_react25 = __toESM(require_react(), 1);
   var PROVIDER_COLORS = {
     deepseek: "linear-gradient(135deg, #4d6bfe, #3b5bdb)",
     claude: "linear-gradient(135deg, #d97757, #c05a3a)",
@@ -33945,47 +33977,47 @@ body {
     grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"
   };
   function Svg4({ d, cls }) {
-    return (0, import_react23.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react23.createElement)("path", { d }));
+    return (0, import_react25.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react25.createElement)("path", { d }));
   }
   function WinItem({ p, providerMap, onOpen, onDelete, onToggleAuto }) {
     const pname = providerMap[p.providerId || ""] || "\u672A\u9009\u5E73\u53F0";
     const initial = (p.name || "?").trim().charAt(0).toUpperCase();
     const avatarStyle = PROVIDER_COLORS[p.providerId || ""] || "";
     const auto = p.autoOpen === true;
-    return (0, import_react23.createElement)(
+    return (0, import_react25.createElement)(
       "div",
       { className: "ck-win-item", onClick: onOpen },
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { className: "ck-win-top" },
-        (0, import_react23.createElement)("span", { className: "ck-win-avatar", style: avatarStyle ? { background: avatarStyle } : void 0 }, initial),
-        (0, import_react23.createElement)("span", { className: "ck-win-name" }, p.name),
-        (0, import_react23.createElement)("span", { className: "ck-win-del", title: "\u5220\u9664\u7A97\u53E3", onClick: (e) => {
+        (0, import_react25.createElement)("span", { className: "ck-win-avatar", style: avatarStyle ? { background: avatarStyle } : void 0 }, initial),
+        (0, import_react25.createElement)("span", { className: "ck-win-name" }, p.name),
+        (0, import_react25.createElement)("span", { className: "ck-win-del", title: "\u5220\u9664\u7A97\u53E3", onClick: (e) => {
           e.stopPropagation();
           onDelete();
         } }, "\u2715")
       ),
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { className: "ck-win-bottom" },
-        (0, import_react23.createElement)("span", { className: "ck-win-provider" }, pname),
-        (0, import_react23.createElement)(
+        (0, import_react25.createElement)("span", { className: "ck-win-provider" }, pname),
+        (0, import_react25.createElement)(
           "label",
           { className: "ck-win-check" + (auto ? " ck-win-check-on" : ""), title: "\u542F\u52A8\u65F6\u9ED8\u8BA4\u6253\u5F00", onClick: (e) => e.stopPropagation() },
-          (0, import_react23.createElement)("input", { type: "checkbox", checked: auto, onClick: (e) => e.stopPropagation(), onChange: (e) => onToggleAuto(e.target.checked) }),
+          (0, import_react25.createElement)("input", { type: "checkbox", checked: auto, onClick: (e) => e.stopPropagation(), onChange: (e) => onToggleAuto(e.target.checked) }),
           "\u9ED8\u8BA4\u6253\u5F00"
         )
       )
     );
   }
   function GroupModal({ group, profiles, onClose, onSaved }) {
-    const [name, setName] = (0, import_react23.useState)(group.name || "");
-    const [members, setMembers] = (0, import_react23.useState)((group.windowIds || []).slice());
+    const [name, setName] = (0, import_react25.useState)(group.name || "");
+    const [members, setMembers] = (0, import_react25.useState)((group.windowIds || []).slice());
     useHideAiView();
     const byId = {};
     for (const p of profiles) byId[p.id] = p;
     const avail = profiles.filter((p) => !members.includes(p.id));
-    const save = (0, import_react23.useCallback)(async () => {
+    const save = (0, import_react25.useCallback)(async () => {
       const anyApi = api;
       try {
         const newName = name.trim();
@@ -34003,33 +34035,33 @@ body {
         onClose();
       }
     }, [name, members, group, onClose, onSaved]);
-    return (0, import_react23.createElement)(
+    return (0, import_react25.createElement)(
       "div",
       { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }, onClick: (e) => {
         if (e.target === e.currentTarget) onClose();
       } },
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { style: { background: "#fff", borderRadius: 10, padding: 20, width: 420, maxWidth: "90vw", boxShadow: "0 8px 32px rgba(0,0,0,.2)" } },
-        (0, import_react23.createElement)("h3", { style: { margin: "0 0 14px" } }, "\u7BA1\u7406\u7A97\u53E3\u7EC4"),
-        (0, import_react23.createElement)(
+        (0, import_react25.createElement)("h3", { style: { margin: "0 0 14px" } }, "\u7BA1\u7406\u7A97\u53E3\u7EC4"),
+        (0, import_react25.createElement)(
           "div",
           { style: { marginBottom: 10 } },
-          (0, import_react23.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u540D"),
-          (0, import_react23.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
+          (0, import_react25.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u540D"),
+          (0, import_react25.createElement)("input", { value: name, onChange: (e) => setName(e.target.value), autoFocus: true, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box" } })
         ),
-        (0, import_react23.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u5185\u7A97\u53E3"),
-        (0, import_react23.createElement)(
+        (0, import_react25.createElement)("div", { style: { fontSize: 12, color: "#666", marginBottom: 4 } }, "\u7EC4\u5185\u7A97\u53E3"),
+        (0, import_react25.createElement)(
           "div",
           { style: { marginBottom: 8 } },
-          members.length === 0 ? (0, import_react23.createElement)("div", { style: { color: "#999", fontSize: 12, padding: 4 } }, "\uFF08\u6682\u65E0\u7A97\u53E3\uFF09") : members.map((id) => (0, import_react23.createElement)(
+          members.length === 0 ? (0, import_react25.createElement)("div", { style: { color: "#999", fontSize: 12, padding: 4 } }, "\uFF08\u6682\u65E0\u7A97\u53E3\uFF09") : members.map((id) => (0, import_react25.createElement)(
             "div",
             { key: id, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", border: "1px solid #eee", borderRadius: 6, marginBottom: 4 } },
-            (0, import_react23.createElement)("span", null, byId[id] ? byId[id].name : id),
-            (0, import_react23.createElement)("span", { style: { color: "#e55", cursor: "pointer" }, onClick: () => setMembers(members.filter((x) => x !== id)) }, "\u2715")
+            (0, import_react25.createElement)("span", null, byId[id] ? byId[id].name : id),
+            (0, import_react25.createElement)("span", { style: { color: "#e55", cursor: "pointer" }, onClick: () => setMembers(members.filter((x) => x !== id)) }, "\u2715")
           ))
         ),
-        (0, import_react23.createElement)(
+        (0, import_react25.createElement)(
           "select",
           { onChange: (e) => {
             const id = e.target.value;
@@ -34038,25 +34070,25 @@ body {
               e.target.value = "";
             }
           }, style: { width: "100%", padding: "6px 8px", border: "1px solid #ddd", borderRadius: 6, boxSizing: "border-box", marginBottom: 16 } },
-          (0, import_react23.createElement)("option", { value: "" }, "\uFF08\u9009\u62E9\u8981\u52A0\u5165\u7684\u7A97\u53E3\u2026\uFF09"),
-          ...avail.map((p) => (0, import_react23.createElement)("option", { key: p.id, value: p.id }, p.name))
+          (0, import_react25.createElement)("option", { value: "" }, "\uFF08\u9009\u62E9\u8981\u52A0\u5165\u7684\u7A97\u53E3\u2026\uFF09"),
+          ...avail.map((p) => (0, import_react25.createElement)("option", { key: p.id, value: p.id }, p.name))
         ),
-        (0, import_react23.createElement)(
+        (0, import_react25.createElement)(
           "div",
           { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
-          (0, import_react23.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
-          (0, import_react23.createElement)("button", { onClick: save, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
+          (0, import_react25.createElement)("button", { onClick: onClose, style: { padding: "6px 14px", border: "1px solid #ddd", background: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u53D6\u6D88"),
+          (0, import_react25.createElement)("button", { onClick: save, style: { padding: "6px 14px", border: "none", background: "#4d6bfe", color: "#fff", borderRadius: 6, cursor: "pointer" } }, "\u4FDD\u5B58")
         )
       )
     );
   }
   function WindowsPage() {
-    const [profiles, setProfiles] = (0, import_react23.useState)(null);
-    const [groups, setGroups] = (0, import_react23.useState)([]);
-    const [providerMap, setProviderMap] = (0, import_react23.useState)({});
-    const [err, setErr] = (0, import_react23.useState)(false);
-    const [managing, setManaging] = (0, import_react23.useState)(null);
-    const load = (0, import_react23.useCallback)(async () => {
+    const [profiles, setProfiles] = (0, import_react25.useState)(null);
+    const [groups, setGroups] = (0, import_react25.useState)([]);
+    const [providerMap, setProviderMap] = (0, import_react25.useState)({});
+    const [err, setErr] = (0, import_react25.useState)(false);
+    const [managing, setManaging] = (0, import_react25.useState)(null);
+    const load = (0, import_react25.useCallback)(async () => {
       if (!api.listProfiles) {
         setProfiles([]);
         return;
@@ -34086,16 +34118,16 @@ body {
         setProfiles([]);
       }
     }, []);
-    (0, import_react23.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       load();
     }, [load]);
-    const open = (0, import_react23.useCallback)(async (id) => {
+    const open = (0, import_react25.useCallback)(async (id) => {
       try {
         await api.openProfileWindow?.(id);
       } catch (_) {
       }
     }, []);
-    const del = (0, import_react23.useCallback)(async (p) => {
+    const del = (0, import_react25.useCallback)(async (p) => {
       if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u7A97\u53E3\u300C" + p.name + "\u300D\uFF1F\u6B64\u64CD\u4F5C\u4E0D\u53EF\u6062\u590D\u3002")) return;
       try {
         const r = await api.deleteProfileWindow?.(p.id);
@@ -34103,7 +34135,7 @@ body {
       } catch (_) {
       }
     }, [load]);
-    const toggleAuto = (0, import_react23.useCallback)(async (p, v) => {
+    const toggleAuto = (0, import_react25.useCallback)(async (p, v) => {
       try {
         const r = await api.setProfileAutoOpen?.(p.id, v);
         if (!r || !r.success) return;
@@ -34111,14 +34143,14 @@ body {
       } catch (_) {
       }
     }, []);
-    const newWin = (0, import_react23.useCallback)(async () => {
+    const newWin = (0, import_react25.useCallback)(async () => {
       try {
         await api.createProfileWindow?.();
         load();
       } catch (_) {
       }
     }, [load]);
-    const newGroup = (0, import_react23.useCallback)(async () => {
+    const newGroup = (0, import_react25.useCallback)(async () => {
       const name = await ckPrompt({ title: "\u65B0\u5EFA\u7A97\u53E3\u7EC4", placeholder: "\u7EC4\u540D\uFF08\u5982\uFF1A\u4E3B\u529B\u8D26\u53F7\u7EC4\uFF09", value: "" });
       if (name === null) return;
       try {
@@ -34127,7 +34159,7 @@ body {
       } catch (_) {
       }
     }, [load]);
-    const wgSwitch = (0, import_react23.useCallback)(async (g) => {
+    const wgSwitch = (0, import_react25.useCallback)(async (g) => {
       const anyApi = api;
       if (!anyApi.wgSwitch) return;
       try {
@@ -34138,7 +34170,7 @@ body {
       }
       load();
     }, [load]);
-    const wgDel = (0, import_react23.useCallback)(async (g) => {
+    const wgDel = (0, import_react25.useCallback)(async (g) => {
       if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BE5\u7A97\u53E3\u7EC4\uFF1F\uFF08\u7A97\u53E3\u672C\u8EAB\u4E0D\u5220\uFF09")) return;
       try {
         await api.wgDelete?.(g.id);
@@ -34146,7 +34178,7 @@ body {
       } catch (_) {
       }
     }, [load]);
-    const wgLast = (0, import_react23.useCallback)(async (g) => {
+    const wgLast = (0, import_react25.useCallback)(async (g) => {
       if (!g.lastWindowId) return;
       try {
         await api.openProfileWindow?.(g.lastWindowId);
@@ -34165,55 +34197,55 @@ body {
     const inGroup = /* @__PURE__ */ new Set();
     for (const g of groups) for (const w of g.windowIds || []) inGroup.add(w);
     const ungrouped = list.filter((p) => !inGroup.has(p.id));
-    return (0, import_react23.createElement)(
+    return (0, import_react25.createElement)(
       "div",
       { className: "ck-tab ck-tab-active" },
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react23.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newWin }, (0, import_react23.createElement)(Svg4, { d: I3.plus, cls: "ck-btn-icon" }), (0, import_react23.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3")),
-        (0, import_react23.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\u5217\u8868", onClick: load }, (0, import_react23.createElement)(Svg4, { d: I3.refresh }))
+        (0, import_react25.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newWin }, (0, import_react25.createElement)(Svg4, { d: I3.plus, cls: "ck-btn-icon" }), (0, import_react25.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3")),
+        (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\u5217\u8868", onClick: load }, (0, import_react25.createElement)(Svg4, { d: I3.refresh }))
       ),
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react23.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newGroup }, (0, import_react23.createElement)(Svg4, { d: I3.grid, cls: "ck-btn-icon" }), (0, import_react23.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3\u7EC4"))
+        (0, import_react25.createElement)("button", { className: "ck-btn ck-btn-anim", onClick: newGroup }, (0, import_react25.createElement)(Svg4, { d: I3.grid, cls: "ck-btn-icon" }), (0, import_react25.createElement)("span", null, "\u65B0\u5EFA\u7A97\u53E3\u7EC4"))
       ),
-      (0, import_react23.createElement)(
+      (0, import_react25.createElement)(
         "div",
         { className: "ck-list" },
-        profiles === null ? (0, import_react23.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react23.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react23.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u7A97\u53E3") : [
+        profiles === null ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : err ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25") : list.length === 0 ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u7A97\u53E3") : [
           ...groups.map((g) => {
             const members = (g.windowIds || []).map((w) => byId[w]).filter(Boolean);
-            return (0, import_react23.createElement)(
+            return (0, import_react25.createElement)(
               "div",
               { key: g.id, className: "ck-wg" },
-              (0, import_react23.createElement)(
+              (0, import_react25.createElement)(
                 "div",
                 { className: "ck-wg-head" },
-                (0, import_react23.createElement)("span", { className: "ck-wg-name" }, g.name),
-                (0, import_react23.createElement)("span", { className: "ck-wg-switch", title: "\u8F6C\u79FB\u5F53\u524D\u5BF9\u8BDD\u5230\u4E0B\u4E00\u7A97\u53E3", onClick: () => wgSwitch(g) }, "\u8F6C\u79FB\u5BF9\u8BDD"),
-                (0, import_react23.createElement)("span", { className: "ck-wg-manage", title: "\u7BA1\u7406\u7EC4\uFF08\u6539\u540D\u3001\u589E\u5220\u7A97\u53E3\uFF09", onClick: () => setManaging(g) }, "\u7BA1\u7406"),
-                (0, import_react23.createElement)("span", { className: "ck-wg-del", title: "\u5220\u9664\u7EC4", onClick: () => wgDel(g) }, "\u2715")
+                (0, import_react25.createElement)("span", { className: "ck-wg-name" }, g.name),
+                (0, import_react25.createElement)("span", { className: "ck-wg-switch", title: "\u8F6C\u79FB\u5F53\u524D\u5BF9\u8BDD\u5230\u4E0B\u4E00\u7A97\u53E3", onClick: () => wgSwitch(g) }, "\u8F6C\u79FB\u5BF9\u8BDD"),
+                (0, import_react25.createElement)("span", { className: "ck-wg-manage", title: "\u7BA1\u7406\u7EC4\uFF08\u6539\u540D\u3001\u589E\u5220\u7A97\u53E3\uFF09", onClick: () => setManaging(g) }, "\u7BA1\u7406"),
+                (0, import_react25.createElement)("span", { className: "ck-wg-del", title: "\u5220\u9664\u7EC4", onClick: () => wgDel(g) }, "\u2715")
               ),
-              g.lastWindowId ? (0, import_react23.createElement)("div", { className: "ck-wg-last", title: "\u70B9\u51FB\u8DF3\u5230\u8BE5\u7A97\u53E3\u7684\u6700\u8FD1\u5BF9\u8BDD", onClick: () => wgLast(g) }, "\u6700\u8FD1\uFF1A" + (byId[g.lastWindowId] ? byId[g.lastWindowId].name : g.lastWindowId)) : null,
-              (0, import_react23.createElement)("div", { className: "ck-wg-body" }, members.map((p) => (0, import_react23.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
+              g.lastWindowId ? (0, import_react25.createElement)("div", { className: "ck-wg-last", title: "\u70B9\u51FB\u8DF3\u5230\u8BE5\u7A97\u53E3\u7684\u6700\u8FD1\u5BF9\u8BDD", onClick: () => wgLast(g) }, "\u6700\u8FD1\uFF1A" + (byId[g.lastWindowId] ? byId[g.lastWindowId].name : g.lastWindowId)) : null,
+              (0, import_react25.createElement)("div", { className: "ck-wg-body" }, members.map((p) => (0, import_react25.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
             );
           }),
-          ungrouped.length ? (0, import_react23.createElement)(
+          ungrouped.length ? (0, import_react25.createElement)(
             "div",
             { key: "ungrouped", className: "ck-wg ck-wg-ungrouped" },
-            (0, import_react23.createElement)("div", { className: "ck-wg-head" }, (0, import_react23.createElement)("span", { className: "ck-wg-name" }, "\u672A\u5206\u7EC4")),
-            (0, import_react23.createElement)("div", { className: "ck-wg-body" }, ungrouped.map((p) => (0, import_react23.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
+            (0, import_react25.createElement)("div", { className: "ck-wg-head" }, (0, import_react25.createElement)("span", { className: "ck-wg-name" }, "\u672A\u5206\u7EC4")),
+            (0, import_react25.createElement)("div", { className: "ck-wg-body" }, ungrouped.map((p) => (0, import_react25.createElement)(WinItem, { key: p.id, p, providerMap, onOpen: () => open(p.id), onDelete: () => del(p), onToggleAuto: (v) => toggleAuto(p, v) })))
           ) : null
         ]
       ),
-      managing ? (0, import_react23.createElement)(GroupModal, { group: managing, profiles: list, onClose: () => setManaging(null), onSaved: load }) : null
+      managing ? (0, import_react25.createElement)(GroupModal, { group: managing, profiles: list, onClose: () => setManaging(null), onSaved: load }) : null
     );
   }
 
   // src/ui/shell/scripts/pages/workspaces-react.tsx
-  var import_react24 = __toESM(require_react(), 1);
+  var import_react26 = __toESM(require_react(), 1);
   function baseName(dir) {
     if (!dir) return "\u672A\u6307\u5B9A\u5DE5\u4F5C\u533A";
     const parts = String(dir).replace(/[\\/]+$/, "").split(/[\\/]/);
@@ -34272,51 +34304,51 @@ body {
     refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"
   };
   function Svg5({ d, cls }) {
-    return (0, import_react24.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react24.createElement)("path", { d }));
+    return (0, import_react26.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react26.createElement)("path", { d }));
   }
   function WsItem({ s, cur, archived, hasChildren, sub, open, onToggle, onNav, onRename, onArchive, onUnarchive }) {
     const label = s.kind === "subagent" && s.agentName ? "\u5B50\u4EE3\u7406: " + s.agentName : s.title || s.sessionId;
     const time = relTime(s.updatedAt);
     const isCur = s.sessionId === cur;
-    return (0, import_react24.createElement)(
+    return (0, import_react26.createElement)(
       "div",
       { className: "ck-ws-item" + (isCur ? " current" : "") + (sub ? " sub" : ""), title: s.sessionId, onClick: () => onNav(s.sessionId) },
-      hasChildren ? (0, import_react24.createElement)("span", { className: "ck-ws-expand" + (open ? " open" : ""), onClick: (e) => {
+      hasChildren ? (0, import_react26.createElement)("span", { className: "ck-ws-expand" + (open ? " open" : ""), onClick: (e) => {
         e.stopPropagation();
         onToggle(s.sessionId);
-      } }, (0, import_react24.createElement)(Svg5, { d: IC.caret })) : (0, import_react24.createElement)("span", { className: "ck-ws-expand ck-ws-expand-hidden" }),
-      (0, import_react24.createElement)("span", { className: "ck-ws-name" }, label),
-      time ? (0, import_react24.createElement)("span", { className: "ck-ws-time" }, time) : null,
-      (0, import_react24.createElement)(
+      } }, (0, import_react26.createElement)(Svg5, { d: IC.caret })) : (0, import_react26.createElement)("span", { className: "ck-ws-expand ck-ws-expand-hidden" }),
+      (0, import_react26.createElement)("span", { className: "ck-ws-name" }, label),
+      time ? (0, import_react26.createElement)("span", { className: "ck-ws-time" }, time) : null,
+      (0, import_react26.createElement)(
         "span",
         { className: "ck-ws-acts" },
-        (0, import_react24.createElement)("span", { className: "ck-ws-act", title: "\u91CD\u547D\u540D", onClick: (e) => {
+        (0, import_react26.createElement)("span", { className: "ck-ws-act", title: "\u91CD\u547D\u540D", onClick: (e) => {
           e.stopPropagation();
           onRename(s, label);
-        } }, (0, import_react24.createElement)(Svg5, { d: IC.rename })),
-        archived ? (0, import_react24.createElement)("span", { className: "ck-ws-act", title: "\u53D6\u6D88\u5F52\u6863", onClick: (e) => {
+        } }, (0, import_react26.createElement)(Svg5, { d: IC.rename })),
+        archived ? (0, import_react26.createElement)("span", { className: "ck-ws-act", title: "\u53D6\u6D88\u5F52\u6863", onClick: (e) => {
           e.stopPropagation();
           onUnarchive(s.sessionId);
-        } }, (0, import_react24.createElement)(Svg5, { d: IC.unarchive })) : sub ? null : (0, import_react24.createElement)("span", { className: "ck-ws-act", title: "\u5F52\u6863", onClick: (e) => {
+        } }, (0, import_react26.createElement)(Svg5, { d: IC.unarchive })) : sub ? null : (0, import_react26.createElement)("span", { className: "ck-ws-act", title: "\u5F52\u6863", onClick: (e) => {
           e.stopPropagation();
           onArchive(s.sessionId);
-        } }, (0, import_react24.createElement)(Svg5, { d: IC.archive }))
+        } }, (0, import_react26.createElement)(Svg5, { d: IC.archive }))
       )
     );
   }
   function WorkspacesPage() {
-    const [sessions, setSessions] = (0, import_react24.useState)(null);
-    const [curSessionId, setCurSessionId] = (0, import_react24.useState)(null);
-    const [curDir, setCurDir] = (0, import_react24.useState)(null);
-    const [archivedProjects, setArchivedProjects] = (0, import_react24.useState)([]);
-    const [expandedDirs, setExpandedDirs] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
-    const [archivedOpen, setArchivedOpen] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
-    const [expandedProjects, setExpandedProjects] = (0, import_react24.useState)(false);
-    const [expandedNodes, setExpandedNodes] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
-    const [expandedSubs, setExpandedSubs] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
-    const [tip, setTip] = (0, import_react24.useState)(null);
-    const [err, setErr] = (0, import_react24.useState)(false);
-    const load = (0, import_react24.useCallback)(async () => {
+    const [sessions, setSessions] = (0, import_react26.useState)(null);
+    const [curSessionId, setCurSessionId] = (0, import_react26.useState)(null);
+    const [curDir, setCurDir] = (0, import_react26.useState)(null);
+    const [archivedProjects, setArchivedProjects] = (0, import_react26.useState)([]);
+    const [expandedDirs, setExpandedDirs] = (0, import_react26.useState)(/* @__PURE__ */ new Set());
+    const [archivedOpen, setArchivedOpen] = (0, import_react26.useState)(/* @__PURE__ */ new Set());
+    const [expandedProjects, setExpandedProjects] = (0, import_react26.useState)(false);
+    const [expandedNodes, setExpandedNodes] = (0, import_react26.useState)(/* @__PURE__ */ new Set());
+    const [expandedSubs, setExpandedSubs] = (0, import_react26.useState)(/* @__PURE__ */ new Set());
+    const [tip, setTip] = (0, import_react26.useState)(null);
+    const [err, setErr] = (0, import_react26.useState)(false);
+    const load = (0, import_react26.useCallback)(async () => {
       if (!api.listAllSessions) {
         setSessions([]);
         return;
@@ -34339,10 +34371,10 @@ body {
         setSessions([]);
       }
     }, []);
-    (0, import_react24.useEffect)(() => {
+    (0, import_react26.useEffect)(() => {
       load();
     }, [load]);
-    (0, import_react24.useEffect)(() => {
+    (0, import_react26.useEffect)(() => {
       if (api.onProjectDir) api.onProjectDir((d) => {
         setCurDir(d);
         load();
@@ -34356,7 +34388,7 @@ body {
       }
       if (api.onSessionsChanged) api.onSessionsChanged(() => load());
     }, [load]);
-    const onNav = (0, import_react24.useCallback)(async (id) => {
+    const onNav = (0, import_react26.useCallback)(async (id) => {
       if (api.navigateSession) {
         try {
           await api.navigateSession(id);
@@ -34364,7 +34396,7 @@ body {
         }
       }
     }, []);
-    const onRename = (0, import_react24.useCallback)(async (s, cur) => {
+    const onRename = (0, import_react26.useCallback)(async (s, cur) => {
       if (!api.setSessionTitle) return;
       const name = await ckPrompt({ title: "\u91CD\u547D\u540D\u5BF9\u8BDD", placeholder: "\u8F93\u5165\u5BF9\u8BDD\u540D\u79F0", value: cur === s.sessionId ? "" : cur });
       if (!name) return;
@@ -34374,7 +34406,7 @@ body {
       }
       load();
     }, [load]);
-    const onArchive = (0, import_react24.useCallback)(async (id) => {
+    const onArchive = (0, import_react26.useCallback)(async (id) => {
       if (api.setSessionArchived) {
         try {
           await api.setSessionArchived(id, true);
@@ -34383,7 +34415,7 @@ body {
         load();
       }
     }, [load]);
-    const onUnarchive = (0, import_react24.useCallback)(async (id) => {
+    const onUnarchive = (0, import_react26.useCallback)(async (id) => {
       if (api.setSessionArchived) {
         try {
           await api.setSessionArchived(id, false);
@@ -34398,15 +34430,15 @@ body {
       else n.add(key);
       return n;
     });
-    const showTip = (0, import_react24.useCallback)(async (dir, el) => {
+    const showTip = (0, import_react26.useCallback)(async (dir, el) => {
       const rect = el.getBoundingClientRect();
       const sidebar = document.getElementById("ck-sidebar");
       const sbw = sidebar && sidebar.offsetWidth ? sidebar.offsetWidth : 320;
       let x = Math.min(rect.left, Math.max(6, sbw - 260));
       setTip({ dir, x, y: rect.bottom + 6 });
     }, []);
-    if (sessions === null) return (0, import_react24.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react24.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"));
-    if (err) return (0, import_react24.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react24.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25"));
+    if (sessions === null) return (0, import_react26.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react26.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026"));
+    if (err) return (0, import_react26.createElement)("div", { className: "ck-tab ck-tab-active" }, (0, import_react26.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u5931\u8D25"));
     const byId = {};
     for (const s of sessions) byId[s.sessionId] = s;
     const subsByParent = {};
@@ -34433,24 +34465,24 @@ body {
       }
       const hasChildren = subs.length > 0 || hist.length > 0;
       const open = expandedNodes.has(s.sessionId);
-      const out = [(0, import_react24.createElement)(WsItem, { key: s.sessionId, s, cur: curSessionId, archived, hasChildren, open, onToggle: (id) => toggle(setExpandedNodes, id), onNav, onRename, onArchive, onUnarchive })];
+      const out = [(0, import_react26.createElement)(WsItem, { key: s.sessionId, s, cur: curSessionId, archived, hasChildren, open, onToggle: (id) => toggle(setExpandedNodes, id), onNav, onRename, onArchive, onUnarchive })];
       if (hasChildren && open) {
         const kids = [];
         if (subs.length) {
           const k = s.sessionId + ":sub";
           const so = expandedSubs.has(k);
-          kids.push((0, import_react24.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (so ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u5B50\u4EE3\u7406\uFF08" + subs.length + "\uFF09"));
-          if (so) kids.push(...subs.map((x) => (0, import_react24.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
+          kids.push((0, import_react26.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (so ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u5B50\u4EE3\u7406\uFF08" + subs.length + "\uFF09"));
+          if (so) kids.push(...subs.map((x) => (0, import_react26.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
           }, onNav, onRename, onArchive, onUnarchive })));
         }
         if (hist.length) {
           const k = s.sessionId + ":hist";
           const ho = expandedSubs.has(k);
-          kids.push((0, import_react24.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (ho ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u538B\u7F29\u5386\u53F2\uFF08" + hist.length + "\uFF09"));
-          if (ho) kids.push(...hist.map((x) => (0, import_react24.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
+          kids.push((0, import_react26.createElement)("div", { key: k, className: "ck-ws-subgroup-title" + (ho ? " open" : ""), onClick: () => toggle(setExpandedSubs, k) }, "\u538B\u7F29\u5386\u53F2\uFF08" + hist.length + "\uFF09"));
+          if (ho) kids.push(...hist.map((x) => (0, import_react26.createElement)(WsItem, { key: x.sessionId, s: x, cur: curSessionId, archived: false, hasChildren: false, sub: true, open: false, onToggle: () => {
           }, onNav, onRename, onArchive, onUnarchive })));
         }
-        out.push((0, import_react24.createElement)("div", { key: s.sessionId + ":kids", className: "ck-ws-children" }, kids));
+        out.push((0, import_react26.createElement)("div", { key: s.sessionId + ":kids", className: "ck-ws-children" }, kids));
       }
       return out;
     };
@@ -34461,22 +34493,22 @@ body {
       g.archived.sort(byTimeDesc);
       const isOpen = dir === curDir || expandedDirs.has(dir);
       const isArchOpen = archivedOpen.has(dir);
-      return (0, import_react24.createElement)(
+      return (0, import_react26.createElement)(
         "div",
         { key: dir, className: "ck-ws-group" + (isOpen ? " open" : ""), "data-dir": dir },
-        (0, import_react24.createElement)(
+        (0, import_react26.createElement)(
           "div",
           { className: "ck-ws-group-title", title: dir || "\u672A\u6307\u5B9A\u5DE5\u4F5C\u533A", onClick: () => toggle(setExpandedDirs, dir), onMouseEnter: (e) => {
             if (dir) showTip(dir, e.currentTarget);
           }, onMouseLeave: () => setTip(null) },
-          (0, import_react24.createElement)(Svg5, { d: IC.caret, cls: "ck-ws-caret" }),
-          (0, import_react24.createElement)(Svg5, { d: IC.folder, cls: "ck-ws-folder" }),
-          (0, import_react24.createElement)("span", { className: "ck-ws-gname" }, baseName(dir)),
+          (0, import_react26.createElement)(Svg5, { d: IC.caret, cls: "ck-ws-caret" }),
+          (0, import_react26.createElement)(Svg5, { d: IC.folder, cls: "ck-ws-folder" }),
+          (0, import_react26.createElement)("span", { className: "ck-ws-gname" }, baseName(dir)),
           // [022] 空目录（未指定工作区）不渲染操作按钮——不是真实目录，新建/归档无意义
-          dir ? (0, import_react24.createElement)(
+          dir ? (0, import_react26.createElement)(
             "span",
             { className: "ck-ws-gacts" },
-            (0, import_react24.createElement)("span", { className: "ck-ws-gact", title: "\u7528\u8BE5\u9879\u76EE\u65B0\u5EFA\u5BF9\u8BDD", onClick: async (e) => {
+            (0, import_react26.createElement)("span", { className: "ck-ws-gact", title: "\u7528\u8BE5\u9879\u76EE\u65B0\u5EFA\u5BF9\u8BDD", onClick: async (e) => {
               e.stopPropagation();
               if (api.newConversationForProject) {
                 try {
@@ -34484,8 +34516,8 @@ body {
                 } catch (_) {
                 }
               }
-            } }, (0, import_react24.createElement)(Svg5, { d: IC.plus })),
-            archivedProjects.includes(dir) ? (0, import_react24.createElement)("span", { className: "ck-ws-gact", title: "\u53D6\u6D88\u5F52\u6863", onClick: async (e) => {
+            } }, (0, import_react26.createElement)(Svg5, { d: IC.plus })),
+            archivedProjects.includes(dir) ? (0, import_react26.createElement)("span", { className: "ck-ws-gact", title: "\u53D6\u6D88\u5F52\u6863", onClick: async (e) => {
               e.stopPropagation();
               if (api.setProjectArchived) {
                 try {
@@ -34494,7 +34526,7 @@ body {
                 }
                 load();
               }
-            } }, (0, import_react24.createElement)(Svg5, { d: IC.unarchiveProj })) : (0, import_react24.createElement)("span", { className: "ck-ws-gact", title: "\u5F52\u6863\u9879\u76EE", onClick: async (e) => {
+            } }, (0, import_react26.createElement)(Svg5, { d: IC.unarchiveProj })) : (0, import_react26.createElement)("span", { className: "ck-ws-gact", title: "\u5F52\u6863\u9879\u76EE", onClick: async (e) => {
               e.stopPropagation();
               if (api.setProjectArchived) {
                 try {
@@ -34503,60 +34535,60 @@ body {
                 }
                 load();
               }
-            } }, (0, import_react24.createElement)(Svg5, { d: IC.archiveProj }))
+            } }, (0, import_react26.createElement)(Svg5, { d: IC.archiveProj }))
           ) : null
         ),
-        (0, import_react24.createElement)(
+        (0, import_react26.createElement)(
           "div",
           { className: "ck-ws-items" },
           ...g.active.flatMap((s) => renderConv(s, false)),
-          g.archived.length ? (0, import_react24.createElement)(
+          g.archived.length ? (0, import_react26.createElement)(
             "div",
             { key: "arch", className: "ck-ws-archived" + (isArchOpen ? " open" : ""), "data-dir": dir },
-            (0, import_react24.createElement)("div", { className: "ck-ws-archived-title", onClick: () => toggle(setArchivedOpen, dir) }, "\u5DF2\u5F52\u6863 " + g.archived.length + " \u5BF9\u8BDD"),
-            (0, import_react24.createElement)("div", { className: "ck-ws-archived-items" }, ...g.archived.flatMap((s) => renderConv(s, true)))
+            (0, import_react26.createElement)("div", { className: "ck-ws-archived-title", onClick: () => toggle(setArchivedOpen, dir) }, "\u5DF2\u5F52\u6863 " + g.archived.length + " \u5BF9\u8BDD"),
+            (0, import_react26.createElement)("div", { className: "ck-ws-archived-items" }, ...g.archived.flatMap((s) => renderConv(s, true)))
           ) : null
         )
       );
     };
     const activeDirs = dirs.filter((d) => !archivedProjects.includes(d));
     const archivedDirs = dirs.filter((d) => archivedProjects.includes(d));
-    return (0, import_react24.createElement)(
+    return (0, import_react26.createElement)(
       "div",
       { className: "ck-tab ck-tab-active" },
-      (0, import_react24.createElement)(
+      (0, import_react26.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react24.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DE5\u4F5C\u533A"),
-        (0, import_react24.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react24.createElement)(Svg5, { d: IC.refresh }))
+        (0, import_react26.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DE5\u4F5C\u533A"),
+        (0, import_react26.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0", onClick: load }, (0, import_react26.createElement)(Svg5, { d: IC.refresh }))
       ),
-      (0, import_react24.createElement)(
+      (0, import_react26.createElement)(
         "div",
         { className: "ck-list" },
-        sessions.length === 0 ? (0, import_react24.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u4F1A\u8BDD") : (0, import_react24.createElement)(
+        sessions.length === 0 ? (0, import_react26.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0\u4F1A\u8BDD") : (0, import_react26.createElement)(
           "div",
           { style: { display: "contents" } },
           ...activeDirs.map(renderGroup),
-          archivedDirs.length ? (0, import_react24.createElement)(
+          archivedDirs.length ? (0, import_react26.createElement)(
             "div",
             { key: "archivedProjects", className: "ck-ws-archived-projects" + (expandedProjects ? " open" : "") },
-            (0, import_react24.createElement)("div", { className: "ck-ws-archived-projects-title", onClick: () => setExpandedProjects(!expandedProjects) }, "\u5DF2\u5F52\u6863 " + archivedDirs.length + " \u9879\u76EE"),
-            (0, import_react24.createElement)("div", { className: "ck-ws-archived-projects-items" }, ...archivedDirs.map(renderGroup))
+            (0, import_react26.createElement)("div", { className: "ck-ws-archived-projects-title", onClick: () => setExpandedProjects(!expandedProjects) }, "\u5DF2\u5F52\u6863 " + archivedDirs.length + " \u9879\u76EE"),
+            (0, import_react26.createElement)("div", { className: "ck-ws-archived-projects-items" }, ...archivedDirs.map(renderGroup))
           ) : null
         )
       ),
-      tip ? (0, import_react24.createElement)(
+      tip ? (0, import_react26.createElement)(
         "div",
         { className: "ck-ws-tip", style: { display: "block", position: "fixed", top: tip.y, left: tip.x, zIndex: 1e4 } },
-        (0, import_react24.createElement)("div", { className: "ck-tip-name" }, baseName(tip.dir)),
-        (0, import_react24.createElement)("div", { className: "ck-tip-path" }, tip.dir),
-        (0, import_react24.createElement)("div", { className: "ck-tip-time" }, "")
+        (0, import_react26.createElement)("div", { className: "ck-tip-name" }, baseName(tip.dir)),
+        (0, import_react26.createElement)("div", { className: "ck-tip-path" }, tip.dir),
+        (0, import_react26.createElement)("div", { className: "ck-tip-time" }, "")
       ) : null
     );
   }
 
   // src/ui/shell/scripts/pages/plugins-react.tsx
-  var import_react25 = __toESM(require_react(), 1);
+  var import_react27 = __toESM(require_react(), 1);
   var I4 = {
     install: "M12 3v12M7 10l5 5 5-5M5 21h14",
     update: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
@@ -34566,7 +34598,7 @@ body {
     plus: "M12 5v14M5 12h14"
   };
   function Svg6({ d, cls }) {
-    return (0, import_react25.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react25.createElement)("path", { d }));
+    return (0, import_react27.createElement)("svg", { className: cls, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, (0, import_react27.createElement)("path", { d }));
   }
   function isNewer(a, b) {
     if (!a || !b) return false;
@@ -34597,10 +34629,10 @@ body {
   function Meta({ pairs }) {
     const cells = pairs.filter(Boolean);
     if (!cells.length) return null;
-    return (0, import_react25.createElement)(
+    return (0, import_react27.createElement)(
       "div",
       { className: "ck-plugin-meta" },
-      cells.map((c, i) => (0, import_react25.createElement)("span", { key: i, style: { display: "contents" } }, i > 0 ? (0, import_react25.createElement)("span", { className: "sep" }, "\xB7") : null, (0, import_react25.createElement)("span", null, c)))
+      cells.map((c, i) => (0, import_react27.createElement)("span", { key: i, style: { display: "contents" } }, i > 0 ? (0, import_react27.createElement)("span", { className: "sep" }, "\xB7") : null, (0, import_react27.createElement)("span", null, c)))
     );
   }
   function InstalledItem({ p, onToggle, onUninstall, onConfig }) {
@@ -34610,75 +34642,75 @@ body {
     if (p.repo) meta.push(p.repo);
     const contrib = contribSummary(p.contributes);
     if (contrib) meta.push(contrib);
-    return (0, import_react25.createElement)(
+    return (0, import_react27.createElement)(
       "div",
       { className: "ck-plugin-item" },
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-plugin-head" },
-        (0, import_react25.createElement)("span", { className: "ck-plugin-name" }, p.name || p.id),
-        exec ? (0, import_react25.createElement)("span", { className: "ck-plugin-badge update", title: "\u542B\u53EF\u6267\u884C\u5185\u5BB9" }, "\u542B\u53EF\u6267\u884C") : null,
-        (0, import_react25.createElement)(
+        (0, import_react27.createElement)("span", { className: "ck-plugin-name" }, p.name || p.id),
+        exec ? (0, import_react27.createElement)("span", { className: "ck-plugin-badge update", title: "\u542B\u53EF\u6267\u884C\u5185\u5BB9" }, "\u542B\u53EF\u6267\u884C") : null,
+        (0, import_react27.createElement)(
           "div",
           { className: "ck-plugin-switch-row" },
-          (0, import_react25.createElement)("span", { className: "ck-plugin-switch-label" }, p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528"),
-          (0, import_react25.createElement)(
+          (0, import_react27.createElement)("span", { className: "ck-plugin-switch-label" }, p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528"),
+          (0, import_react27.createElement)(
             "label",
             { className: "ck-switch" },
-            (0, import_react25.createElement)("input", { type: "checkbox", checked: !!p.enabled, onChange: (e) => onToggle(e.target.checked) }),
-            (0, import_react25.createElement)("span", { className: "ck-switch-track" })
+            (0, import_react27.createElement)("input", { type: "checkbox", checked: !!p.enabled, onChange: (e) => onToggle(e.target.checked) }),
+            (0, import_react27.createElement)("span", { className: "ck-switch-track" })
           )
         ),
-        (0, import_react25.createElement)(
+        (0, import_react27.createElement)(
           "div",
           { className: "ck-plugin-actions" },
-          p.hasConfig ? (0, import_react25.createElement)("button", { className: "ck-snip-icon-btn", title: "\u914D\u7F6E", onClick: onConfig }, "\u2699") : (0, import_react25.createElement)("span", { className: "ck-snip-icon-btn ck-snip-icon-placeholder" }),
-          (0, import_react25.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5378\u8F7D", onClick: onUninstall }, (0, import_react25.createElement)(Svg6, { d: I4.trash }))
+          p.hasConfig ? (0, import_react27.createElement)("button", { className: "ck-snip-icon-btn", title: "\u914D\u7F6E", onClick: onConfig }, "\u2699") : (0, import_react27.createElement)("span", { className: "ck-snip-icon-btn ck-snip-icon-placeholder" }),
+          (0, import_react27.createElement)("button", { className: "ck-snip-icon-btn danger", title: "\u5378\u8F7D", onClick: onUninstall }, (0, import_react27.createElement)(Svg6, { d: I4.trash }))
         )
       ),
-      (0, import_react25.createElement)("div", { className: "ck-plugin-desc" }, p.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09"),
-      (0, import_react25.createElement)(Meta, { pairs: meta })
+      (0, import_react27.createElement)("div", { className: "ck-plugin-desc" }, p.description || "\uFF08\u65E0\u63CF\u8FF0\uFF09"),
+      (0, import_react27.createElement)(Meta, { pairs: meta })
     );
   }
   function MarketCard({ it, state, remote, onInstall }) {
     const badges = [];
-    if (it.archived) badges.push((0, import_react25.createElement)("span", { key: "a", className: "ck-plugin-badge archived", title: "\u4ED3\u5E93\u5DF2\u5F52\u6863\uFF0C\u53EF\u80FD\u4E0D\u518D\u7EF4\u62A4" }, "\u5DF2\u5F52\u6863"));
-    if (state === "installed") badges.push((0, import_react25.createElement)("span", { key: "i", className: "ck-plugin-badge on" }, "\u5DF2\u5B89\u88C5"));
-    if (state === "update") badges.push((0, import_react25.createElement)("span", { key: "u", className: "ck-plugin-badge update" }, "\u53EF\u66F4\u65B0"));
+    if (it.archived) badges.push((0, import_react27.createElement)("span", { key: "a", className: "ck-plugin-badge archived", title: "\u4ED3\u5E93\u5DF2\u5F52\u6863\uFF0C\u53EF\u80FD\u4E0D\u518D\u7EF4\u62A4" }, "\u5DF2\u5F52\u6863"));
+    if (state === "installed") badges.push((0, import_react27.createElement)("span", { key: "i", className: "ck-plugin-badge on" }, "\u5DF2\u5B89\u88C5"));
+    if (state === "update") badges.push((0, import_react27.createElement)("span", { key: "u", className: "ck-plugin-badge update" }, "\u53EF\u66F4\u65B0"));
     let action = null;
-    if (state === "none") action = (0, import_react25.createElement)("button", { className: "ck-snip-icon-btn", title: "\u5B89\u88C5", onClick: () => onInstall(false) }, (0, import_react25.createElement)(Svg6, { d: I4.install }));
-    else if (state === "update") action = (0, import_react25.createElement)("button", { className: "ck-snip-icon-btn", title: "\u66F4\u65B0\u5230\u6700\u65B0", onClick: () => onInstall(true) }, (0, import_react25.createElement)(Svg6, { d: I4.update }));
+    if (state === "none") action = (0, import_react27.createElement)("button", { className: "ck-snip-icon-btn", title: "\u5B89\u88C5", onClick: () => onInstall(false) }, (0, import_react27.createElement)(Svg6, { d: I4.install }));
+    else if (state === "update") action = (0, import_react27.createElement)("button", { className: "ck-snip-icon-btn", title: "\u66F4\u65B0\u5230\u6700\u65B0", onClick: () => onInstall(true) }, (0, import_react27.createElement)(Svg6, { d: I4.update }));
     let req = null;
     if (remote && remote.ok) {
       const bits = [];
       if (remote.version) bits.push("\u63D2\u4EF6 v" + remote.version);
       if (remote.minAppVersion) bits.push("\u9700\u8981 Cuckoo Code \u2265 " + remote.minAppVersion);
-      if (bits.length) req = (0, import_react25.createElement)("div", { className: "ck-plugin-req" }, bits.join(" \xB7 "));
-    } else if (remote && remote.error) req = (0, import_react25.createElement)("div", { className: "ck-plugin-req err" }, "\u8BFB\u4E0D\u5230 plugin.json\uFF1A" + remote.error);
-    return (0, import_react25.createElement)(
+      if (bits.length) req = (0, import_react27.createElement)("div", { className: "ck-plugin-req" }, bits.join(" \xB7 "));
+    } else if (remote && remote.error) req = (0, import_react27.createElement)("div", { className: "ck-plugin-req err" }, "\u8BFB\u4E0D\u5230 plugin.json\uFF1A" + remote.error);
+    return (0, import_react27.createElement)(
       "div",
       { className: "ck-plugin-item" },
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-plugin-head" },
-        (0, import_react25.createElement)("span", { className: "ck-plugin-name", title: it.id }, it.id),
+        (0, import_react27.createElement)("span", { className: "ck-plugin-name", title: it.id }, it.id),
         ...badges,
-        (0, import_react25.createElement)("div", { className: "ck-plugin-actions" }, action)
+        (0, import_react27.createElement)("div", { className: "ck-plugin-actions" }, action)
       ),
-      (0, import_react25.createElement)("div", { className: "ck-plugin-desc" }, it.description || "\uFF08\u65E0\u7B80\u4ECB\uFF09"),
-      (0, import_react25.createElement)(Meta, { pairs: [it.language, it.stars ? "\u2605 " + it.stars : "", it.license, (it.pushedAt || it.updatedAt || "").slice(0, 10)] }),
+      (0, import_react27.createElement)("div", { className: "ck-plugin-desc" }, it.description || "\uFF08\u65E0\u7B80\u4ECB\uFF09"),
+      (0, import_react27.createElement)(Meta, { pairs: [it.language, it.stars ? "\u2605 " + it.stars : "", it.license, (it.pushedAt || it.updatedAt || "").slice(0, 10)] }),
       req
     );
   }
   function PluginsPage() {
-    const [installed, setInstalled] = (0, import_react25.useState)(null);
-    const [market, setMarket] = (0, import_react25.useState)([]);
-    const [marketNotice, setMarketNotice] = (0, import_react25.useState)("");
-    const [marketRemote, setMarketRemote] = (0, import_react25.useState)({});
-    const [installedMap, setInstalledMap] = (0, import_react25.useState)({});
-    const [dsh, setDsh] = (0, import_react25.useState)(null);
+    const [installed, setInstalled] = (0, import_react27.useState)(null);
+    const [market, setMarket] = (0, import_react27.useState)([]);
+    const [marketNotice, setMarketNotice] = (0, import_react27.useState)("");
+    const [marketRemote, setMarketRemote] = (0, import_react27.useState)({});
+    const [installedMap, setInstalledMap] = (0, import_react27.useState)({});
+    const [dsh, setDsh] = (0, import_react27.useState)(null);
     const anyApi = api;
-    const loadInstalled = (0, import_react25.useCallback)(async () => {
+    const loadInstalled = (0, import_react27.useCallback)(async () => {
       if (!api.listInstalledPlugins) {
         setInstalled([]);
         return;
@@ -34690,7 +34722,7 @@ body {
         setInstalled([]);
       }
     }, []);
-    const loadMarket = (0, import_react25.useCallback)(async (force) => {
+    const loadMarket = (0, import_react27.useCallback)(async (force) => {
       if (!anyApi.pluginMarketList) {
         setMarket([]);
         return;
@@ -34717,7 +34749,7 @@ body {
         setMarket([]);
       }
     }, [anyApi]);
-    const loadDsh = (0, import_react25.useCallback)(async () => {
+    const loadDsh = (0, import_react27.useCallback)(async () => {
       if (typeof anyApi.cuckooPluginList !== "function") {
         setDsh([]);
         return;
@@ -34729,15 +34761,15 @@ body {
         setDsh([]);
       }
     }, [anyApi]);
-    const loadAll = (0, import_react25.useCallback)(async () => {
+    const loadAll = (0, import_react27.useCallback)(async () => {
       await loadInstalled();
       await loadMarket(false);
       await loadDsh();
     }, [loadInstalled, loadMarket, loadDsh]);
-    (0, import_react25.useEffect)(() => {
+    (0, import_react27.useEffect)(() => {
       loadAll();
     }, [loadAll]);
-    const onToggleInstalled = (0, import_react25.useCallback)(async (p, v) => {
+    const onToggleInstalled = (0, import_react27.useCallback)(async (p, v) => {
       if (v && hasExec(p.contributes)) {
         const lines = (p.contributes.providers || []).map((f) => "\xB7 providers/" + f + "\uFF08\u4F1A\u88AB require \u6267\u884C\uFF09");
         if (p.contributes.mcp) lines.push("\xB7 mcp.json \u91CC\u7684 MCP server\uFF08\u4F1A\u542F\u52A8\u5B50\u8FDB\u7A0B\uFF09");
@@ -34752,7 +34784,7 @@ body {
       }
       loadInstalled();
     }, [loadInstalled]);
-    const onUninstallInstalled = (0, import_react25.useCallback)(async (p) => {
+    const onUninstallInstalled = (0, import_react27.useCallback)(async (p) => {
       if (!await ckConfirm("\u786E\u5B9A\u5378\u8F7D\u63D2\u4EF6\u300C" + p.id + "\u300D\uFF1F\n\n\u63D2\u4EF6\u76EE\u5F55\u4E0E\u5176\u542F\u7528\u72B6\u6001\u90FD\u4F1A\u88AB\u5220\u9664\u3002", "\u5378\u8F7D\u63D2\u4EF6")) return;
       if (!api.pluginUninstall) return;
       const r = await api.pluginUninstall(p.id);
@@ -34762,7 +34794,7 @@ body {
       }
       loadAll();
     }, [loadAll]);
-    const onConfig = (0, import_react25.useCallback)(async (id) => {
+    const onConfig = (0, import_react27.useCallback)(async (id) => {
       if (typeof anyApi.pluginConfigGet !== "function") {
         await ckAlert("\u914D\u7F6E\u63A5\u53E3\u4E0D\u53EF\u7528");
         return;
@@ -34799,7 +34831,7 @@ body {
       }
       await ckAlert("\u5DF2\u4FDD\u5B58\u3002\u91CD\u542F\u6216\u91CD\u8F7D\u540E\u751F\u6548\uFF08\u90E8\u5206\u63D2\u4EF6\u5373\u65F6\u751F\u6548\uFF09\u3002", "\u914D\u7F6E\u5DF2\u4FDD\u5B58");
     }, [anyApi]);
-    const onInstallMarket = (0, import_react25.useCallback)(async (it, isUpgrade) => {
+    const onInstallMarket = (0, import_react27.useCallback)(async (it, isUpgrade) => {
       const remote = marketRemote[it.id];
       const what = isUpgrade ? "\u66F4\u65B0" : "\u5B89\u88C5";
       const lines = [it.id];
@@ -34818,7 +34850,7 @@ body {
       await ckAlert((r.upgraded ? "\u5DF2\u66F4\u65B0\uFF1A" : "\u5DF2\u5B89\u88C5\uFF1A") + (r.plugin && r.plugin.name || it.id), r.upgraded ? "\u66F4\u65B0\u5B8C\u6210" : "\u5B89\u88C5\u5B8C\u6210");
       loadAll();
     }, [marketRemote, loadAll]);
-    const onToggleDsh = (0, import_react25.useCallback)(async (p, v) => {
+    const onToggleDsh = (0, import_react27.useCallback)(async (p, v) => {
       const r = await anyApi.cuckooPluginToggle(p.id, v);
       if (!r || !r.success) {
         await ckAlert(r && r.error || "\u64CD\u4F5C\u5931\u8D25");
@@ -34826,7 +34858,7 @@ body {
       }
       loadDsh();
     }, [anyApi, loadDsh]);
-    const onUninstallDsh = (0, import_react25.useCallback)(async (p) => {
+    const onUninstallDsh = (0, import_react27.useCallback)(async (p) => {
       if (!await ckConfirm("\u786E\u5B9A\u5378\u8F7D\u63D2\u4EF6\u300C" + p.id + "\u300D\uFF1F\n\uFF08\u5DE5\u5177\u9700\u91CD\u542F\u540E\u79FB\u9664\uFF09")) return;
       const r = await anyApi.cuckooPluginUninstall(p.id);
       if (!r || !r.success) {
@@ -34835,7 +34867,7 @@ body {
       }
       loadDsh();
     }, [anyApi, loadDsh]);
-    const onInstallDsh = (0, import_react25.useCallback)(async () => {
+    const onInstallDsh = (0, import_react27.useCallback)(async () => {
       if (typeof anyApi.cuckooPluginInstall !== "function") return;
       const pkgName = await ckPrompt({ title: "\u5B89\u88C5 DSH \u63D2\u4EF6", placeholder: "npm \u5305\u540D\uFF0C\u5982 @scope/dsh-plugin-xxx", value: "" });
       if (!pkgName) return;
@@ -34862,38 +34894,38 @@ body {
     };
     const instList = installed || [];
     const dshList = dsh || [];
-    return (0, import_react25.createElement)(
+    return (0, import_react27.createElement)(
       "div",
       { className: "ck-tab ck-tab-active" },
       // 已安装
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react25.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DF2\u5B89\u88C5\u63D2\u4EF6"),
-        (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u6253\u5F00\u63D2\u4EF6\u76EE\u5F55", onClick: async () => {
+        (0, import_react27.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5DF2\u5B89\u88C5\u63D2\u4EF6"),
+        (0, import_react27.createElement)("button", { className: "ck-icon-btn", title: "\u6253\u5F00\u63D2\u4EF6\u76EE\u5F55", onClick: async () => {
           if (api.pluginOpenDir) {
             const r = await api.pluginOpenDir();
             if (r && !r.success) await ckAlert(r.error || "\u6253\u5F00\u76EE\u5F55\u5931\u8D25");
           }
-        } }, (0, import_react25.createElement)(Svg6, { d: I4.folder })),
-        (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\uFF08\u91CD\u65B0\u641C\u7D22\u5E02\u573A\uFF09", onClick: () => loadMarket(true) }, (0, import_react25.createElement)(Svg6, { d: I4.refresh }))
+        } }, (0, import_react27.createElement)(Svg6, { d: I4.folder })),
+        (0, import_react27.createElement)("button", { className: "ck-icon-btn", title: "\u5237\u65B0\uFF08\u91CD\u65B0\u641C\u7D22\u5E02\u573A\uFF09", onClick: () => loadMarket(true) }, (0, import_react27.createElement)(Svg6, { d: I4.refresh }))
       ),
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-list" },
-        installed === null ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : instList.length === 0 ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u63D2\u4EF6", (0, import_react25.createElement)("br"), "\u4ECE\u4E0B\u65B9\u5E02\u573A\u5B89\u88C5") : instList.map((p) => (0, import_react25.createElement)(InstalledItem, { key: p.id, p, onToggle: (v) => onToggleInstalled(p, v), onUninstall: () => onUninstallInstalled(p), onConfig: () => onConfig(p.id) }))
+        installed === null ? (0, import_react27.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : instList.length === 0 ? (0, import_react27.createElement)("div", { className: "ck-list-empty" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u63D2\u4EF6", (0, import_react27.createElement)("br"), "\u4ECE\u4E0B\u65B9\u5E02\u573A\u5B89\u88C5") : instList.map((p) => (0, import_react27.createElement)(InstalledItem, { key: p.id, p, onToggle: (v) => onToggleInstalled(p, v), onUninstall: () => onUninstallInstalled(p), onConfig: () => onConfig(p.id) }))
       ),
       // 市场
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-actions" },
-        (0, import_react25.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5E02\u573A"),
-        (0, import_react25.createElement)("span", { className: "ck-snip-badge", title: "\u552F\u4E00\u641C\u7D22\u6E90" }, "topic:cuckoo-plugin")
+        (0, import_react27.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "\u5E02\u573A"),
+        (0, import_react27.createElement)("span", { className: "ck-snip-badge", title: "\u552F\u4E00\u641C\u7D22\u6E90" }, "topic:cuckoo-plugin")
       ),
-      (0, import_react25.createElement)(
+      (0, import_react27.createElement)(
         "div",
         { className: "ck-list" },
-        market.length === 0 ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, marketNotice || "\u6682\u65E0\u63D2\u4EF6", (0, import_react25.createElement)("br"), (0, import_react25.createElement)("br"), "\u7ED9\u4F60\u7684\u4ED3\u5E93\u6253\u4E0A ", (0, import_react25.createElement)("b", null, "cuckoo-plugin"), " topic\uFF0C", (0, import_react25.createElement)("br"), "\u5B83\u5C31\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC") : market.map((it) => (0, import_react25.createElement)(MarketCard, { key: it.id, it, state: marketState(it), remote: marketRemote[it.id], onInstall: (u) => onInstallMarket(it, u) }))
+        market.length === 0 ? (0, import_react27.createElement)("div", { className: "ck-list-empty" }, marketNotice || "\u6682\u65E0\u63D2\u4EF6", (0, import_react27.createElement)("br"), (0, import_react27.createElement)("br"), "\u7ED9\u4F60\u7684\u4ED3\u5E93\u6253\u4E0A ", (0, import_react27.createElement)("b", null, "cuckoo-plugin"), " topic\uFF0C", (0, import_react27.createElement)("br"), "\u5B83\u5C31\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC") : market.map((it) => (0, import_react27.createElement)(MarketCard, { key: it.id, it, state: marketState(it), remote: marketRemote[it.id], onInstall: (u) => onInstallMarket(it, u) }))
       )
     );
   }
@@ -34916,6 +34948,8 @@ body {
     registerPage("conversations", ConversationsPage);
     registerPage("token", TokenPage);
     registerPage("feishu", FeishuPage);
+    registerPage("memories", MemoriesReact);
+    registerPage("snapshots", SnapshotsReact);
     registerPage("memories", loadMemories);
     registerPage("snapshots", loadSnapshots);
     registerPage("agents", AgentsPage);
