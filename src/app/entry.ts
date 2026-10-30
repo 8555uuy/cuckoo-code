@@ -84,6 +84,13 @@ import { injectWindowGroupDeps, requestSwitchShare } from './ipc/window-groups.j
 import { initProject } from '../session/project-context.js';
 import * as windowGroups from './window-groups.js';
 
+// 全局默认 UA：Electron 默认的 app.userAgentFallback 含 "Electron/x.y.z Chrome/<内核完整版>"
+// 标识，与下面 view.webContents.setUserAgent() 设置的干净 Chrome UA（Chrome/<主版本>.0.0.0）
+// 不一致。壳页面 / Service Worker / 部分子资源会走 fallback，暴露 Electron 标识与源内核完整版本，
+// 造成"一处 Chrome 版本、一处源内核版本"的矛盾（DeepSeek / Google OAuth 判定环境异常）。
+// 在 app.whenReady() 之前统一设置为干净 UA，保证所有 WebContents 一致。
+app.userAgentFallback = buildChromeUserAgent();
+
 // 退出前需要 flush 的 sessions
 const sessionsToFlush = new Set<any>();
 
