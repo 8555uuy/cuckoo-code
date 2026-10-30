@@ -8,14 +8,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-export interface UserConfig {
-  /** 是否启用用户记忆功能（默认 false） */
-  memoriesEnabled: boolean;
-}
+export interface UserConfig {}
 
-const DEFAULT_CONFIG: UserConfig = {
-  memoriesEnabled: false,
-};
+const DEFAULT_CONFIG: UserConfig = {};
 
 /** 用户级目录（可用 CUCKOO_HOME 覆盖，供测试隔离） */
 function getUserDir(): string {
@@ -34,7 +29,7 @@ function readConfig(): UserConfig {
     if (fs.existsSync(file)) {
       const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
       if (raw && typeof raw === 'object') {
-        return { memoriesEnabled: raw.memoriesEnabled === true };
+        return { ...raw };
       }
     }
   } catch (err: any) {
@@ -57,24 +52,4 @@ function writeConfig(cfg: Partial<UserConfig>): boolean {
   }
 }
 
-/** 记忆功能是否启用（默认关闭） */
-function isMemoriesEnabled(): boolean {
-  return readConfig().memoriesEnabled === true;
-}
-
-/** 设置记忆功能开关 */
-function setMemoriesEnabled(enabled: boolean): boolean {
-  return writeConfig({ memoriesEnabled: enabled === true });
-}
-
-/**
- * 已启用的工具功能分组（用于注入对应的 API 契约文件 api.<feature>.d.ts）。
- * 目前仅 'memories'。
- */
-function getEnabledToolFeatures(): string[] {
-  const feats: string[] = [];
-  if (isMemoriesEnabled()) feats.push('memories');
-  return feats;
-}
-
-export { readConfig, writeConfig, isMemoriesEnabled, setMemoriesEnabled, getEnabledToolFeatures, getConfigFile };
+export { readConfig, writeConfig, getConfigFile };
