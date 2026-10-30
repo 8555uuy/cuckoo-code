@@ -85,9 +85,17 @@ function copyDirSync(src: string, dst: string): void {
  */
 function seedBundledPlugins(dir: string, name: string): void {
   const marker = path.join(dir, SEED_MARKER);
-  if (fs.existsSync(marker)) return; // 已预置过（用户可自由删）
   const bundledDir = getBundledPluginsDir();
   if (!fs.existsSync(bundledDir)) return; // 没有内置插件目录：不写标记（留待后续版本）
+
+  // 注意：这里去掉了原版“if (fs.existsSync(marker)) return”的阻断。
+  // 为了支持后续版本新增内置插件（如 dshmarket）时，老用户能够平滑增量更新，
+  // 我们改为逐个包检查：只要 bundled-plugins 里有，而 node_modules 里没有，就补进去。
+  // 但如果是用户手动删掉的怎么办？靠 marker 记录已 seed 过的列表，如果列表里有但用户删了，就不再加。
+  let previouslySeeded: string[] = [];
+  if (fs.existsSync(marker)) {
+    try { previouslySeeded = fs.readFileSync(marker, 'utf-8').split(/\r?\n/).map(s => s.trim()).filter(Boolean); } catch (_) {}
+  }
 
   // 遍历 bundled-plugins 下的包（支持 @scope/name）
   const seeded: string[] = [];
@@ -97,10 +105,16 @@ function seedBundledPlugins(dir: string, name: string): void {
       const full = path.join(baseDir, e.name);
       const pkgName = prefix ? prefix + '/' + e.name : e.name;
       if (fs.existsSync(path.join(full, 'package.json'))) {
-        // 是一个包：复制到 node_modules/<pkgName>
+        // 是一个包：如果之前没 seed 过，或者目录不存在（但之前也没 seed 过），则复制
         const dst = path.join(getProfileModulesDir(dir), pkgName);
-        if (!fs.existsSync(dst)) copyDirSync(full, dst);
-        seeded.push(pkgName);
+        const isNew = !previouslySeeded.includes(pkgName);
+        if (isNew && !fs.existsSync(dst)) {
+          copyDirSync(full, dst);
+        }
+        // 只有在真正需要处理时，才加入当前列表（保持之前处理过的记录）
+        if (isNew || !seeded.includes(pkgName)) {
+          seeded.push(pkgName);
+        }
       } else if (e.name.startsWith('@')) {
         // scope 目录：递归
         scan(full, e.name);
