@@ -37,10 +37,13 @@
 >
 > 所有捐赠款项**直接进入壹基金公益账户**，与作者无关，纯属公益行为。
 
-**已通过壹基金捐赠的善款：3 笔 / 300 元**
+**已通过壹基金捐赠的善款：6 笔 / 588 元**
 
 | 捐赠者 | 金额 | 日期 | 捐赠证书 |
 |---|---|---|---|
+| 刘*帅 | 100 元 | 2026-10-29 |[https://onefoundation.cn/cert/20261029162641585/](https://onefoundation.cn/cert/20261029162641585/))|
+| CS | 100 元 | 2026-10-29 |[https://onefoundation.cn/cert/20261029003017507/](https://onefoundation.cn/cert/20261029003017507/)|
+| 杨先生 | 88 元 | 2026-10-29 |[https://onefoundation.cn/cert/20261029065593254/](https://onefoundation.cn/cert/20261029065593254/))|
 | Hazel | 100 元 | 2026-10-26 | [https://onefoundation.cn/cert/20261027103737586/](https://onefoundation.cn/cert/20261027103737586/)|
 | 十七不是石器ᯤ | 100 元 | 2026-10-26 | [https://onefoundation.cn/cert/20261026213679892/](https://onefoundation.cn/cert/20261026213679892/)|
 | 王先生 | 100 元 | 2026-10-26 | [https://onefoundation.cn/cert/20261026131837934/](https://onefoundation.cn/cert/20261026131837934/) |
