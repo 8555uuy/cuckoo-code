@@ -4137,7 +4137,7 @@ body {
             }
             return dispatcher.useContext(Context);
           }
-          function useState20(initialState) {
+          function useState22(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -4145,7 +4145,7 @@ body {
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef9(initialValue) {
+          function useRef7(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
@@ -4939,8 +4939,8 @@ body {
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
-          exports.useRef = useRef9;
-          exports.useState = useState20;
+          exports.useRef = useRef7;
+          exports.useState = useState22;
           exports.useSyncExternalStore = useSyncExternalStore2;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -27517,11 +27517,11 @@ body {
               return jsxWithValidation(type, props, key, false);
             }
           }
-          var jsx = jsxWithValidationDynamic;
-          var jsxs = jsxWithValidationStatic;
+          var jsx3 = jsxWithValidationDynamic;
+          var jsxs3 = jsxWithValidationStatic;
           exports.Fragment = REACT_FRAGMENT_TYPE;
-          exports.jsx = jsx;
-          exports.jsxs = jsxs;
+          exports.jsx = jsx3;
+          exports.jsxs = jsxs3;
         })();
       }
     }
@@ -33124,6 +33124,121 @@ body {
 
   // src/ui/shell/scripts/pages/memories-react.tsx
   var import_react21 = __toESM(require_react(), 1);
+  var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+  function MemoriesReact() {
+    const [memories2, setMemories] = (0, import_react21.useState)([]);
+    const [keyword2, setKeyword] = (0, import_react21.useState)("");
+    const [loading, setLoading] = (0, import_react21.useState)(true);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await api.listMemories();
+        if (res && res.success) setMemories(res.memories || []);
+      } catch (e) {
+      }
+      setLoading(false);
+    };
+    (0, import_react21.useEffect)(() => {
+      load();
+    }, []);
+    const handleAdd = async () => {
+      const text = prompt("\u65B0\u5EFA\u8BB0\u5FC6\uFF08\u5982\uFF1A\u7528\u6237\u504F\u597D\u7528\u4E2D\u6587\u56DE\u590D\uFF09");
+      if (text && text.trim()) {
+        await api.addMemory(text.trim());
+        load();
+      }
+    };
+    const handleEdit = async (id, oldText) => {
+      const text = prompt("\u7F16\u8F91\u8BB0\u5FC6", oldText);
+      if (text && text.trim()) {
+        await api.updateMemory(id, text.trim());
+        load();
+      }
+    };
+    const handleDelete = async (id) => {
+      if (confirm("\u786E\u5B9A\u5220\u9664\u8FD9\u6761\u8BB0\u5FC6\u5417\uFF1F")) {
+        await api.deleteMemory(id);
+        load();
+      }
+    };
+    const filtered2 = memories2.filter((m) => m.text.toLowerCase().includes(keyword2.toLowerCase()));
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { padding: "16px", height: "100%", display: "flex", flexDirection: "column", gap: "12px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { className: "ck-input", placeholder: "\u641C\u7D22\u8BB0\u5FC6...", value: keyword2, onChange: (e) => setKeyword(e.target.value), style: { flex: 1 } }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ck-btn-anim", onClick: handleAdd, children: "\u65B0\u5EFA\u8BB0\u5FC6" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: "8px" }, children: [
+        loading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "#888" }, children: "\u52A0\u8F7D\u4E2D..." }) : null,
+        !loading && filtered2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "#888" }, children: "\u6682\u65E0\u8BB0\u5FC6" }) : null,
+        filtered2.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", padding: "8px", background: "var(--ck-bg-2)", borderRadius: "6px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { flex: 1, whiteSpace: "pre-wrap", wordBreak: "break-all" }, children: m.text }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ghost", style: { marginLeft: "8px" }, onClick: () => handleEdit(m.id, m.text), children: "\u7F16\u8F91" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ghost", style: { marginLeft: "8px", color: "red" }, onClick: () => handleDelete(m.id), children: "\u5220\u9664" })
+        ] }, m.id))
+      ] })
+    ] });
+  }
+
+  // src/ui/shell/scripts/pages/snapshots-react.tsx
+  var import_react22 = __toESM(require_react(), 1);
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+  function SnapshotsReact() {
+    const [snaps, setSnaps] = (0, import_react22.useState)([]);
+    const [loading, setLoading] = (0, import_react22.useState)(true);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await api.listSnapshots();
+        if (res && res.success) setSnaps(res.snapshots || []);
+      } catch (e) {
+      }
+      setLoading(false);
+    };
+    (0, import_react22.useEffect)(() => {
+      load();
+    }, []);
+    const handleCreate = async () => {
+      const name = prompt("\u5FEB\u7167\u540D\u79F0\uFF08\u5982\uFF1A\u91CD\u6784\u524D\uFF09");
+      if (name && name.trim()) {
+        await api.createSnapshot(name.trim());
+        load();
+      }
+    };
+    const handleRestore = async (id) => {
+      if (confirm("\u6062\u590D\u5FEB\u7167\u4F1A\u8986\u76D6\u5F53\u524D\u9879\u76EE\uFF0C\u4E14\u81EA\u52A8\u521B\u5EFA\u56DE\u6EDA\u5907\u4EFD\u3002\u786E\u5B9A\u7EE7\u7EED\uFF1F")) {
+        try {
+          const r = await api.restoreSnapshot(id);
+          if (r && r.success) alert("\u6062\u590D\u6210\u529F\uFF01\u6062\u590D\u6587\u4EF6\u6570\uFF1A" + r.restored);
+          else alert("\u6062\u590D\u5931\u8D25\uFF1A" + (r ? r.error : "\u672A\u77E5\u9519\u8BEF"));
+        } catch (e) {
+          alert("\u6062\u590D\u5F02\u5E38\uFF1A" + e.message);
+        }
+        load();
+      }
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { padding: "16px", height: "100%", display: "flex", flexDirection: "column", gap: "12px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "ck-btn ck-btn-anim", onClick: handleCreate, children: "\u65B0\u5EFA\u5FEB\u7167" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "ck-btn ghost", onClick: load, children: "\u5237\u65B0" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: "8px" }, children: [
+        loading ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { color: "#888" }, children: "\u52A0\u8F7D\u4E2D..." }) : null,
+        !loading && snaps.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { color: "#888" }, children: "\u6682\u65E0\u5FEB\u7167" }) : null,
+        snaps.map((s) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", padding: "8px", background: "var(--ck-bg-2)", borderRadius: "6px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold" }, children: s.name }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: "12px", color: "#888" }, children: [
+              new Date(s.createdAt).toLocaleString(),
+              " \xB7 ",
+              s.fileCount,
+              " \u4E2A\u6587\u4EF6"
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "ck-btn ghost", onClick: () => handleRestore(s.id), children: "\u6062\u590D" })
+        ] }, s.id))
+      ] })
+    ] });
+  }
 
   // src/ui/shell/scripts/pages/memories.ts
   var memories = [];
@@ -33259,21 +33374,6 @@ body {
     });
   }
 
-  // src/ui/shell/scripts/pages/memories-react.tsx
-  function MemoriesReact() {
-    const ref = (0, import_react21.useRef)(null);
-    (0, import_react21.useEffect)(() => {
-      if (ref.current) ref.current.innerHTML = '<div class="ck-tab" data-panel="memories">\n  <div class="ck-actions">\n    <button class="ck-btn ck-btn-anim" id="mem-add">\n      <svg class="ck-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>\n      <span>\u65B0\u5EFA\u8BB0\u5FC6</span>\n    </button>\n    <input class="ck-input" id="mem-search" type="search" placeholder="\u641C\u7D22\u8BB0\u5FC6\u2026" style="flex:1;min-width:0;margin-left:8px" />\n    <button class="ck-icon-btn" id="mem-refresh" title="\u5237\u65B0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>\n  </div>\n  <p class="ck-about-tip">\u8BB0\u5FC6\u4F1A\u968F\u7CFB\u7EDF\u63D0\u793A\u8BCD\u53D1\u7ED9\u6A21\u578B\u3002\u65E0\u6761\u6570/\u957F\u5EA6\u9650\u5236\u3002</p>\n  <div class="ck-list" id="mem-list"><div class="ck-list-empty">\u52A0\u8F7D\u4E2D\u2026</div></div>\n</div>';
-      setTimeout(() => {
-        if (typeof loadMemories === "function") loadMemories();
-      }, 50);
-    }, []);
-    return import_react21.default.createElement("div", { ref, style: { height: "100%", overflow: "auto", padding: "16px" } });
-  }
-
-  // src/ui/shell/scripts/pages/snapshots-react.tsx
-  var import_react22 = __toESM(require_react(), 1);
-
   // src/ui/shell/scripts/pages/snapshots.ts
   var snapshots = [];
   var currentProjectDir = null;
@@ -33383,18 +33483,6 @@ body {
     await loadSnapshots();
   });
   document.getElementById("snap-refresh")?.addEventListener("click", loadSnapshots);
-
-  // src/ui/shell/scripts/pages/snapshots-react.tsx
-  function SnapshotsReact() {
-    const ref = (0, import_react22.useRef)(null);
-    (0, import_react22.useEffect)(() => {
-      if (ref.current) ref.current.innerHTML = '<div class="ck-tab" data-panel="snapshots">\n  <div class="ck-actions">\n    <button class="ck-btn ck-btn-anim" id="snap-create">\u65B0\u5EFA\u5FEB\u7167</button>\n    <button class="ck-icon-btn" id="snap-refresh" title="\u5237\u65B0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>\n  </div>\n  <p class="ck-about-tip">\u5FEB\u7167\u4F1A\u5728\u6062\u590D\u524D\u81EA\u52A8\u521B\u5EFA\u56DE\u6EDA\u5907\u4EFD\uFF0C\u9632\u6B62\u6570\u636E\u4E22\u5931\u3002</p>\n  <div class="ck-list" id="snap-list"><div class="ck-list-empty">\u52A0\u8F7D\u4E2D\u2026</div></div>\n</div>';
-      setTimeout(() => {
-        if (typeof loadSnapshots === "function") loadSnapshots();
-      }, 50);
-    }, []);
-    return import_react22.default.createElement("div", { ref, style: { height: "100%", overflow: "auto", padding: "16px" } });
-  }
 
   // src/ui/shell/scripts/pages/agents-react.tsx
   var import_react23 = __toESM(require_react(), 1);

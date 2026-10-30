@@ -1,10 +1,64 @@
-import React, { useEffect, useRef } from 'react';
-import { loadMemories } from './memories.js';
+import React, { useState, useEffect } from 'react';
+import { api } from '../shared.js';
+
 export function MemoriesReact() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current) ref.current.innerHTML = "<div class=\"ck-tab\" data-panel=\"memories\">\n  <div class=\"ck-actions\">\n    <button class=\"ck-btn ck-btn-anim\" id=\"mem-add\">\n      <svg class=\"ck-btn-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 5v14M5 12h14\"/></svg>\n      <span>新建记忆</span>\n    </button>\n    <input class=\"ck-input\" id=\"mem-search\" type=\"search\" placeholder=\"搜索记忆…\" style=\"flex:1;min-width:0;margin-left:8px\" />\n    <button class=\"ck-icon-btn\" id=\"mem-refresh\" title=\"刷新\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg></button>\n  </div>\n  <p class=\"ck-about-tip\">记忆会随系统提示词发给模型。无条数/长度限制。</p>\n  <div class=\"ck-list\" id=\"mem-list\"><div class=\"ck-list-empty\">加载中…</div></div>\n</div>";
-    setTimeout(() => { if (typeof loadMemories === 'function') loadMemories(); }, 50);
-  }, []);
-  return React.createElement('div', { ref, style: { height: '100%', overflow: 'auto', padding: '16px' } });
+  const [memories, setMemories] = useState<any[]>([]);
+  const [keyword, setKeyword] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await (api as any).listMemories();
+      if (res && res.success) setMemories(res.memories || []);
+    } catch (e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleAdd = async () => {
+    const text = prompt('新建记忆（如：用户偏好用中文回复）');
+    if (text && text.trim()) {
+      await (api as any).addMemory(text.trim());
+      load();
+    }
+  };
+
+  const handleEdit = async (id: string, oldText: string) => {
+    const text = prompt('编辑记忆', oldText);
+    if (text && text.trim()) {
+      await (api as any).updateMemory(id, text.trim());
+      load();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('确定删除这条记忆吗？')) {
+      await (api as any).deleteMemory(id);
+      load();
+    }
+  };
+
+  const filtered = memories.filter(m => m.text.toLowerCase().includes(keyword.toLowerCase()));
+
+  return (
+    <div style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input className="ck-input" placeholder="搜索记忆..." value={keyword} onChange={e => setKeyword(e.target.value)} style={{ flex: 1 }} />
+        <button className="ck-btn ck-btn-anim" onClick={handleAdd}>新建记忆</button>
+      </div>
+      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {loading ? <div style={{color: '#888'}}>加载中...</div> : null}
+        {!loading && filtered.length === 0 ? <div style={{color: '#888'}}>暂无记忆</div> : null}
+        {filtered.map(m => (
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', background: 'var(--ck-bg-2)', borderRadius: '6px' }}>
+            <div style={{ flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{m.text}</div>
+            <button className="ck-btn ghost" style={{ marginLeft: '8px' }} onClick={() => handleEdit(m.id, m.text)}>编辑</button>
+            <button className="ck-btn ghost" style={{ marginLeft: '8px', color: 'red' }} onClick={() => handleDelete(m.id)}>删除</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

@@ -1,10 +1,61 @@
-import React, { useEffect, useRef } from 'react';
-import { loadSnapshots } from './snapshots.js';
+import React, { useState, useEffect } from 'react';
+import { api } from '../shared.js';
+
 export function SnapshotsReact() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current) ref.current.innerHTML = "<div class=\"ck-tab\" data-panel=\"snapshots\">\n  <div class=\"ck-actions\">\n    <button class=\"ck-btn ck-btn-anim\" id=\"snap-create\">新建快照</button>\n    <button class=\"ck-icon-btn\" id=\"snap-refresh\" title=\"刷新\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg></button>\n  </div>\n  <p class=\"ck-about-tip\">快照会在恢复前自动创建回滚备份，防止数据丢失。</p>\n  <div class=\"ck-list\" id=\"snap-list\"><div class=\"ck-list-empty\">加载中…</div></div>\n</div>";
-    setTimeout(() => { if (typeof loadSnapshots === 'function') loadSnapshots(); }, 50);
-  }, []);
-  return React.createElement('div', { ref, style: { height: '100%', overflow: 'auto', padding: '16px' } });
+  const [snaps, setSnaps] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await (api as any).listSnapshots();
+      if (res && res.success) setSnaps(res.snapshots || []);
+    } catch (e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleCreate = async () => {
+    const name = prompt('快照名称（如：重构前）');
+    if (name && name.trim()) {
+      await (api as any).createSnapshot(name.trim());
+      load();
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    if (confirm('恢复快照会覆盖当前项目，且自动创建回滚备份。确定继续？')) {
+      try {
+        const r = await (api as any).restoreSnapshot(id);
+        if (r && r.success) alert('恢复成功！恢复文件数：' + r.restored);
+        else alert('恢复失败：' + (r ? r.error : '未知错误'));
+      } catch (e: any) {
+        alert('恢复异常：' + e.message);
+      }
+      load();
+    }
+  };
+
+  return (
+    <div style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button className="ck-btn ck-btn-anim" onClick={handleCreate}>新建快照</button>
+        <button className="ck-btn ghost" onClick={load}>刷新</button>
+      </div>
+      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {loading ? <div style={{color: '#888'}}>加载中...</div> : null}
+        {!loading && snaps.length === 0 ? <div style={{color: '#888'}}>暂无快照</div> : null}
+        {snaps.map(s => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', background: 'var(--ck-bg-2)', borderRadius: '6px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 'bold' }}>{s.name}</div>
+              <div style={{ fontSize: '12px', color: '#888' }}>{new Date(s.createdAt).toLocaleString()} · {s.fileCount} 个文件</div>
+            </div>
+            <button className="ck-btn ghost" onClick={() => handleRestore(s.id)}>恢复</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
