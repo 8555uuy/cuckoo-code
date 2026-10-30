@@ -27671,9 +27671,6 @@ body {
   function escapeHtml(s) {
     return String(s === null || s === void 0 ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
-  function escapeAttr(s) {
-    return escapeHtml(s).replace(/"/g, "&quot;");
-  }
   function formatTokenCount(n) {
     if (!isFinite(n) || n < 0) return "0";
     if (n >= 1e8) return (n / 1e8).toFixed(2) + "\u4EBF";
@@ -31427,11 +31424,11 @@ body {
     const renderSlot = (0, import_react9.useCallback)((slotName, ownerProps, opts) => {
       try {
         const items = getSlotItems(slotName);
-        let filtered2 = items;
-        if (opts && opts.only !== void 0) filtered2 = items.filter((it) => it.id === opts.only);
-        else if (opts && opts.entryKey !== void 0) filtered2 = items.filter((it) => it.id === opts.entryKey || it.spec && it.spec.key === opts.entryKey);
-        if (!filtered2.length) return opts && opts.fallback || null;
-        return (0, import_react9.createElement)(import_react9.Fragment, null, ...filtered2.map((it, i) => {
+        let filtered = items;
+        if (opts && opts.only !== void 0) filtered = items.filter((it) => it.id === opts.only);
+        else if (opts && opts.entryKey !== void 0) filtered = items.filter((it) => it.id === opts.entryKey || it.spec && it.spec.key === opts.entryKey);
+        if (!filtered.length) return opts && opts.fallback || null;
+        return (0, import_react9.createElement)(import_react9.Fragment, null, ...filtered.map((it, i) => {
           const C2 = it.Component;
           if (typeof C2 !== "function") return null;
           const p = Object.assign({}, ownerProps || {}, it.injectedProps || {});
@@ -33126,8 +33123,8 @@ body {
   var import_react21 = __toESM(require_react(), 1);
   var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
   function MemoriesReact() {
-    const [memories2, setMemories] = (0, import_react21.useState)([]);
-    const [keyword2, setKeyword] = (0, import_react21.useState)("");
+    const [memories, setMemories] = (0, import_react21.useState)([]);
+    const [keyword, setKeyword] = (0, import_react21.useState)("");
     const [loading, setLoading] = (0, import_react21.useState)(true);
     const load = async () => {
       setLoading(true);
@@ -33161,16 +33158,16 @@ body {
         load();
       }
     };
-    const filtered2 = memories2.filter((m) => m.text.toLowerCase().includes(keyword2.toLowerCase()));
+    const filtered = memories.filter((m) => m.text.toLowerCase().includes(keyword.toLowerCase()));
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { padding: "16px", height: "100%", display: "flex", flexDirection: "column", gap: "12px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { className: "ck-input", placeholder: "\u641C\u7D22\u8BB0\u5FC6...", value: keyword2, onChange: (e) => setKeyword(e.target.value), style: { flex: 1 } }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { className: "ck-input", placeholder: "\u641C\u7D22\u8BB0\u5FC6...", value: keyword, onChange: (e) => setKeyword(e.target.value), style: { flex: 1 } }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ck-btn-anim", onClick: handleAdd, children: "\u65B0\u5EFA\u8BB0\u5FC6" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: "8px" }, children: [
         loading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "#888" }, children: "\u52A0\u8F7D\u4E2D..." }) : null,
-        !loading && filtered2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "#888" }, children: "\u6682\u65E0\u8BB0\u5FC6" }) : null,
-        filtered2.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", padding: "8px", background: "var(--ck-bg-2)", borderRadius: "6px" }, children: [
+        !loading && filtered.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "#888" }, children: "\u6682\u65E0\u8BB0\u5FC6" }) : null,
+        filtered.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", padding: "8px", background: "var(--ck-bg-2)", borderRadius: "6px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { flex: 1, whiteSpace: "pre-wrap", wordBreak: "break-all" }, children: m.text }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ghost", style: { marginLeft: "8px" }, onClick: () => handleEdit(m.id, m.text), children: "\u7F16\u8F91" }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "ck-btn ghost", style: { marginLeft: "8px", color: "red" }, onClick: () => handleDelete(m.id), children: "\u5220\u9664" })
@@ -33239,250 +33236,6 @@ body {
       ] })
     ] });
   }
-
-  // src/ui/shell/scripts/pages/memories.ts
-  var memories = [];
-  var keyword = "";
-  function fmtTime(ts) {
-    if (!ts) return "";
-    try {
-      const d = new Date(ts);
-      const pad = (n) => n < 10 ? "0" + n : String(n);
-      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-    } catch (_) {
-      return "";
-    }
-  }
-  async function loadEnabledState() {
-    const cb = document.getElementById("mem-enabled");
-    if (!cb || !api.getMemoriesEnabled) return;
-    try {
-      const r = await api.getMemoriesEnabled();
-      cb.checked = !!(r && r.success && r.enabled);
-    } catch (_) {
-      cb.checked = false;
-    }
-  }
-  async function loadMemories() {
-    await loadEnabledState();
-    if (!api.listMemories) return;
-    try {
-      const res = await api.listMemories();
-      memories = res && res.success && Array.isArray(res.memories) ? res.memories : [];
-    } catch (_) {
-      memories = [];
-    }
-    renderMemories();
-  }
-  function filtered() {
-    const k = keyword.trim().toLowerCase();
-    if (!k) return memories;
-    return memories.filter((m) => String(m.text || "").toLowerCase().indexOf(k) >= 0);
-  }
-  function renderMemories() {
-    const listEl = document.getElementById("mem-list");
-    if (!listEl) return;
-    const list = filtered();
-    if (!list.length) {
-      const msg = keyword ? "\u6CA1\u6709\u5339\u914D\u7684\u8BB0\u5FC6" : "\u8FD8\u6CA1\u6709\u8BB0\u5FC6\uFF0C\u70B9\u4E0A\u65B9\u65B0\u5EFA\uFF0C\u6216\u8BA9 AI \u7528 remember \u5DE5\u5177";
-      listEl.innerHTML = "<div class=ck-list-empty>" + msg + "</div>";
-      return;
-    }
-    listEl.innerHTML = list.map((m) => {
-      const t = fmtTime(m.updatedAt || m.createdAt);
-      const timeLine = t ? "<div style=font-size:11px;opacity:.55>\u66F4\u65B0\u4E8E " + escapeHtml(t) + "</div>" : "";
-      return "<div class=ck-snip-item data-id=" + escapeAttr(m.id) + "><div class=ck-snip-top><span class=ck-snip-name style=white-space:pre-wrap;word-break:break-word>" + escapeHtml(m.text) + "</span><div class=ck-snip-actions><button class=ck-snip-icon-btn data-edit=" + escapeAttr(m.id) + " title=\u7F16\u8F91>&#9998;</button><button class=ck-snip-icon-btn danger data-del=" + escapeAttr(m.id) + " title=\u5220\u9664>&#128465;</button></div></div>" + timeLine + "</div>";
-    }).join("");
-    listEl.querySelectorAll("[data-edit]").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const m = memories.filter((x) => x.id === btn.dataset.edit)[0];
-        if (!m) return;
-        const text = await ckPrompt({ title: "\u7F16\u8F91\u8BB0\u5FC6", value: m.text });
-        if (text === null) return;
-        const t = text.trim();
-        if (!t) {
-          await ckAlert("\u5185\u5BB9\u4E0D\u80FD\u4E3A\u7A7A");
-          return;
-        }
-        if (api.updateMemory) {
-          try {
-            await api.updateMemory(m.id, t);
-          } catch (_) {
-          }
-        } else if (api.saveMemories) {
-          memories = memories.map((x) => x.id === m.id ? { ...x, text: t, updatedAt: Date.now() } : x);
-          try {
-            await api.saveMemories(memories);
-          } catch (_) {
-          }
-        }
-        await loadMemories();
-      });
-    });
-    listEl.querySelectorAll("[data-del]").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.del;
-        const m = memories.filter((x) => x.id === id)[0];
-        const label = m ? m.text : "";
-        const ok = await ckConfirm("\u786E\u5B9A\u5220\u9664\u8BB0\u5FC6\u300C" + label + "\u300D\uFF1F");
-        if (!ok) return;
-        if (api.deleteMemory) {
-          try {
-            await api.deleteMemory(id);
-          } catch (_) {
-          }
-        }
-        await loadMemories();
-      });
-    });
-  }
-  document.getElementById("mem-add")?.addEventListener("click", async () => {
-    const text = await ckPrompt({ title: "\u65B0\u5EFA\u8BB0\u5FC6", placeholder: "\u5982\uFF1A\u7528\u6237\u504F\u597D\u7528\u4E2D\u6587\u56DE\u590D" });
-    if (text === null) return;
-    const t = text.trim();
-    if (!t) {
-      await ckAlert("\u5185\u5BB9\u4E0D\u80FD\u4E3A\u7A7A");
-      return;
-    }
-    if (api.addMemory) {
-      try {
-        await api.addMemory(t);
-      } catch (_) {
-      }
-    }
-    await loadMemories();
-  });
-  document.getElementById("mem-refresh")?.addEventListener("click", loadMemories);
-  document.getElementById("mem-search")?.addEventListener("input", (e) => {
-    keyword = String(e.target.value || "");
-    renderMemories();
-  });
-  document.getElementById("mem-enabled")?.addEventListener("change", async (e) => {
-    if (!api.setMemoriesEnabled) return;
-    try {
-      await api.setMemoriesEnabled(!!e.target.checked);
-      await ckAlert(e.target.checked ? "\u8BB0\u5FC6\u529F\u80FD\u5DF2\u5F00\u542F" : "\u8BB0\u5FC6\u529F\u80FD\u5DF2\u5173\u95ED");
-    } catch (_) {
-      await ckAlert("\u8BBE\u7F6E\u5931\u8D25");
-    }
-  });
-  if (api.onMemoriesChanged) {
-    api.onMemoriesChanged(() => {
-      loadMemories();
-    });
-  }
-
-  // src/ui/shell/scripts/pages/snapshots.ts
-  var snapshots = [];
-  var currentProjectDir = null;
-  async function loadSnapshots() {
-    if (!api.listSnapshots) return;
-    try {
-      if (api.getProjectDir) {
-        const pr = await api.getProjectDir();
-        currentProjectDir = pr && pr.dir ? pr.dir : null;
-      }
-    } catch (_) {
-    }
-    try {
-      const res = await api.listSnapshots(currentProjectDir || void 0);
-      snapshots = res && res.success && Array.isArray(res.snapshots) ? res.snapshots : [];
-    } catch (_) {
-      snapshots = [];
-    }
-    renderSnapshots();
-  }
-  function fmtTime2(ts) {
-    try {
-      return new Date(ts).toLocaleString("zh-CN");
-    } catch (_) {
-      return "";
-    }
-  }
-  function fmtSize(bytes) {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / 1024 / 1024).toFixed(1) + " MB";
-  }
-  function renderSnapshots() {
-    const listEl = document.getElementById("snap-list");
-    if (!listEl) return;
-    if (!snapshots.length) {
-      listEl.innerHTML = '<div class="ck-list-empty">\u6682\u65E0\u5FEB\u7167\uFF0C\u70B9\u4E0A\u65B9\u521B\u5EFA\uFF0C\u6216\u8BA9 AI \u7528 createSnapshot \u5DE5\u5177</div>';
-      return;
-    }
-    listEl.innerHTML = snapshots.map((s) => {
-      return '<div class="ck-snip-item" data-id="' + escapeAttr(s.id) + '"><div class="ck-snip-top"><span class="ck-snip-name">' + escapeHtml(s.name) + '</span><div class="ck-snip-actions"><button class="ck-snip-icon-btn" data-restore="' + escapeAttr(s.id) + '" title="\u6062\u590D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button><button class="ck-snip-icon-btn danger" data-del="' + escapeAttr(s.id) + '" title="\u5220\u9664"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></div><span class="ck-snip-preview">' + s.fileCount + " \u4E2A\u6587\u4EF6 \xB7 " + fmtSize(s.totalBytes || 0) + " \xB7 " + fmtTime2(s.createdAt) + (s.description ? " \xB7 " + escapeHtml(s.description) : "") + "</span></div>";
-    }).join("");
-    listEl.querySelectorAll("[data-restore]").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.restore;
-        const s = snapshots.filter((x) => x.id === id)[0];
-        if (!await ckConfirm("\u786E\u5B9A\u628A\u5FEB\u7167\u300C" + (s ? s.name : "") + "\u300D\u6062\u590D\u5230\u9879\u76EE\u76EE\u5F55\uFF1F\u5C06\u8986\u76D6\u540C\u540D\u6587\u4EF6\u3002")) return;
-        if (!api.restoreSnapshot) {
-          await ckAlert("\u63A5\u53E3\u4E0D\u53EF\u7528");
-          return;
-        }
-        try {
-          const r = await api.restoreSnapshot(id);
-          if (r && r.success === false) {
-            await ckAlert("\u6062\u590D\u5931\u8D25\uFF1A" + (r.error || "\u672A\u77E5\u9519\u8BEF"));
-          } else if (r && typeof r.restored === "number") {
-            await ckAlert("\u5DF2\u6062\u590D " + r.restored + " \u4E2A\u6587\u4EF6");
-          } else {
-            await ckAlert("\u5DF2\u6062\u590D");
-          }
-        } catch (e2) {
-          await ckAlert("\u6062\u590D\u51FA\u9519\uFF1A" + (e2 && e2.message ? e2.message : e2));
-        }
-      });
-    });
-    listEl.querySelectorAll("[data-del]").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.del;
-        const s = snapshots.filter((x) => x.id === id)[0];
-        if (!await ckConfirm("\u786E\u5B9A\u5220\u9664\u5FEB\u7167\u300C" + (s ? s.name : "") + "\u300D\uFF1F")) return;
-        if (api.deleteSnapshot) {
-          try {
-            await api.deleteSnapshot(id);
-          } catch (_) {
-          }
-        }
-        await loadSnapshots();
-      });
-    });
-  }
-  document.getElementById("snap-add")?.addEventListener("click", async () => {
-    if (!currentProjectDir) {
-      await ckAlert("\u8BF7\u5148\u9009\u62E9\u9879\u76EE\u76EE\u5F55");
-      return;
-    }
-    const name = await ckPrompt({ title: "\u521B\u5EFA\u5FEB\u7167", placeholder: "\u5982\uFF1A\u91CD\u6784\u524D", value: "\u5FEB\u7167-" + (/* @__PURE__ */ new Date()).toLocaleString("zh-CN") });
-    if (name === null) return;
-    const n = name.trim();
-    if (!n) {
-      await ckAlert("\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A");
-      return;
-    }
-    if (api.createSnapshot) {
-      try {
-        const r = await api.createSnapshot(currentProjectDir, n);
-        if (r && r.success === false) {
-          await ckAlert("\u521B\u5EFA\u5931\u8D25\uFF1A" + (r.error || ""));
-        } else if (r && r.snapshot) {
-          await ckAlert("\u5DF2\u521B\u5EFA\uFF1A" + r.snapshot.fileCount + " \u4E2A\u6587\u4EF6 \xB7 " + (r.snapshot.totalBytes / 1024 / 1024).toFixed(1) + "MB");
-        }
-      } catch (e) {
-        await ckAlert("\u521B\u5EFA\u51FA\u9519\uFF1A" + (e && e.message ? e.message : e));
-      }
-    }
-    await loadSnapshots();
-  });
-  document.getElementById("snap-refresh")?.addEventListener("click", loadSnapshots);
 
   // src/ui/shell/scripts/pages/agents-react.tsx
   var import_react23 = __toESM(require_react(), 1);
@@ -33796,7 +33549,7 @@ body {
     lock: "LCK"
   };
   var MEDIA_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "avif", "mp4", "mp3", "wav", "mov", "webm"]);
-  function fmtSize2(n) {
+  function fmtSize(n) {
     if (typeof n !== "number") return "";
     if (n < 1024) return n + " B";
     if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
@@ -33938,7 +33691,7 @@ body {
           "div",
           { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--ck-border, #e0e0e0)", flexShrink: 0 } },
           (0, import_react24.createElement)("span", { style: { fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: path }, path),
-          state.size !== void 0 ? (0, import_react24.createElement)("span", { style: { fontSize: 12, opacity: 0.6 } }, fmtSize2(state.size)) : null,
+          state.size !== void 0 ? (0, import_react24.createElement)("span", { style: { fontSize: 12, opacity: 0.6 } }, fmtSize(state.size)) : null,
           (0, import_react24.createElement)("button", { title: "\u7528\u7CFB\u7EDF\u7A0B\u5E8F\u6253\u5F00", onClick: openExternal, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2197"),
           (0, import_react24.createElement)("button", { title: "\u5173\u95ED", onClick: onClose, style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 16, padding: "2px 8px" } }, "\u2715")
         ),
@@ -35038,8 +34791,8 @@ body {
     registerPage("feishu", FeishuPage);
     registerPage("memories", MemoriesReact);
     registerPage("snapshots", SnapshotsReact);
-    registerPage("memories", loadMemories);
-    registerPage("snapshots", loadSnapshots);
+    registerPage("memories", MemoriesPage);
+    registerPage("snapshots", SnapshotsPage);
     registerPage("agents", AgentsPage);
     registerPage("files", FilesPage);
     registerPage("windows", WindowsPage);

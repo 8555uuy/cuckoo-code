@@ -32,8 +32,8 @@ import { TokenPage } from './pages/token-react.js';
 import { FeishuPage } from './pages/feishu-react.js';
 import { MemoriesReact } from './pages/memories-react.js';
 import { SnapshotsReact } from './pages/snapshots-react.js';
-import { loadMemories as MemoriesPage } from './pages/memories.js';
-import { loadSnapshots as SnapshotsPage } from './pages/snapshots.js';
+
+
 // SettingsPage 改为全屏模态（shell-frame 直接引入），不再注册为 tab
 import { AgentsPage } from './pages/agents-react.js';
 import { FilesPage } from './pages/files-react.js';
