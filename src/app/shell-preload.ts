@@ -49,6 +49,16 @@ const shellAPI = {
   toggleSidebar: (width: number) => ipcRenderer.invoke('shell-toggle-sidebar', { width }),
   // 隐藏/显示 AI 视图（壳页面弹窗需要盖过 AI 区域时用）
   setAiViewVisible: (visible: boolean) => ipcRenderer.invoke('shell-set-ai-view-visible', { visible }),
+  listMemories: () => ipcRenderer.invoke('list-memories'),
+  addMemory: (text: string) => ipcRenderer.invoke('add-memory', { text }),
+  updateMemory: (id: string, text: string) => ipcRenderer.invoke('update-memory', { id, text }),
+  deleteMemory: (id: string) => ipcRenderer.invoke('delete-memory', { id }),
+  getMemoriesEnabled: () => ipcRenderer.invoke('get-memories-enabled'),
+  setMemoriesEnabled: (enabled: boolean) => ipcRenderer.invoke('set-memories-enabled', { enabled }),
+  listSnapshots: () => ipcRenderer.invoke('list-snapshots'),
+  createSnapshot: (name: string) => ipcRenderer.invoke('create-snapshot', { name }),
+  restoreSnapshot: (id: string) => ipcRenderer.invoke('restore-snapshot', { id }),
+  deleteSnapshot: (id: string) => ipcRenderer.invoke('delete-snapshot', { id }),
   // 侧边栏拖拽调宽（AI 视图会临时移出，鼠标事件全落在壳页面；主进程轮询算宽度后推回）
   startSidebarDrag: () => ipcRenderer.send('shell-sidebar-drag-start'),
   endSidebarDrag: () => ipcRenderer.send('shell-sidebar-drag-end'),
