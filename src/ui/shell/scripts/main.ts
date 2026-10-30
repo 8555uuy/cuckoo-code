@@ -59,8 +59,6 @@ try {
   registerPage('feishu', FeishuPage);
   registerPage('memories', MemoriesReact);
   registerPage('snapshots', SnapshotsReact);
-  registerPage('memories', MemoriesPage as any);
-  registerPage('snapshots', SnapshotsPage as any);
   // settings 页改为全屏模态（见 shell-frame.tsx），不注册为 tab
   registerPage('agents', AgentsPage);
   registerPage('files', FilesPage);
