@@ -34647,41 +34647,6 @@ body {
         "div",
         { className: "ck-list" },
         market.length === 0 ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, marketNotice || "\u6682\u65E0\u63D2\u4EF6", (0, import_react25.createElement)("br"), (0, import_react25.createElement)("br"), "\u7ED9\u4F60\u7684\u4ED3\u5E93\u6253\u4E0A ", (0, import_react25.createElement)("b", null, "cuckoo-plugin"), " topic\uFF0C", (0, import_react25.createElement)("br"), "\u5B83\u5C31\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC") : market.map((it) => (0, import_react25.createElement)(MarketCard, { key: it.id, it, state: marketState(it), remote: marketRemote[it.id], onInstall: (u) => onInstallMarket(it, u) }))
-      ),
-      // DSH 插件
-      (0, import_react25.createElement)(
-        "div",
-        { className: "ck-actions" },
-        (0, import_react25.createElement)("span", { className: "ck-set-group-title", style: { flex: 1 } }, "DSH \u63D2\u4EF6\uFF08npm\uFF09"),
-        (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u6253\u5F00\u63D2\u4EF6\u76EE\u5F55", onClick: async () => {
-          if (typeof anyApi.cuckooPluginOpenDir === "function") {
-            const r = await anyApi.cuckooPluginOpenDir();
-            if (r && !r.success) await ckAlert(r.error || "\u6253\u5F00\u76EE\u5F55\u5931\u8D25");
-          }
-        } }, (0, import_react25.createElement)(Svg6, { d: I4.folder })),
-        (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u5B89\u88C5 DSH \u63D2\u4EF6\uFF08\u8F93\u5165 npm \u5305\u540D\uFF09", onClick: onInstallDsh }, (0, import_react25.createElement)(Svg6, { d: I4.plus }))
-      ),
-      (0, import_react25.createElement)(
-        "div",
-        { className: "ck-list" },
-        dsh === null ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u52A0\u8F7D\u4E2D\u2026") : dshList.length === 0 ? (0, import_react25.createElement)("div", { className: "ck-list-empty" }, "\u6682\u65E0 DSH \u63D2\u4EF6\uFF08\u70B9 + \u5B89\u88C5\uFF09") : dshList.map((p) => (0, import_react25.createElement)(
-          "div",
-          { key: p.id, className: "ck-list-item" },
-          (0, import_react25.createElement)(
-            "div",
-            { className: "ck-list-main" },
-            (0, import_react25.createElement)("div", { className: "ck-list-title" }, p.name || p.id, p.version ? (0, import_react25.createElement)("span", { className: "ck-plugin-ver" }, "v" + p.version) : null),
-            p.description ? (0, import_react25.createElement)("div", { className: "ck-list-desc" }, p.description) : null,
-            (0, import_react25.createElement)("div", { className: "ck-plugin-meta" }, (0, import_react25.createElement)("span", null, p.id))
-          ),
-          (0, import_react25.createElement)(
-            "label",
-            { className: "ck-switch", title: p.enabled ? "\u5DF2\u542F\u7528" : "\u5DF2\u7981\u7528" },
-            (0, import_react25.createElement)("input", { type: "checkbox", checked: !!p.enabled, onChange: (e) => onToggleDsh(p, e.target.checked) }),
-            (0, import_react25.createElement)("span", { className: "ck-switch-track" })
-          ),
-          (0, import_react25.createElement)("button", { className: "ck-icon-btn", title: "\u5378\u8F7D", onClick: () => onUninstallDsh(p) }, (0, import_react25.createElement)(Svg6, { d: I4.trash }))
-        ))
       )
     );
   }

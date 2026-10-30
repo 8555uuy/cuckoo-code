@@ -271,27 +271,5 @@ export function PluginsPage() {
         ? createElement('div', { className: 'ck-list-empty' }, marketNotice || '暂无插件', createElement('br'), createElement('br'), '给你的仓库打上 ', createElement('b', null, 'cuckoo-plugin'), ' topic，', createElement('br'), '它就会出现在这里')
         : market.map((it) => createElement(MarketCard, { key: it.id, it, state: marketState(it), remote: marketRemote[it.id], onInstall: (u: boolean) => onInstallMarket(it, u) })),
     ),
-    // DSH 插件
-    createElement('div', { className: 'ck-actions' },
-      createElement('span', { className: 'ck-set-group-title', style: { flex: 1 } }, 'DSH 插件（npm）'),
-      createElement('button', { className: 'ck-icon-btn', title: '打开插件目录', onClick: async () => { if (typeof anyApi.cuckooPluginOpenDir === 'function') { const r = await anyApi.cuckooPluginOpenDir(); if (r && !r.success) await ckAlert(r.error || '打开目录失败'); } } }, createElement(Svg, { d: I.folder })),
-      createElement('button', { className: 'ck-icon-btn', title: '安装 DSH 插件（输入 npm 包名）', onClick: onInstallDsh }, createElement(Svg, { d: I.plus })),
-    ),
-    createElement('div', { className: 'ck-list' },
-      dsh === null ? createElement('div', { className: 'ck-list-empty' }, '加载中…')
-        : dshList.length === 0 ? createElement('div', { className: 'ck-list-empty' }, '暂无 DSH 插件（点 + 安装）')
-        : dshList.map((p) => createElement('div', { key: p.id, className: 'ck-list-item' },
-            createElement('div', { className: 'ck-list-main' },
-              createElement('div', { className: 'ck-list-title' }, p.name || p.id, p.version ? createElement('span', { className: 'ck-plugin-ver' }, 'v' + p.version) : null),
-              p.description ? createElement('div', { className: 'ck-list-desc' }, p.description) : null,
-              createElement('div', { className: 'ck-plugin-meta' }, createElement('span', null, p.id)),
-            ),
-            createElement('label', { className: 'ck-switch', title: p.enabled ? '已启用' : '已禁用' },
-              createElement('input', { type: 'checkbox', checked: !!p.enabled, onChange: (e: any) => onToggleDsh(p, e.target.checked) }),
-              createElement('span', { className: 'ck-switch-track' }),
-            ),
-            createElement('button', { className: 'ck-icon-btn', title: '卸载', onClick: () => onUninstallDsh(p) }, createElement(Svg, { d: I.trash })),
-          )),
-    ),
   );
 }
