@@ -75,6 +75,8 @@ function getProfileModulesDir(dir: string): string {
 
 /** 内置（预置）插件目录：开发版 = <项目根>/resources/bundled-plugins；打包版 = resources/bundled-plugins（extraResources） */
 function getBundledPluginsDir(): string {
+  // 测试环境通常用 CUCKOO_SKIP_BUNDLED=1 隔离真实的 bundled-plugins，防止测试断言被开发机文件干扰
+  if (process.env.CUCKOO_SKIP_BUNDLED) return '/nonexistent-bundled-plugins';
   return path.join(resolveResourceRoot(), 'bundled-plugins');
 }
 

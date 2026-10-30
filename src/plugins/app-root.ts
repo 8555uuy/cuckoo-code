@@ -14,12 +14,17 @@ import fs from 'node:fs';
 
 /** 找应用根（开发=项目根；打包=resources 同级目录），用于拼 resources/runtime 等内置资源 */
 export function resolveResourceRoot(): string {
-  // 打包版：process.resourcesPath 指向 resources/，resources/runtime 直接存在
+  // 1. 打包版：process.resourcesPath 指向 resources/，resources/runtime 直接存在
   const rp = (process as any).resourcesPath;
   if (typeof rp === 'string' && rp && fs.existsSync(path.join(rp, 'runtime'))) {
     return rp;
   }
-  // 开发版：out/src/plugins/<xxx> → 上 4 级 = 项目根 → resources/runtime
+  // 2. 开发版：优先用 process.cwd()（启动时的目录通常就是项目根）
+  const cwdRes = path.join(process.cwd(), 'resources');
+  if (fs.existsSync(path.join(cwdRes, 'runtime'))) {
+    return cwdRes;
+  }
+  // 3. 兜底推算（仅当上述都不命中时）
   const appRoot = path.join(import.meta.dirname, '..', '..', '..', '..');
   return path.join(appRoot, 'resources');
 }
@@ -33,6 +38,11 @@ export function resolveAppRoot(): string {
     if (fs.existsSync(asar)) return asar;
     return rp;
   }
-  // 开发版：out/src/plugins/<xxx> → 上 4 级 = 项目根
+  // 开发版：优先用 process.cwd()（启动时的目录通常就是项目根）
+  const cwdRes = path.join(process.cwd(), 'resources');
+  if (fs.existsSync(cwdRes)) {
+    return process.cwd();
+  }
+  // 兜底推算
   return path.join(import.meta.dirname, '..', '..', '..', '..');
 }

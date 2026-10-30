@@ -8,9 +8,11 @@ describe('profile init', () => {
   beforeEach(() => {
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ck-profile-'));
     process.env.CUCKOO_HOME = tmp;
+    process.env.CUCKOO_SKIP_BUNDLED = '1'; // 隔离真实的 bundled-plugins，防止测试断言被开发机文件干扰
   });
   afterEach(() => {
     delete process.env.CUCKOO_HOME;
+    delete process.env.CUCKOO_SKIP_BUNDLED;
     try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
   });
 

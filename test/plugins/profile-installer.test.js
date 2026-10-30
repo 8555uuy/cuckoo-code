@@ -8,9 +8,11 @@ describe('profile installer', () => {
   beforeEach(() => {
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ck-install-'));
     process.env.CUCKOO_HOME = tmp;
+    process.env.CUCKOO_SKIP_BUNDLED = '1';
   });
   afterEach(() => {
     delete process.env.CUCKOO_HOME;
+    delete process.env.CUCKOO_SKIP_BUNDLED;
     try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
   });
 
