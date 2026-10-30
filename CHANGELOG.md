@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **统一 UA 版本**：设置全局 `app.userAgentFallback` 为干净 Chrome UA，消除壳页面 / Service Worker / 子资源与 AI 页面 UA 不一致的问题（此前 fallback 暴露 `Electron/x.y.z` 标识与内核完整版本号，DeepSeek / Google OAuth 可能判定环境异常）。（@jiangchengnay，PR #71）
+
 ## [0.8.18] - 2026-10-26
 
 ### Added

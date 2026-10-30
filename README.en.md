@@ -327,6 +327,7 @@ This project is licensed under the GNU General Public License v3.0. See the LICE
   - **Plugin web-script injection**: new `scripts/` contribution type for plugins — inject scripts into the web page's main world by URL match, works on built-in platforms (PR #26)
   - **Gitee plugin market support**: the plugin market gains a Gitee source (search / download / manifest), parallel to GitHub, for users with unstable GitHub access (PR #28)
   - **Subagent send fix**: fixes subagents getting stuck at "sending task prompt" on contenteditable platforms like Doubao (PR #29)
+  - **Unified UA version**: set global `app.userAgentFallback` to a clean Chrome UA, eliminating UA inconsistency between shell pages / Service Workers and the AI page (which exposed the Electron identifier and full kernel version, potentially triggering DeepSeek environment checks / Google OAuth rejection) (PR #71)
 - [@8555uuy](https://github.com/8555uuy):
   - **Dangerous-command detection hardening**: fixes detection bypass via compound commands (`&&` `||` `;` `|` `&`); unifies into a single source of truth and adds more dangerous variants (PR #30)
   - **glob excludes artifact dirs**: excludes dependency/artifact dirs like `node_modules` by default when no path is given, avoiding drowning out the project's own files (PR #31)
