@@ -35,7 +35,7 @@ export function AboutPage() {
       createElement('a', { className: 'ck-about-link', onClick: openGithub }, 'github.com/wangyongpeng90/cuckoo-code'),
     ),
     createElement('div', { className: 'ck-about-group' },
-      createElement('div', { className: 'ck-about-group-title' }, 'QQ 群：1104042537'),
+      createElement('div', { className: 'ck-about-group-title' }, 'QQ 群：250383183'),
       qqUrl ? createElement('img', { className: 'ck-about-qr', src: qqUrl, alt: 'QQ 群' }) : null,
     ),
   );
