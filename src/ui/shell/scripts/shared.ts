@@ -4,7 +4,14 @@
 import type { ShellAPI } from './shell-api.js';
 
 /** 暴露的壳页面 API（preload 注入） */
-export const api: ShellAPI = (window as any).shellAPI || {};
+export const api: ShellAPI = (window as any).shellAPI || {  listMemories: () => (window as any).shellAPI.listMemories(),
+  addMemory: (text: string) => (window as any).shellAPI.addMemory(text),
+  updateMemory: (id: string, text: string) => (window as any).shellAPI.updateMemory(id, text),
+  deleteMemory: (id: string) => (window as any).shellAPI.deleteMemory(id),
+  listSnapshots: () => (window as any).shellAPI.listSnapshots(),
+  createSnapshot: (name: string) => (window as any).shellAPI.createSnapshot(name),
+  restoreSnapshot: (id: string) => (window as any).shellAPI.restoreSnapshot(id),
+};
 
 // ===== 通用弹框（替代原生 alert/confirm）=====
 /** 弹窗期间隐藏 AI 视图（原生 WebContentsView 永远在网页之上），关闭后恢复。
