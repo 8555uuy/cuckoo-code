@@ -130,3 +130,16 @@ export function formatShort(n: number): string {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万';
   return String(Math.round(n));
 }
+
+
+// 补充记忆与快照 API 到全局 api 对象
+const extraApis = {
+  listMemories: () => (window as any).shellAPI.listMemories(),
+  addMemory: (text: string) => (window as any).shellAPI.addMemory(text),
+  updateMemory: (id: string, text: string) => (window as any).shellAPI.updateMemory(id, text),
+  deleteMemory: (id: string) => (window as any).shellAPI.deleteMemory(id),
+  listSnapshots: () => (window as any).shellAPI.listSnapshots(),
+  createSnapshot: (name: string) => (window as any).shellAPI.createSnapshot(name),
+  restoreSnapshot: (id: string) => (window as any).shellAPI.restoreSnapshot(id),
+};
+Object.assign(api as any, extraApis);

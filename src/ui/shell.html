@@ -27683,6 +27683,16 @@ body {
     if (n >= 1e4) return (n / 1e4).toFixed(1) + "\u4E07";
     return String(Math.round(n));
   }
+  var extraApis = {
+    listMemories: () => window.shellAPI.listMemories(),
+    addMemory: (text) => window.shellAPI.addMemory(text),
+    updateMemory: (id, text) => window.shellAPI.updateMemory(id, text),
+    deleteMemory: (id) => window.shellAPI.deleteMemory(id),
+    listSnapshots: () => window.shellAPI.listSnapshots(),
+    createSnapshot: (name) => window.shellAPI.createSnapshot(name),
+    restoreSnapshot: (id) => window.shellAPI.restoreSnapshot(id)
+  };
+  Object.assign(api, extraApis);
 
   // src/ui/shell/scripts/toolbar.ts
   var input = document.getElementById("url-input");
